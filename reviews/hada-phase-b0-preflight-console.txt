@@ -1,0 +1,64 @@
+============================================
+HADA M1 Phase B0 — Bounded Preflight
+Timestamp: 20260725170700
+Remote dir: /tmp/hada-b0-preflight-20260725170700
+Evidence dir: /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700
+Candidate archive: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip
+============================================
+
+[0/8] Verifying candidate archive checksum locally...
+HADA-M1-gcp-candidate.zip: OK
+  -> archive checksum rc=0
+PASS: candidate archive checksum verified
+
+[0b/8] Extracting candidate archive into local mktemp directory...
+  -> local extract dir: /tmp/hada-b0-extract-QqNUSuSJZQ
+PASS: compose.yaml, compose.gcp.yaml, Caddyfile.gcp obtained from extracted candidate
+  -> /tmp/hada-b0-extract-QqNUSuSJZQ/HADA-M1-durable-orchestrator/deploy/compose/compose.yaml
+  -> /tmp/hada-b0-extract-QqNUSuSJZQ/HADA-M1-durable-orchestrator/deploy/compose/compose.gcp.yaml
+  -> /tmp/hada-b0-extract-QqNUSuSJZQ/HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile.gcp
+
+  Verifying candidate manifest from extracted root...
+./tests/unit/test_orchestrator.py: OK
+./tests/unit/test_outbox.py: OK
+./tests/unit/test_policy.py: OK
+./tests/unit/test_queue_and_leases.py: OK
+./tests/unit/test_workspace.py: OK
+PASS: candidate manifest verified from extracted root
+
+[1/8] Capturing and enforcing Docker Compose version...
+  -> raw version: 5.3.1
+  -> stripped version: 5.3.1
+PASS: Compose version 5.3.1 >= 2.24.4
+PASS: Compose version requirement: PASS
+
+[2/8] Capturing BEFORE state...
+  -> docker ps -aq -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700/docker-ps-before.txt
+  -> docker images -q -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700/docker-images-before.txt
+
+[3/8] Creating remote temporary directory...
+/tmp/hada-b0-preflight-20260725170700
+  -> /tmp/hada-b0-preflight-20260725170700
+
+[4/8] Uploading preflight files from extracted candidate tree...
+  -> compose.yaml (from candidate)
+  -> compose.gcp.yaml (from candidate)
+  -> Caddyfile.gcp (from candidate)
+  -> candidate.sha256
+
+[5/8] Creating synthetic .env...
+synthetic .env created
+  -> .env (synthetic, non-production)
+
+[6/8] Rendering effective-compose.json and running assertions...
+  -> effective-compose.json saved (rc=0)
+PASS: Compose JSON render: PASS
+
+  [6a] Validating published ports...
+  File "<string>", line 24
+    print(f"  service={pp[\"service\"]} host_ip={pp[\"host_ip\"]} "
+                           ^
+SyntaxError: unexpected character after line continuation character
+[cleanup] removed local extract dir: /tmp/hada-b0-extract-QqNUSuSJZQ
+removed: /tmp/hada-b0-preflight-20260725170700
+[cleanup] remote cleanup attempted: /tmp/hada-b0-preflight-20260725170700

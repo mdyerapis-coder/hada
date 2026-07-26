@@ -1,0 +1,260 @@
+================================================================================
+HADA M1 — PHASE B RUNNER DEEP FAIL-CLOSED CORRECTION — REVIEW
+================================================================================
+Date (UTC):           2026-07-26
+Working directory:    /home/bobthabuilda/hada-deployment
+Scope:                LOCAL-ONLY. No SSH, no SCP, no deploy, no pull, no
+                      build, no secret creation, no candidate modification.
+
+Locked candidate SHA-256 (verified before and after this work, unchanged):
+  9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+  (sha256sum HADA-M1-gcp-candidate.zip re-verified locally: MATCH)
+
+Corrected artifact:
+  scripts/run-phase-b-deploy.sh          (fully rewritten, 1,180+ lines)
+
+New deployment-runner test scripts (all executable, all mocked, no remote
+contact, no Docker daemon required):
+  tests/phase-b/test_ssh_sudo_capture.sh              13 assertions PASS
+  tests/phase-b/test_prohibited_operation_scanner.sh  16 assertions PASS
+  tests/phase-b/test_stage_aware_rollback.sh          15 assertions PASS
+  tests/phase-b/test_remote_temp_permissions.sh       11 assertions PASS
+  tests/phase-b/test_env_validation.sh                19 assertions PASS
+  tests/phase-b/run_all.sh                            harness: 5/5 PASS
+
+  Suite total: 74/74 assertions passed.
+
+The pre-existing Phase B0 tests (tests/static/test_docker_state_none_logic.sh
+and tests/static/test_port_assertion.sh) are retained unchanged and are NOT
+substituted for the new deployment-runner tests. Both sets ship in the bundle.
+
+Verification performed locally:
+  - bash -n on the runner and all 6 new test scripts: PASS
+  - shellcheck -S error (v0.11.0) on runner + all new tests: PASS (clean)
+  - tests/phase-b/run_all.sh: SUITE RESULT PASS (5/5 scripts, 74 assertions)
+  - ./scripts/run-phase-b-deploy.sh with DEPLOY_EXECUTE unset: Gate 0 and
+    Gate 1 pass end-to-end, exit 0, "No SSH/SCP/deploy actions were
+    performed", candidate SHA re-verified, execution-gate review written.
+
+--------------------------------------------------------------------------------
+CORRECTION 1 — ssh_sudo_capture replaced completely
+--------------------------------------------------------------------------------
+Old defect: the inner command was embedded so that sort ran inside/alongside
+the Docker command substitution and a quoted command string could be treated
+as one executable; a failed query could still emit NONE.
+
+New implementation (scripts/run-phase-b-deploy.sh, ssh_sudo_capture):
+  - The inner command is interpolated as a plain shell command line inside
+    the remote script — never quoted as a single executable.
+  - The remote block runs:  out=$( <inner> 2>err ); rc=$?  under set +e
+    guards, so the capture happens FIRST and the exact status is read.
+  - On rc != 0 the remote block prints a diagnostic to stderr and exits with
+    the SAME rc. NONE is never emitted on failure.
+  - sort runs ONLY in the success branch, after the empty/non-empty check,
+    and never inside the command substitution.
+  - Locally, return "${PIPESTATUS[0]}" preserves the remote nonzero status
+    across the local `| tee evidence-file` pipeline.
+
+Tests (test_ssh_sudo_capture.sh) execute the EXACT generated remote command
+(the mock SSH transport logs the command string verbatim and runs it with
+bash -c against PATH-shimmed sudo/docker mocks):
+  a. successful empty output      -> rc 0, output exactly NONE
+  b. successful nonempty output   -> rc 0, output sorted (def/abc/ghi ->
+                                     abc/def/ghi)
+  c. sudo failure (exit 42)       -> function returns exactly 42 AFTER the
+                                     local tee pipeline; no NONE emitted
+  d. Docker failure (exit 17)     -> function returns exactly 17 AFTER the
+                                     local tee pipeline; no NONE emitted
+Structural assertions on the generated command: begins with
+set -Eeuo pipefail; no sort/pipeline inside the $() substitution; inner
+command not quoted as a single executable; sort occurs only after the rc
+check; all 4 generated commands begin with set -Eeuo pipefail.
+
+--------------------------------------------------------------------------------
+CORRECTION 2 — Prohibited-operation scanner with executable fixture tests
+--------------------------------------------------------------------------------
+The scanner (has_prohibited_violation) is now a sourceable library function
+inside the runner, exercised by executable fixtures rather than self-checks.
+
+Fixture tests (test_prohibited_operation_scanner.sh) prove it FLAGS
+uncommented executable occurrences of:
+    docker system prune
+    docker volume prune
+    docker compose down -v
+    rm -rf /var/lib/hada
+    rm -rf /opt/hada
+    mkfs.ext4 /dev/sdb        (fixture text only; nothing executes it)
+including indented occurrences inside control flow, and does NOT flag:
+    full-line comments
+    echo/printf/log documentation lines
+    explicit refusal messages (REFUSED / prohibited / Do NOT / never)
+    grep checks and assert-helper lines
+    a documentation-only file containing all six patterns
+Finally the actual production scripts are scanned and proven clean.
+
+--------------------------------------------------------------------------------
+CORRECTION 3 — Stage-aware rollback
+--------------------------------------------------------------------------------
+- Gate 2's FIRST remote command is a READ-ONLY existing-resource check
+  (containers, container names, volumes, networks, orchestrator image,
+  /opt/hada tree, hada-supervisor unit). It runs BEFORE the remote temp dir
+  is created and before any upload. Pre-existing HADA resources cause
+  immediate refusal with zero mutation.
+- Remote temp-dir creation moved to the END of Gate 2 (first mutation, after
+  every read-only verification).
+- This run's resources are tracked (CREATED_CONTAINERS/VOLUMES/NETWORKS/
+  IMAGES, UNIT_INSTALLED, SUPERVISOR_STARTED, COMPOSE_UP_DONE).
+- bounded_rollback() stops the supervisor ONLY if SUPERVISOR_STARTED=1,
+  composes down (never -v) ONLY if COMPOSE_UP_DONE=1 with tracked
+  containers, removes the unit ONLY if UNIT_INSTALLED=1. It never deletes
+  /var/lib/hada or /opt/hada.
+- main() calls NO rollback after a Gate 2 refusal or initial-state failure
+  ("ABORT: Gate 2 failed (zero mutation, zero rollback)").
+
+Mocked tests (test_stage_aware_rollback.sh) prove:
+  - existing-resource scenario: refusal (rc!=0), EXACTLY ONE remote command
+    issued (the read-only check), zero mutation/rollback commands in the
+    decoded command log, REMOTE_DIR_CREATED remains 0;
+  - clean scenario: the check is the first remote command; temp-dir creation
+    is the final Gate 2 step;
+  - bounded_rollback with nothing tracked issues ZERO remote commands;
+  - bounded_rollback with tracked resources stops the supervisor, composes
+    down WITHOUT -v, removes the unit, and never deletes persistent paths;
+  - Gate-2-only progress (temp dir only) triggers no compose/service/unit
+    rollback commands.
+
+--------------------------------------------------------------------------------
+CORRECTION 4 — Remote-block discipline
+--------------------------------------------------------------------------------
+Every remote shell block generated by the runner begins with
+set -Eeuo pipefail (verified per-command by the mocked tests, which decode
+each transmitted command). All privileged commands use sudo -n. Multi-command
+preparation blocks (create-dirs, stage-release, install-release) consist of
+sequential install/cp/chown/mv/systemctl commands executing under
+set -Eeuo pipefail with no `|| true` and no trailing echo: the first failing
+install/mkdir/chown/chmod/cp/systemctl aborts the block and the block's exit
+status is the failing command's status — a final echo can never mask an
+earlier error (blocks that previously ended in "echo PASS" now end with the
+last real command or a PASS message only in single-command report blocks).
+
+--------------------------------------------------------------------------------
+CORRECTION 5 — Remote temporary material protection
+--------------------------------------------------------------------------------
+- Remote temp dir: created with `umask 077` + `install -d -m 0700`, then
+  mode re-verified remotely (stat -c %a must equal 700, else the block
+  fails).
+- Resolved real-secret Compose JSON is NEVER stored on the remote host: the
+  render command pipes `docker compose config --format json` to stdout and
+  it is streamed over SSH directly into a LOCAL mktemp file created under
+  umask 077 and chmod 0600, validated structurally (ports + volumes via
+  python3), then deleted immediately (rm -f) in both success and failure
+  paths.
+Tests (test_remote_temp_permissions.sh) execute the exact generated
+temp-dir command in a sandbox and stat the result (700, drwx------), prove
+umask 077 precedes creation, prove the render leaves no
+effective-compose*.json behind, prove the 0600 temp pattern, and statically
+prove the remote render block contains no remote JSON persistence and the
+runner has no world-readable JSON permission pattern.
+
+--------------------------------------------------------------------------------
+CORRECTION 6 — Secrets removed from process arguments
+--------------------------------------------------------------------------------
+The old check extracted VALKEY_PASSWORD on the host and passed it through
+`exec -T -e VALKEYCLI_AUTH=<value>` — the secret appeared in the host
+command line. Replaced with an entirely in-container check:
+
+  ... exec -T valkey sh -c
+      'VALKEYCLI_AUTH="${VALKEY_PASSWORD:?...}" valkey-cli ping'
+
+The single-quoted sh -c body is expanded INSIDE the container from the
+container's own VALKEY_PASSWORD environment. No `valkey-cli -a` anywhere; the
+secret never appears in the host command line, the runner log, or evidence
+(evidence records only the command template and PONG/health markers).
+
+--------------------------------------------------------------------------------
+CORRECTION 7 — Strengthened .env validation, value-free
+--------------------------------------------------------------------------------
+Gate 4 (remote) and env_validate_file() (local library, unit-tested) both:
+  - require root:hada 0640 (remote) and all five keys present;
+  - reject empty values;
+  - reject CHANGE_ME, ***, synthetic/SYNTHETIC, test-secret,
+    example-secret, actual-test-secret, EXAMPLE as substrings;
+  - verify HADA_DATABASE_DSN is postgresql:// and its password segment
+    equals POSTGRES_PASSWORD;
+  - verify HADA_VALKEY_URL is redis:// and its password segment equals
+    VALKEY_PASSWORD;
+  - reject GRAFANA_ADMIN_PASSWORD reusing either secret;
+  - report FAILURES BY KEY NAME ONLY — no value is ever echoed or logged.
+19 fixture assertions in test_env_validation.sh, including leak checks that
+scan validator output for the fixture secrets.
+
+--------------------------------------------------------------------------------
+CORRECTION 8 — Mounted-filesystem UUID proof
+--------------------------------------------------------------------------------
+Gate 2 verifies the filesystem MOUNTED AT /var/lib/hada:
+    findmnt -T /var/lib/hada             (mount must exist)
+    findmnt -n -T -o UUID /var/lib/hada  (UUID of the mounted fs itself)
+and requires the value to equal a1574097-cdf9-4d0a-ace0-adac63038e56.
+/dev/sdb is never consulted independently; the proof is tied to the mount
+point, so a wrong disk mounted at /var/lib/hada — or the right disk mounted
+elsewhere — both fail closed.
+
+--------------------------------------------------------------------------------
+CORRECTION 9 — Complete candidate-derived application install
+--------------------------------------------------------------------------------
+The runner no longer assumes /opt/hada contains anything (Gate 2 in fact
+REFUSES if /opt/hada already exists — a takeover of a stale tree is not
+permitted). Gate 3:
+  - tars the complete candidate payload locally from the verified extraction
+    (base compose.yaml, compose.gcp.yaml, Caddyfile.gcp, Dockerfile, full
+    src tree, config/hada.yaml, provision-secrets.sh, supervisor.sh,
+    validate-host.sh, container-entrypoint.sh, hada-supervisor.service);
+  - computes a per-file SHA-256 manifest (candidate-payload.sha256, 43
+    files) at Gate 1 from the checksum-locked archive;
+  - uploads payload + manifest, unpacks into a 0700 staging dir, and runs
+    `sha256sum -c` against the manifest — fail-closed BEFORE install;
+  - installs with explicit owner/group/mode via `install` to .new paths and
+    atomically `mv`s into place (atomic release layout);
+  - Gate 3e re-hashes every installed file under /opt/hada and diffs the
+    sorted hash list against the candidate manifest — byte-identical or the
+    gate fails. The orchestrator build (Gate 6) can therefore never build
+    stale pre-existing files.
+
+--------------------------------------------------------------------------------
+CORRECTION 10 — Repository-connectivity acceptance checks
+--------------------------------------------------------------------------------
+Gate 10 (after startup and health validation):
+  10a. sudo -n -u hada git ls-remote --exit-code <repo> HEAD  (from
+       hada-control as user hada);
+  10b. docker compose ... exec -T orchestrator git ls-remote --exit-code
+       <repo> HEAD  (from inside the orchestrator container).
+Both are ls-remote ONLY — no clone, no fetch, no checkout, no write. The
+runner logs "No autonomous repository work performed" and stops at
+IMPLEMENTATION_CANDIDATE_AWAITING_PARTY_3.
+
+--------------------------------------------------------------------------------
+EXECUTION-GATE GUARANTEE (unchanged and re-verified)
+--------------------------------------------------------------------------------
+With DEPLOY_EXECUTE unset or != "1" the runner performs Gates 0–1 only:
+local static validation and candidate verification/extraction. Verified by
+running it during this correction: exit 0, no SSH/SCP invoked, no remote
+contact, review document written. Nothing in this correction executed any
+deployment step.
+
+--------------------------------------------------------------------------------
+BUNDLE CONTENTS (HADA-PHASE-B-DEEP-CORRECTED-BUNDLE.tar.gz)
+--------------------------------------------------------------------------------
+  scripts/run-phase-b-deploy.sh
+  tests/phase-b/run_all.sh
+  tests/phase-b/test_ssh_sudo_capture.sh
+  tests/phase-b/test_prohibited_operation_scanner.sh
+  tests/phase-b/test_stage_aware_rollback.sh
+  tests/phase-b/test_remote_temp_permissions.sh
+  tests/phase-b/test_env_validation.sh
+  tests/static/test_docker_state_none_logic.sh   (pre-existing B0, retained)
+  tests/static/test_port_assertion.sh            (pre-existing B0, retained)
+  REVIEW.txt (this document)
+
+================================================================================
+PHASE_B_DEEP_CORRECTIONS_COMPLETE_NOT_EXECUTED
+================================================================================

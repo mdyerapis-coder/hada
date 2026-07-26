@@ -1,0 +1,145 @@
+HADA M1 — PHASE B RUNTIME-COMPLETE CANDIDATE (v2) REVIEW
+=========================================================
+Date: 2026-07-26
+Scope: LOCAL-ONLY. No SSH/SCP, no contact with hada-control, no deploys,
+no image pulls/builds, no containers started, no real secrets created.
+Phase B0 was NOT run. The VM was NOT contacted.
+
+AUDIT HISTORY PRESERVED
+-----------------------
+Original locked candidate (UNCHANGED, verified this session):
+  HADA-M1-gcp-candidate.zip
+  SHA-256: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+
+New locked candidate (does not overwrite v1):
+  deploy-v2/HADA-M1-gcp-candidate-v2.zip
+  SHA-256: b2f43880c22527284e9938b53f20e5035260db78cc55a46e458063c702011ffa
+  (recorded in deploy-v2/HADA-M1-gcp-candidate-v2.zip.sha256, sha256sum -c OK)
+
+CORRECTIONS DELIVERED
+---------------------
+
+1. COMPLETE DEPLOYMENT PAYLOAD
+   - Runner CANDIDATE_MANIFEST expanded to the complete runtime payload:
+     pyproject.toml, README.md, Dockerfile, src/, config/, deploy/compose/,
+     deploy/caddy/, deploy/prometheus/, deploy/loki/, deploy/alloy/,
+     deploy/grafana/, scripts/container-entrypoint.sh,
+     scripts/provision-secrets.sh, scripts/supervisor.sh,
+     scripts/validate-host.sh, scripts/hada-supervisor.service.
+   - upload_and_install_application atomically installs the FULL tree;
+     verify_installed_tree hashes the complete installed tree.
+   - New validate_build_context gate (REQUIRED_BUILD_CONTEXT_FILES) proves
+     every Dockerfile COPY source and monitoring config exists under
+     /opt/hada before Gate 6.
+   - Test: tests/phase-b/test_complete_payload.sh (9 assertions) proves:
+     every Dockerfile COPY source present; every Compose host-bind source
+     present; omitted pyproject.toml / README.md / prometheus.yml /
+     loki config.yml / alloy config.alloy each FAIL validation; Gate 6
+     reaches a valid complete build context.
+
+2. HOST SUPERVISOR FIXED
+   - v2 scripts/supervisor.sh uses the explicit Compose project hada-m1,
+     both explicit compose files (compose.yaml + compose.gcp.yaml) and the
+     explicit .env file on EVERY invocation; no /opt/hada/.venv dependency;
+     never starts or manages a second project named "hada"; recovery is
+     bounded by maximum_recovery_attempts / recovery_backoff_seconds parsed
+     from config/hada.yaml with a POSIX awk (no python/venv needed).
+     HADA_ROOT env override (default /opt/hada) enables sandboxed testing.
+   - Test: tests/phase-b/test_supervisor_invocation.sh (5 assertions)
+     executes the installed supervisor with PATH shims and proves every
+     captured invocation is exactly:
+       docker compose -p hada-m1
+         -f $HADA_ROOT/deploy/compose/compose.yaml
+         -f $HADA_ROOT/deploy/compose/compose.gcp.yaml
+         --env-file $HADA_ROOT/.env
+     with no .venv reference and no bare-"hada" project.
+
+3. VALKEY SECRET REMOVED FROM PROCESS ARGUMENTS
+   - v2 compose.yaml: valkey-server started with --requirepass-file pointing
+     at a Compose secret file (host source
+     /var/lib/hada/secrets/valkey/requirepass, created by Gate 3f at
+     mode 0600, root-owned, excluded from evidence); no password in the
+     command array.
+   - Healthcheck uses VALKEYCLI_AUTH sourced in-container from
+     /run/secrets/valkey_password; valkey-cli -a is NOT used anywhere.
+   - Runner Gate 5e asserts the secret value is absent from every rendered
+     service command, healthcheck and environment field.
+   - Test: tests/phase-b/test_valkey_secret_absence.sh (2 assertions)
+     renders base+gcp Compose with a known sentinel password (pyyaml,
+     handles the !override tag) and proves the sentinel occurs in no
+     command/healthcheck/environment field, --requirepass-file is used,
+     and the healthcheck uses VALKEYCLI_AUTH without valkey-cli -a.
+
+4. STARTUP FAILURE AND RETRY SAFETY
+   - COMPOSE_UP_ATTEMPTED is set before invoking compose up; bounded
+     rollback only performs compose down when an up was actually attempted.
+   - Rollback removes ONLY: the explicit hada-m1 project's tracked
+     containers/networks; exact Docker volume METADATA created by this run
+     (never the underlying /var/lib/hada bind directories); the orchestrator
+     image only when ORCH_BUILT_BY_RUN=1. /opt/hada and /var/lib/hada are
+     never deleted; pre-existing resources are untouched.
+   - Test: tests/phase-b/test_compose_rollback_safety.sh (8 assertions)
+     covers partial Compose creation + nonzero exit, failure after
+     successful startup, retry after rollback with no stale hada-m1
+     containers/networks/volume metadata/orchestrator image blocking it,
+     and persistent files beneath /var/lib/hada surviving every rollback.
+
+5. INCORRECT DSN REMEDIATION REMOVED
+   - v2 provision-secrets.sh constructs HADA_DATABASE_DSN directly from
+     POSTGRES_PASSWORD (no ':***@' placeholder).
+   - The runner's ':***@' remediation path is deleted. Gate 3f still
+     validates DSN/password and Valkey URL/password consistency WITHOUT
+     printing any secret value (checks run remotely; only PASS/FAIL is
+     transmitted and logged).
+
+6. FULL GATES 1-10 MOCKED ACCEPTANCE TEST
+   - Test: tests/phase-b/test_full_gates_1_10.sh (33 assertions) drives the
+     runner's REAL gate functions end-to-end against a mocked fresh host
+     (tests/phase-b/mock_ssh_full.sh + lib_mock_remote.sh):
+     candidate extraction -> complete installation -> secrets ->
+     Compose render -> build-context validation -> image pulls ->
+     orchestrator build-context -> Compose startup -> supervisor startup ->
+     service health -> loopback-only exposure (127.0.0.1:80) ->
+     final state -> host+container git ls-remote -> clean bounded rollback.
+   - It asserts every transmitted Compose invocation uses -p hada-m1,
+     no invocation uses a mismatched bare "hada" project, all runtime
+     files are installed, the valkey secret file exists at mode 0600,
+     no valkey-cli -a appears in any transmitted command, and NO
+     provisioned secret value appears in evidence, gate logs, or
+     transmitted commands.
+
+VERIFICATION (this session, local-only)
+---------------------------------------
+  shellcheck -S error scripts/run-phase-b-deploy.sh tests/phase-b/*.sh : CLEAN
+  bash tests/phase-b/run_all.sh : SUITE RESULT: PASS
+    test_ssh_sudo_capture.sh ................ 13 passed
+    test_prohibited_operation_scanner.sh .... 16 passed
+    test_stage_aware_rollback.sh ............ 15 passed
+    test_remote_temp_permissions.sh ......... 11 passed
+    test_env_validation.sh .................. 19 passed
+    test_installed_manifest.sh ...............  9 passed
+    test_recoverable_install.sh ............. 13 passed
+    test_cross_gate_happy_path.sh ........... 33 passed
+    test_complete_payload.sh .................  9 passed
+    test_supervisor_invocation.sh ............  5 passed
+    test_valkey_secret_absence.sh ............  2 passed
+    test_compose_rollback_safety.sh ..........  8 passed
+    test_full_gates_1_10.sh ................. 33 passed
+    TOTAL ................................... 186 assertions, 0 failures
+
+  Original candidate v1 SHA-256 re-verified UNCHANGED.
+  v2 zip sha256sum -c: OK.
+
+DELIVERABLES
+------------
+  /home/bobthabuilda/hada-deployment/deploy-v2/HADA-M1-gcp-candidate-v2.zip
+  /home/bobthabuilda/hada-deployment/deploy-v2/HADA-M1-gcp-candidate-v2.zip.sha256
+  /home/bobthabuilda/Downloads/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt   (this file)
+  /home/bobthabuilda/Downloads/HADA-PHASE-B-RUNTIME-COMPLETE-BUNDLE.tar.gz
+    (self-contained: runner + scripts + v1/v2 candidates + full test suite;
+     tests/phase-b/run_all.sh passes after extraction into an unrelated
+     temporary directory)
+
+STATUS
+------
+HADA_RUNTIME_COMPLETE_CANDIDATE_V2_NOT_EXECUTED

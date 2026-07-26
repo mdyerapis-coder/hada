@@ -1,0 +1,129 @@
+HADA M1 — V3 PHASE B0 CHECKSUM AND EVIDENCE-BINDING CORRECTION
+==============================================================
+Date: 2026-07-26
+Scope: LOCAL-ONLY. No SSH/SCP, no contact with hada-control, Phase B0 was NOT
+run, no deploys, no image pulls/builds, no containers started, no real
+secrets created. The VM was NOT contacted. Zero unexpected network attempts
+(all remote I/O is mocked; the new Gate 0f test intercepts gcloud on PATH and
+confirms no remote command fires).
+
+AUDIT HISTORY PRESERVED (all three candidates unchanged)
+--------------------------------------------------------
+v1 (locked):     HADA-M1-gcp-candidate.zip
+                SHA-256 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+v2 (prior):      HADA-M1-gcp-candidate-v2.zip
+                SHA-256 b2f43880c22527284e9938b53f20e5035260db78cc55a46e458063c702011ffa
+v3 (this task):  deploy-v3/HADA-M1-gcp-candidate-v3.zip
+                SHA-256 7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204
+                (sha256sum -c OK; re-verified unchanged this session)
+No candidate v4 was created.
+
+1. FIX V3 B0 CHECKSUM VERIFICATION
+-----------------------------------
+scripts/run-phase-b0-v3-preflight.sh no longer uses the path-dependent
+`sha256sum -c /path/to/HADA-M1-gcp-candidate-v3.zip.sha256` form. Instead:
+  - it computes the archive hash DIRECTLY from CANDIDATE_ARCHIVE;
+  - it reads the first hash field from CANDIDATE_SHA256;
+  - it requires BOTH to equal the hardcoded expected v3 SHA-256
+    (EXPECTED_CANDIDATE_SHA256_V3, defined once at the top of the runner);
+  - it fails BEFORE any remote contact on any mismatch.
+The exact checksum gate (b0_verify_candidate_checksum) is callable and is
+exercised from the deployment root by the new test.
+
+2. VERSION THE V3 MANIFEST
+--------------------------
+Created deploy-v3/candidate-manifest-v3.txt: sha256sum manifest of the complete
+extracted v3 candidate tree (129 entries), generated from the checksum-locked
+v3 candidate. The B0 runner now uses ONLY this versioned manifest
+(MANIFEST_FILE -> deploy-v3/candidate-manifest-v3.txt) and does NOT depend on
+evidence/phase-b0/candidate-manifest.txt. The B0 bundle includes the manifest.
+Tests prove: untouched v3 extraction passes; one modified extracted file
+fails; the old v1 manifest cannot satisfy the v3 gate; a missing v3 manifest
+fails before remote contact.
+
+3. BIND B0 EVIDENCE TO V3
+--------------------------
+On successful B0 execution (real run) the runner writes non-secret evidence:
+  - candidate-sha256.txt        = exactly
+      7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204
+  - target-identity.txt         = project=api-intergrations-501314
+                                   zone=australia-southeast1-b
+                                   vm=hada-control
+  - preflight-summary.txt       = PASS for candidate-checksum, candidate-manifest,
+                                   compose-version, compose-render, port-assertion,
+                                   volume-assertion, container-state-unchanged,
+                                   image-state-unchanged (plus candidate-sha256 +
+                                   project/zone/vm).
+No secrets or resolved environment values are included.
+
+4. STRENGTHEN PHASE B GATE 0f
+-----------------------------
+scripts/run-phase-b-deploy.sh Gate 0f now REJECTS B0 evidence unless ALL hold:
+  - candidate-sha256.txt exactly matches the locked v3 hash;
+  - target-identity.txt exactly matches project, zone and VM;
+  - compose-version-check.txt reports PASS;
+  - compose-render-check.txt reports PASS;
+  - port-assertion-check.txt reports PASS;
+  - volume-assertion-check.txt reports PASS;
+  - state-check.txt reports PASS;
+  - preflight-summary.txt records the complete successful v3 result.
+A stale v1 Phase B0 evidence directory (which has only a PASS state-check.txt
+and none of the v3-specific files) is REJECTED. Merely finding any directory
+with a PASS state-check.txt is no longer sufficient. The gate logic is exposed
+as verify_phase_b0_evidence() for testing.
+
+5. LOCAL TESTS (tests/phase-b/test_b0_checksum_manifest_evidence.sh)
+--------------------------------------------------------------------
+  - checksum verification works from the deployment root (exact gate);
+  - wrong archive hash fails before SSH;
+  - wrong SHA file fails before SSH;
+  - missing or altered v3 manifest fails before SSH;
+  - stale v1 B0 evidence is rejected by Phase B;
+  The runner returns code 1 on failure; the test asserts the rejection.
+
+INDEPENDENT REVIEW FINDINGS — ADDRESSED (correction pass)
+---------------------------------------------------------
+The first review flagged two items; both are now corrected and the corrected
+bundle was independently re-run:
+
+  (A) "v1-manifest rejection test did not prove the old v1 manifest fails;
+      when the fixture was absent it reported a skipped assertion as PASS."
+  FIX: test_b0_checksum_manifest_evidence.sh no longer depends on an optional
+  fixture file. It GENERATES the v1 manifest directly from the v1 candidate
+  (HADA-M1-gcp-candidate.zip, present in the repo/bundle) and asserts it fails
+  against the v3 extraction. The assertion ALWAYS executes (no skip branch);
+  a skipped PASS can no longer inflate the count. New result line:
+  "PASS: stale v1 manifest cannot satisfy the v3 manifest gate".
+
+  (B) "Gate 0f uses broad grep -q 'PASS' checks; contradictory/malformed
+      evidence containing the word PASS can be accepted."
+  FIX: Gate 0f (both the inline Gate 0f and the standalone
+  verify_phase_b0_evidence() used by the test) now requires the EXACT expected
+  PASS line in each check file and REJECTS any file containing the word FAIL.
+  target-identity.txt must contain exactly one project=/zone=/vm= line (a
+  duplicate identity key is rejected). New hardened rejection tests prove:
+  - malformed evidence with a FAIL line is REJECTED by Gate 0f;
+  - evidence with a duplicate identity field is REJECTED by Gate 0f.
+
+Corrected bundle SHA-256:
+  0bf6f806c19b41ebecb19f547aefc4b6552d5f41b4d3e882686ff0fb060f3663  (prior)
+  (rebuilt after correction; re-compute on delivery)
+
+DELIVERABLES
+------------
+  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip
+  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip.sha256
+  /home/bobthabuilda/hada-deployment/deploy-v3/candidate-manifest-v3.txt
+  /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-v3-preflight.sh
+  /home/bobthabuilda/hada-deployment/scripts/run-phase-b-deploy.sh
+  /home/bobthabuilda/hada-deployment/tests/phase-b/test_b0_checksum_manifest_evidence.sh
+  /home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-REVIEW.txt   (this file)
+  /home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-BUNDLE.tar.gz
+    (self-contained: v3 candidate + SHA file + versioned manifest + v3 B0
+     runner + v3 deploy runner + all supporting scripts + complete test suite;
+     no real secrets. Extract into an unrelated directory and run_all.sh passes
+     as a non-root user.)
+
+STATUS
+------
+HADA_V3_B0_RUNNER_READY_NOT_EXECUTED

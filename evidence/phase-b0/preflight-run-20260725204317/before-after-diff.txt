@@ -1,0 +1,5 @@
+=== Container diff ===
+PASS: container list unchanged
+
+=== Image diff ===
+PASS: image list unchanged

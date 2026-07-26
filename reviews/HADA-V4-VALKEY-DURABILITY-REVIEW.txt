@@ -1,0 +1,72 @@
+HADA M1 — V4 VALKEY DURABILITY AND B0 FAILURE-EVIDENCE CORRECTION
+================================================================
+
+Scope: LOCAL-ONLY. No SSH, SCP, VM contact, Phase B0 execution, deployment,
+image pull/build, container start, or real-secret creation occurred.
+
+V4 candidate
+------------
+Path: deploy-v4/HADA-M1-gcp-candidate-v4.zip
+SHA-256: d5582879cba20d92881ba013c68c4b9df3f9e36a3d0ce22aaad0a53bd33856ac
+Manifest: deploy-v4/candidate-manifest-v4.txt
+
+Preserved v3 candidate
+----------------------
+Path: deploy-v3/HADA-M1-gcp-candidate-v3.zip
+SHA-256: 7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204
+Result: unchanged and retained.
+
+Valkey durability correction
+----------------------------
+- The v4 base Compose valkey service mounts valkey-data:/data read-write.
+- The protected valkey_conf file remains mounted through Compose secrets and
+  is read-only in the container.
+- The GCP valkey-data driver remains type=none, o=bind, with exact device
+  /var/lib/hada/docker-volumes/valkey-data.
+- The B0 assertion remains fixed at exactly eight durable volumes.
+- Removing the service mount in the regression fixture reproduces the prior
+  seven-volume effective model.
+- Valkey password material remains absent from Valkey process arguments and
+  the Valkey service environment.
+
+B0 failure evidence correction
+------------------------------
+- After remote contact, EXIT handling attempts sudo -n read-only AFTER capture
+  for docker ps -aq and docker images -q on every path.
+- Exact AFTER capture return codes are recorded.
+- Container and image comparisons are emitted even on failure paths.
+- preflight-summary.txt records overall result, failed gate, candidate hash,
+  exact target identity, AFTER capture status, state-change results, and remote
+  cleanup result.
+- Evidence-capture or cleanup failure cannot produce overall PASS.
+- Mocked seven-volume failure and cleanup-failure paths both pass their tests.
+
+Phase B evidence lock
+---------------------
+- Defaults are locked to the v4 archive and v4 checksum file.
+- Successful evidence must contain the expanded v4 PASS summary.
+- Stale v1, v2, and v3 B0 evidence is rejected.
+- DEPLOY_EXECUTE=0 was tested with a transport interceptor: zero remote calls.
+
+Preserved failed evidence
+-------------------------
+- evidence/phase-b0/preflight-run-20260726205629: local/sandbox DNS failure
+  before VM contact.
+- evidence/phase-b0/preflight-run-20260726205647: valid remote v3 B0 failure
+  at the volume assertion.
+- No Phase B deployment occurred.
+
+Local verification
+------------------
+- Candidate unit tests: PASS (56 passed, 2 skipped).
+- Compose structural durability test: PASS.
+- Complete Phase B mocked suite: PASS (19/19 scripts).
+- Static B0 tests: PASS.
+- shellcheck -S error: PASS.
+- Candidate checksum and manifest: PASS.
+- Checksum and manifest mutation rejection: PASS.
+- DEPLOY_EXECUTE=0 no-remote test: PASS.
+
+Gate status
+-----------
+HADA_V4_LOCAL_GATE_PASS_AWAITING_PHASE_B0

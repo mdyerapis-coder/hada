@@ -1,0 +1,17 @@
+HADA M1 Phase A — Local Archive SHA-256 Checksum
+Generated: 2026-07-25T13:42:00Z
+
+Archive path: /home/bobthabuilda/hada-deployment/HADA-M1-durable-orchestrator.zip
+Archive size: 141540 bytes
+
+SHA-256 checksum:
+51cbf075ff1fd5da481b6bec400a760e722aa4d1131c568dd79f8c070c3f4647  HADA-M1-durable-orchestrator.zip
+
+Command used:
+  sha256sum HADA-M1-durable-orchestrator.zip
+
+Verification:
+  The checksum above was produced by sha256sum on the local Fedora host.
+  The archive was not modified during Phase A.
+  Extraction was performed into a separate inspection directory:
+  /home/bobthabuilda/hada-deployment/inspection/HADA-M1-durable-orchestrator/

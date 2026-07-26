@@ -1,0 +1,38 @@
+PASS: successful empty sudo Docker container output becomes NONE
+PASS: successful empty sudo Docker image output becomes NONE
+PASS: successful non-empty container output is sorted
+PASS: successful non-empty image output is sorted and unique
+PASS: mocked Docker command failure returns nonzero (rc=1)
+PASS: mocked sudo failure returns nonzero (rc=1)
+PASS: failed Docker command does not output NONE
+PASS: failed sudo command does not output NONE
+PASS: failure path emits FAIL diagnostic on stderr
+PASS: identical NONE files compare successfully
+PASS: differing states (NONE before vs IDs after) fail closed
+PASS: differing container IDs fail closed
+PASS: runner uses sudo -n for container and image captures
+PASS: runner has no pipeline inside docker state command substitution
+
+============================================
+Static Docker-state assertion results
+============================================
+Passed: 14
+Failed: 0
+
+RESULT: PASS
+PASS: extracted port-assertion Python from runner
+PASS: exact port-assertion Python program parses (py_compile)
+PASS: runner has no escaped dict-key expressions in f-strings
+PASS: valid JSON caddy 127.0.0.1:80:80/tcp no 443 returns zero
+PASS: valid JSON with integer published=80 returns zero
+PASS: invalid JSON with published port 443 returns nonzero
+PASS: invalid JSON with target port 443 returns nonzero
+PASS: prior preflight effective-compose.json passes port assertion
+
+============================================
+Static port-assertion results
+============================================
+Passed: 8
+Failed: 0
+
+RESULT: PASS

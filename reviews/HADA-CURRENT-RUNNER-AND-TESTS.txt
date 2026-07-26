@@ -1,0 +1,1501 @@
+============================================================
+LIVE HADA RUNNER SNAPSHOT
+Generated: 2026-07-25T20:38:17+10:00
+Working directory: /home/bobthabuilda/hada-deployment
+============================================================
+
+## RUNNER METADATA
+  File: scripts/run-phase-b0-preflight.sh
+  Size: 27278     	Blocks: 56         IO Block: 4096   regular file
+Device: 0,54	Inode: 1387576     Links: 1
+Access: (0755/-rwxr-xr-x)  Uid: ( 1000/bobthabuilda)   Gid: ( 1000/bobthabuilda)
+Context: unconfined_u:object_r:user_home_t:s0
+Access: 2026-07-25 19:27:14.151749977 +1000
+Modify: 2026-07-25 19:26:00.349753358 +1000
+Change: 2026-07-25 19:27:14.149749950 +1000
+ Birth: 2026-07-25 19:26:00.341753250 +1000
+cf61fb86ca6c04fa1c9969c457b6e7a9bee6423177d57316ae7acc465fe10811  scripts/run-phase-b0-preflight.sh
+
+## CANDIDATE SHA
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+HADA-M1-gcp-candidate.zip: OK
+
+## VALIDATION
+runner_bash_status=0
+runner_shellcheck_status=0
+
+## CURRENT DOCKER COMMANDS
+270:${SSH_CMD} --command='raw="$(sudo -n docker ps -aq)" || { rc=$?; echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort; else printf "NONE\n"; fi' \
+273:echo "  -> sudo -n docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+276:${SSH_CMD} --command='raw="$(sudo -n docker images -q)" || { rc=$?; echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort -u; else printf "NONE\n"; fi' \
+279:echo "  -> sudo -n docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+580:${SSH_CMD} --command='raw="$(sudo -n docker ps -aq)" || { rc=$?; echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort; else printf "NONE\n"; fi' \
+583:echo "  -> sudo -n docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+586:${SSH_CMD} --command='raw="$(sudo -n docker images -q)" || { rc=$?; echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort -u; else printf "NONE\n"; fi' \
+589:echo "  -> sudo -n docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+
+## ESCAPED PYTHON SCAN
+PASS: escaped Python dictionary expressions absent
+
+## COMPLETE LIVE RUNNER
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Bounded Preflight Script (Final corrected version)
+#
+# This script runs a bounded preflight on hada-control that:
+#   - verifies the local candidate archive checksum (sha256sum -c);
+#   - extracts the candidate into a unique local mktemp directory;
+#   - obtains compose.yaml, compose.gcp.yaml and Caddyfile.gcp from that
+#     extracted candidate tree (never from the older inspection directory);
+#   - creates a uniquely named remote temporary directory;
+#   - uploads only the required preflight files;
+#   - uses a synthetic non-production .env;
+#   - renders effective-compose.json via docker compose config --format json;
+#   - enforces Docker Compose >= 2.24.4 (strips optional leading v, fails closed);
+#   - runs structured assertions on ports and volumes;
+#   - captures before/after container/image state and fails closed on any diff;
+#   - captures diagnostic SSH/SCP stderr without exposing secrets;
+#   - retrieves evidence into evidence/phase-b0/preflight-run-<timestamp>/;
+#   - safely removes only its remote temporary directory via a guarded cleanup
+#     function (trap on EXIT, INT, TERM);
+#   - never runs up, build, pull, create, start, restart or reboot.
+#
+# Usage:
+#   ./scripts/run-phase-b0-preflight.sh
+#
+# Prerequisites:
+#   - gcloud CLI authenticated with IAP tunneling access to hada-control
+#   - Docker Compose >= 2.24.4 on hada-control
+#   - The candidate archive and production files exist locally
+#
+set -Eeuo pipefail
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+PROJECT="api-intergrations-501314"
+ZONE="australia-southeast1-b"
+VM="hada-control"
+SSH_CMD="gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+SCP_CMD="gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+
+DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+EVIDENCE_DIR="${DEPLOY_DIR}/evidence/phase-b0"
+TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+RUN_DIR="${EVIDENCE_DIR}/preflight-run-${TIMESTAMP}"
+PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+REMOTE_DIR="/tmp/${PREFLIGHT_PREFIX}"
+
+CANDIDATE_ARCHIVE="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip"
+CANDIDATE_SHA256="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip.sha256"
+
+# Track whether the remote directory was created, so the cleanup trap only
+# attempts SSH cleanup when it was.  This prevents contacting hada-control
+# if a failure occurs during local checksum, extraction, manifest, or
+# required-file validation (before any remote mkdir).
+REMOTE_DIR_CREATED=0
+
+# These will be set after extracting the candidate archive
+CANDIDATE_EXTRACT_DIR=""
+BASE_COMPOSE=""
+GCP_COMPOSE=""
+CADDYFILE_GCP=""
+
+mkdir -p "${RUN_DIR}"
+
+# Track the original exit status so the cleanup trap preserves it
+EXIT_STATUS=0
+
+# ---------------------------------------------------------------------------
+# Cleanup function
+# ---------------------------------------------------------------------------
+
+# shellcheck disable=SC2329  # invoked indirectly via trap below
+cleanup() {
+  local rc=$?
+  # If invoked by the trap (EXIT), use EXIT_STATUS; if invoked by signal
+  # handler, capture the signal context.
+  if (( EXIT_STATUS == 0 )); then
+    EXIT_STATUS=$rc
+  fi
+
+  # Remove the local mktemp directory (if created and non-empty)
+  if [[ -n "${CANDIDATE_EXTRACT_DIR}" && -d "${CANDIDATE_EXTRACT_DIR}" ]]; then
+    rm -rf "${CANDIDATE_EXTRACT_DIR}"
+    echo "[cleanup] removed local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+  fi
+
+  # Remove the remote directory ONLY if it was actually created during
+  # this run (REMOTE_DIR_CREATED=1) and it matches the strict pattern
+  # ^/tmp/hada-b0-preflight-[0-9]+$
+  if [[ "${REMOTE_DIR_CREATED}" == "1" && -n "${REMOTE_DIR}" ]]; then
+    if [[ -z "${REMOTE_DIR}" ]]; then
+      echo "[cleanup] REFUSED: empty remote path"
+    elif [[ "${REMOTE_DIR}" == "/tmp" || "${REMOTE_DIR}" == "/tmp/" ]]; then
+      echo "[cleanup] REFUSED: refusing to remove /tmp"
+    elif [[ ! "${REMOTE_DIR}" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+      echo "[cleanup] REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : ${REMOTE_DIR}"
+    else
+      ${SSH_CMD} --command="
+DIR='${REMOTE_DIR}'
+if [[ -z \"\${DIR}\" ]]; then
+  echo 'REFUSED: empty path'
+  exit 1
+elif [[ \"\${DIR}\" == \"/tmp\" || \"\${DIR}\" == \"/tmp/\" ]]; then
+  echo 'REFUSED: refusing to remove /tmp'
+  exit 1
+elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+\$ ]]; then
+  echo \"REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : \${DIR}\"
+  exit 1
+else
+  rm -rf \"\${DIR}\"
+  echo \"removed: \${DIR}\"
+fi" 2>>"${RUN_DIR}/cleanup-stderr.log" || true
+      echo "[cleanup] remote cleanup attempted: ${REMOTE_DIR}"
+    fi
+  fi
+
+  exit "${EXIT_STATUS}"
+}
+
+trap cleanup EXIT
+trap 'EXIT_STATUS=$((130)); cleanup' INT
+trap 'EXIT_STATUS=$((143)); cleanup' TERM
+
+echo "============================================"
+echo "HADA M1 Phase B0 — Bounded Preflight"
+echo "Timestamp: ${TIMESTAMP}"
+echo "Remote dir: ${REMOTE_DIR}"
+echo "Evidence dir: ${RUN_DIR}"
+echo "Candidate archive: ${CANDIDATE_ARCHIVE}"
+echo "============================================"
+
+# ---------------------------------------------------------------------------
+# Step 0: Verify the candidate archive checksum locally
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[0/8] Verifying candidate archive checksum locally..."
+
+if [[ ! -f "${CANDIDATE_ARCHIVE}" ]]; then
+  echo "FAIL: candidate archive not found: ${CANDIDATE_ARCHIVE}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+if [[ ! -f "${CANDIDATE_SHA256}" ]]; then
+  echo "FAIL: candidate SHA-256 file not found: ${CANDIDATE_SHA256}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# Run sha256sum -c on the archive's own .sha256 file
+# The .sha256 file contains: <hash>  HADA-M1-gcp-candidate.zip
+sha256sum -c "${CANDIDATE_SHA256}" 2>&1 | tee "${RUN_DIR}/archive-checksum-verify.txt"
+ARCHIVE_VERIFY_RC=${PIPESTATUS[0]}
+echo "  -> archive checksum rc=${ARCHIVE_VERIFY_RC}"
+
+if [[ "${ARCHIVE_VERIFY_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate archive checksum verification failed"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: candidate archive checksum verified"
+
+# ---------------------------------------------------------------------------
+# Step 0b: Extract the candidate into a unique local mktemp directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[0b/8] Extracting candidate archive into local mktemp directory..."
+
+CANDIDATE_EXTRACT_DIR="$(mktemp -d -t hada-b0-extract-XXXXXXXXXX)"
+echo "  -> local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+
+# Extract the candidate archive
+( cd "${CANDIDATE_EXTRACT_DIR}" && unzip -q "${CANDIDATE_ARCHIVE}" )
+EXTRACT_RC=$?
+if [[ "${EXTRACT_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate archive extraction failed (rc=${EXTRACT_RC})"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# The archive extracts to HADA-M1-durable-orchestrator/
+CANDIDATE_ROOT="${CANDIDATE_EXTRACT_DIR}/HADA-M1-durable-orchestrator"
+if [[ ! -d "${CANDIDATE_ROOT}" ]]; then
+  echo "FAIL: extracted candidate root not found: ${CANDIDATE_ROOT}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# Obtain compose.yaml, compose.gcp.yaml, and Caddyfile.gcp from the extracted
+# candidate tree.  NEVER use the older inspection directory as the Compose source.
+BASE_COMPOSE="${CANDIDATE_ROOT}/deploy/compose/compose.yaml"
+GCP_COMPOSE="${CANDIDATE_ROOT}/deploy/compose/compose.gcp.yaml"
+CADDYFILE_GCP="${CANDIDATE_ROOT}/deploy/caddy/Caddyfile.gcp"
+
+for f in "${BASE_COMPOSE}" "${GCP_COMPOSE}" "${CADDYFILE_GCP}"; do
+  if [[ ! -f "${f}" ]]; then
+    echo "FAIL: required file not found in extracted candidate: ${f}"
+    EXIT_STATUS=1
+    exit 1
+  fi
+done
+echo "PASS: compose.yaml, compose.gcp.yaml, Caddyfile.gcp obtained from extracted candidate"
+echo "  -> ${BASE_COMPOSE}"
+echo "  -> ${GCP_COMPOSE}"
+echo "  -> ${CADDYFILE_GCP}"
+
+# Verify the candidate manifest from the extracted candidate root
+echo ""
+echo "  Verifying candidate manifest from extracted root..."
+MANIFEST_FILE="${DEPLOY_DIR}/evidence/phase-b0/candidate-manifest.txt"
+if [[ ! -f "${MANIFEST_FILE}" ]]; then
+  echo "FAIL: candidate manifest not found: ${MANIFEST_FILE}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+( cd "${CANDIDATE_ROOT}" && sha256sum -c "${MANIFEST_FILE}" ) > "${RUN_DIR}/manifest-verify.txt" 2>&1
+MANIFEST_RC=$?
+cat "${RUN_DIR}/manifest-verify.txt" | tail -5
+if [[ "${MANIFEST_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate manifest verification failed"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: candidate manifest verified from extracted root"
+
+# ---------------------------------------------------------------------------
+# Step 1: Capture Docker Compose version and enforce >= 2.24.4
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[1/8] Capturing and enforcing Docker Compose version..."
+
+${SSH_CMD} --command='docker compose version --short' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/compose-version.txt" > /dev/null
+COMPOSE_VERSION_RAW="$(cat "${RUN_DIR}/compose-version.txt")"
+echo "  -> raw version: ${COMPOSE_VERSION_RAW}"
+
+# Strip an optional leading v
+COMPOSE_VERSION="${COMPOSE_VERSION_RAW#v}"
+echo "  -> stripped version: ${COMPOSE_VERSION}"
+
+# Enforce >= 2.24.4 using sort -V
+REQUIRED_VERSION="2.24.4"
+if [[ "$(printf '%s\n%s\n' "${REQUIRED_VERSION}" "${COMPOSE_VERSION}" | sort -V | head -1)" != "${REQUIRED_VERSION}" ]]; then
+  echo "FAIL: Docker Compose version ${COMPOSE_VERSION} is older than required ${REQUIRED_VERSION}"
+  echo "FAIL: Compose version requirement: FAIL" | tee "${RUN_DIR}/compose-version-check.txt"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: Compose version ${COMPOSE_VERSION} >= ${REQUIRED_VERSION}"
+echo "PASS: Compose version requirement: PASS" | tee "${RUN_DIR}/compose-version-check.txt"
+
+# ---------------------------------------------------------------------------
+# Step 2: Capture BEFORE state (containers and images)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[2/8] Capturing BEFORE state..."
+
+# Capture container IDs with sudo -n. Do not pipeline inside the command
+# substitution (that masks docker/sudo exit status). Fail closed on error —
+# never convert a failed query into NONE. Local set -o pipefail preserves the
+# SSH nonzero status through tee so cleanup can run.
+# shellcheck disable=SC2016  # ${raw}/${rc} expand on remote shell, not locally
+${SSH_CMD} --command='raw="$(sudo -n docker ps -aq)" || { rc=$?; echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-before.txt" > /dev/null
+echo "  -> sudo -n docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+
+# shellcheck disable=SC2016  # ${raw}/${rc} expand on remote shell, not locally
+${SSH_CMD} --command='raw="$(sudo -n docker images -q)" || { rc=$?; echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort -u; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-before.txt" > /dev/null
+echo "  -> sudo -n docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+
+# ---------------------------------------------------------------------------
+# Step 3: Create remote temporary directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[3/8] Creating remote temporary directory..."
+
+${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}" \
+  2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> ${REMOTE_DIR}"
+
+# Mark that the remote directory was created so the cleanup trap knows
+# it is safe to attempt remote SSH cleanup.
+REMOTE_DIR_CREATED=1
+
+# ---------------------------------------------------------------------------
+# Step 4: Upload preflight files (from the extracted candidate tree)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[4/8] Uploading preflight files from extracted candidate tree..."
+
+# Upload compose.yaml (base) from the extracted candidate
+${SCP_CMD} "${BASE_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.yaml (from candidate)"
+
+# Upload compose.gcp.yaml from the extracted candidate
+${SCP_CMD} "${GCP_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.gcp.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.gcp.yaml (from candidate)"
+
+# Upload Caddyfile.gcp from the extracted candidate
+${SCP_CMD} "${CADDYFILE_GCP}" "${VM}:${REMOTE_DIR}/deploy/caddy/Caddyfile.gcp" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> Caddyfile.gcp (from candidate)"
+
+# Upload the candidate SHA256 for reference
+${SCP_CMD} "${CANDIDATE_SHA256}" "${VM}:${REMOTE_DIR}/candidate.sha256" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> candidate.sha256"
+
+# ---------------------------------------------------------------------------
+# Step 5: Create synthetic non-production .env
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[5/8] Creating synthetic .env..."
+
+${SSH_CMD} --command="cat > ${REMOTE_DIR}/.env <<'ENVEOF'
+HADA_ENV=preflight
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=hada
+POSTGRES_USER=hada
+POSTGRES_PASSWORD=synthetic-not-a-real-secret
+VALKEY_PASSWORD=synthetic-not-a-real-secret
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=synthetic-not-a-real-secret
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=postgresql://hada:***@postgres:5432/hada
+HADA_VALKEY_URL=redis://:synthetic-not-a-real-secret@valkey:6379/0
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+ENVEOF
+echo 'synthetic .env created'" 2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> .env (synthetic, non-production)"
+
+# ---------------------------------------------------------------------------
+# Step 6: Render effective configuration as JSON and run structured assertions
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[6/8] Rendering effective-compose.json and running assertions..."
+
+COMPOSE_RENDER_RC=0
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/effective-compose.json" > /dev/null
+COMPOSE_RENDER_RC=${PIPESTATUS[0]}
+echo "  -> effective-compose.json saved (rc=${COMPOSE_RENDER_RC})"
+
+if [[ "${COMPOSE_RENDER_RC}" -ne 0 ]]; then
+  echo "FAIL: docker compose config --format json failed (rc=${COMPOSE_RENDER_RC})"
+  echo "FAIL: Compose JSON render: FAIL" | tee "${RUN_DIR}/compose-render-check.txt"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: Compose JSON render: PASS" | tee "${RUN_DIR}/compose-render-check.txt"
+
+# Validate published ports from structured JSON
+echo ""
+echo "  [6a] Validating published ports..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+services = cfg.get("services", {})
+
+# Collect all published ports from structured fields
+published_ports = []
+for svc_name, svc_def in services.items():
+    ports = svc_def.get("ports", [])
+    for p in ports:
+        entry = {
+            "service": svc_name,
+            "host_ip": str(p.get("host_ip", "0.0.0.0")),
+            "published": p.get("published"),
+            "target": p.get("target"),
+            "protocol": str(p.get("protocol", "tcp")),
+            "mode": str(p.get("mode", "host")),
+        }
+        published_ports.append(entry)
+
+print("Published ports found:")
+for pp in published_ports:
+    service = pp["service"]
+    host_ip = pp["host_ip"]
+    published = pp["published"]
+    target = pp["target"]
+    protocol = pp["protocol"]
+    print(
+        f"  service={service} host_ip={host_ip} "
+        f"published={published} target={target} protocol={protocol}"
+    )
+
+errors = []
+
+if len(published_ports) != 1:
+    errors.append(
+        f"FAIL: expected exactly 1 published port, found {len(published_ports)}"
+    )
+
+if published_ports:
+    pp = published_ports[0]
+    service = pp["service"]
+    host_ip = pp["host_ip"]
+    published = pp["published"]
+    target = pp["target"]
+    protocol = pp["protocol"]
+
+    if service != "caddy":
+        errors.append(f"FAIL: expected service=caddy, got {service}")
+
+    if host_ip != "127.0.0.1":
+        errors.append(
+            f"FAIL: expected host_ip=127.0.0.1, got {host_ip}"
+        )
+
+    if published != 80 and published != "80":
+        errors.append(
+            f"FAIL: expected published=80, got {published}"
+        )
+
+    if target != 80 and target != "80":
+        errors.append(
+            f"FAIL: expected target=80, got {target}"
+        )
+
+    if protocol != "tcp":
+        errors.append(
+            f"FAIL: expected protocol=tcp, got {protocol}"
+        )
+
+    for p2 in published_ports:
+        p2_service = p2["service"]
+        p2_published = p2["published"]
+        p2_target = p2["target"]
+        if (
+            p2_published == 443
+            or p2_published == "443"
+            or p2_target == 443
+            or p2_target == "443"
+        ):
+            errors.append(
+                f"FAIL: port 443 found: service={p2_service} "
+                f"published={p2_published} target={p2_target}"
+            )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print("PASS: exactly one published port - caddy, 127.0.0.1:80:80/tcp, "
+          "no 443")
+' 2>&1 | tee "${RUN_DIR}/port-assertion.txt"
+PORT_RC=${PIPESTATUS[0]}
+echo "  -> port-assertion.txt (rc=${PORT_RC})"
+
+if [[ "${PORT_RC}" -ne 0 ]]; then
+  echo "FAIL: Port assertion: FAIL" | tee "${RUN_DIR}/port-assertion-check.txt"
+else
+  echo "PASS: Port assertion: PASS" | tee "${RUN_DIR}/port-assertion-check.txt"
+fi
+
+# Validate eight top-level volumes from structured JSON
+echo ""
+echo "  [6b] Validating stateful volumes..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+volumes = cfg.get("volumes", {})
+
+expected = {
+    "postgres-data":     "/var/lib/hada/docker-volumes/postgres-data",
+    "valkey-data":       "/var/lib/hada/docker-volumes/valkey-data",
+    "prometheus-data":   "/var/lib/hada/docker-volumes/prometheus-data",
+    "loki-data":         "/var/lib/hada/docker-volumes/loki-data",
+    "alloy-data":        "/var/lib/hada/docker-volumes/alloy-data",
+    "grafana-data":      "/var/lib/hada/docker-volumes/grafana-data",
+    "caddy-data":        "/var/lib/hada/docker-volumes/caddy-data",
+    "caddy-config":      "/var/lib/hada/docker-volumes/caddy-config",
+}
+
+errors = []
+print("Volumes found:")
+for name in sorted(volumes.keys()):
+    vol = volumes[name]
+    driver_opts = vol.get("driver_opts", {})
+    t = str(driver_opts.get("type", "NOT SET"))
+    o = str(driver_opts.get("o", "NOT SET"))
+    device = str(driver_opts.get("device", "NOT SET"))
+    print(f"  {name}: type={t} o={o} device={device}")
+
+    if name not in expected:
+        errors.append(f"FAIL: unexpected volume: {name}")
+        continue
+
+    if t != "none":
+        errors.append(f"FAIL: {name} type={t} expected=none")
+    if o != "bind":
+        errors.append(f"FAIL: {name} o={o} expected=bind")
+    if device != expected[name]:
+        errors.append(
+            f"FAIL: {name} device={device} expected={expected[name]}"
+        )
+    if not device.startswith("/var/lib/hada/docker-volumes/"):
+        errors.append(
+            f"FAIL: {name} device not beneath "
+            f"/var/lib/hada/docker-volumes/: {device}"
+        )
+
+for name in sorted(expected.keys()):
+    if name not in volumes:
+        errors.append(f"FAIL: missing volume: {name}")
+
+if len(volumes) != len(expected):
+    errors.append(
+        f"FAIL: expected {len(expected)} volumes, got {len(volumes)}"
+    )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print(f"PASS: all {len(expected)} volumes have type=none, o=bind, "
+          f"device beneath /var/lib/hada/docker-volumes/")
+' 2>&1 | tee "${RUN_DIR}/volume-assertion.txt"
+VOL_RC=${PIPESTATUS[0]}
+echo "  -> volume-assertion.txt (rc=${VOL_RC})"
+
+if [[ "${VOL_RC}" -ne 0 ]]; then
+  echo "FAIL: Volume assertion: FAIL" | tee "${RUN_DIR}/volume-assertion-check.txt"
+else
+  echo "PASS: Volume assertion: PASS" | tee "${RUN_DIR}/volume-assertion-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 7: Capture AFTER state (containers and images) — fail closed
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[7/8] Capturing AFTER state..."
+
+# Same fail-closed sudo -n capture as BEFORE (no pipeline inside $(...)).
+# shellcheck disable=SC2016  # ${raw}/${rc} expand on remote shell, not locally
+${SSH_CMD} --command='raw="$(sudo -n docker ps -aq)" || { rc=$?; echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-after.txt" > /dev/null
+echo "  -> sudo -n docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+
+# shellcheck disable=SC2016  # ${raw}/${rc} expand on remote shell, not locally
+${SSH_CMD} --command='raw="$(sudo -n docker images -q)" || { rc=$?; echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2; exit "${rc}"; }; if [[ -n "${raw}" ]]; then printf "%s\n" "${raw}" | sort -u; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-after.txt" > /dev/null
+echo "  -> sudo -n docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+
+# Compare before and after — fail closed (write diff into evidence)
+echo ""
+echo "  Comparing before/after state..."
+
+CONTAINER_DIFF_RC=0
+IMAGE_DIFF_RC=0
+
+if diff "${RUN_DIR}/docker-ps-before.txt" "${RUN_DIR}/docker-ps-after.txt" \
+    > "${RUN_DIR}/container-diff.txt" 2>&1; then
+  echo "PASS: container list unchanged (no containers started)"
+  echo "PASS: container list unchanged" >> "${RUN_DIR}/container-diff.txt"
+else
+  echo "FAIL: container list changed"
+  CONTAINER_DIFF_RC=1
+fi
+
+if diff "${RUN_DIR}/docker-images-before.txt" "${RUN_DIR}/docker-images-after.txt" \
+    > "${RUN_DIR}/image-diff.txt" 2>&1; then
+  echo "PASS: image list unchanged (no images pulled or created)"
+  echo "PASS: image list unchanged" >> "${RUN_DIR}/image-diff.txt"
+else
+  echo "FAIL: image list changed"
+  IMAGE_DIFF_RC=1
+fi
+
+# Write combined before/after diff report
+{
+  echo "=== Container diff ==="
+  cat "${RUN_DIR}/container-diff.txt"
+  echo ""
+  echo "=== Image diff ==="
+  cat "${RUN_DIR}/image-diff.txt"
+} > "${RUN_DIR}/before-after-diff.txt"
+
+if [[ "${CONTAINER_DIFF_RC}" -ne 0 || "${IMAGE_DIFF_RC}" -ne 0 ]]; then
+  echo "FAIL: Docker state changed during preflight" | tee "${RUN_DIR}/state-check.txt"
+  EXIT_STATUS=1
+else
+  echo "PASS: Docker state unchanged during preflight" | tee "${RUN_DIR}/state-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 8: Cleanup is handled by the trap
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[8/8] Cleanup handled by trap on EXIT/INT/TERM"
+
+# ---------------------------------------------------------------------------
+# Final preflight result — fail unless ALL checks pass
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Phase B0 Preflight Final Result"
+echo "============================================"
+
+FINAL_PASS=1
+
+# Check 1: Compose version requirement passed
+if [[ -f "${RUN_DIR}/compose-version-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/compose-version-check.txt"; then
+  echo "PASS: Compose version requirement"
+else
+  echo "FAIL: Compose version requirement"
+  FINAL_PASS=0
+fi
+
+# Check 2: effective Compose JSON rendered successfully
+if [[ -f "${RUN_DIR}/compose-render-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/compose-render-check.txt" && \
+   [[ -s "${RUN_DIR}/effective-compose.json" ]]; then
+  echo "PASS: Compose JSON rendered"
+else
+  echo "FAIL: Compose JSON rendered"
+  FINAL_PASS=0
+fi
+
+# Check 3: port assertion passed
+if [[ -f "${RUN_DIR}/port-assertion-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/port-assertion-check.txt"; then
+  echo "PASS: Port assertion"
+else
+  echo "FAIL: Port assertion"
+  FINAL_PASS=0
+fi
+
+# Check 4: volume assertion passed
+if [[ -f "${RUN_DIR}/volume-assertion-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/volume-assertion-check.txt"; then
+  echo "PASS: Volume assertion"
+else
+  echo "FAIL: Volume assertion"
+  FINAL_PASS=0
+fi
+
+# Check 5: container list remained identical
+if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+  echo "PASS: Container list identical"
+else
+  echo "FAIL: Container list changed"
+  FINAL_PASS=0
+fi
+
+# Check 6: image list remained identical
+# (covered by state-check.txt which requires both container and image unchanged)
+if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+  echo "PASS: Image list identical"
+else
+  echo "FAIL: Image list changed"
+  FINAL_PASS=0
+fi
+
+# Check 7: all expected evidence files exist and are non-empty
+EVIDENCE_FILES=(
+  "compose-version.txt"
+  "compose-version-check.txt"
+  "docker-ps-before.txt"
+  "docker-images-before.txt"
+  "effective-compose.json"
+  "port-assertion.txt"
+  "port-assertion-check.txt"
+  "volume-assertion.txt"
+  "volume-assertion-check.txt"
+  "docker-ps-after.txt"
+  "docker-images-after.txt"
+  "container-diff.txt"
+  "image-diff.txt"
+  "before-after-diff.txt"
+  "state-check.txt"
+  "archive-checksum-verify.txt"
+  "manifest-verify.txt"
+)
+
+EVIDENCE_PASS=1
+for ef in "${EVIDENCE_FILES[@]}"; do
+  fpath="${RUN_DIR}/${ef}"
+  if [[ ! -f "${fpath}" ]]; then
+    echo "FAIL: evidence file missing: ${ef}"
+    EVIDENCE_PASS=0
+  elif [[ ! -s "${fpath}" ]]; then
+    echo "FAIL: evidence file empty: ${ef}"
+    EVIDENCE_PASS=0
+  fi
+done
+
+if [[ "${EVIDENCE_PASS}" -eq 1 ]]; then
+  echo "PASS: All evidence files exist and non-empty"
+else
+  echo "FAIL: Some evidence files missing or empty"
+  FINAL_PASS=0
+fi
+
+echo ""
+echo "Evidence dir: ${RUN_DIR}"
+echo ""
+echo "Files in evidence dir:"
+ls -1 "${RUN_DIR}/"
+echo ""
+
+if [[ "${FINAL_PASS}" -ne 1 ]]; then
+  echo "PREFLIGHT RESULT: FAIL"
+  EXIT_STATUS=1
+  exit 1
+else
+  echo "PREFLIGHT RESULT: PASS"
+  EXIT_STATUS=0
+  exit 0
+fi
+
+## COMPLETE LIVE STATIC TESTS
+
+============================================================
+FILE: tests/static/test_docker_state_none_logic.sh
+============================================================
+bash_status=0
+shellcheck_status=0
+PASS: successful empty sudo Docker container output becomes NONE
+PASS: successful empty sudo Docker image output becomes NONE
+PASS: successful non-empty container output is sorted
+PASS: successful non-empty image output is sorted and unique
+PASS: mocked Docker command failure returns nonzero (rc=1)
+PASS: mocked sudo failure returns nonzero (rc=1)
+PASS: failed Docker command does not output NONE
+PASS: failed sudo command does not output NONE
+PASS: failure path emits FAIL diagnostic on stderr
+PASS: identical NONE files compare successfully
+PASS: differing states (NONE before vs IDs after) fail closed
+PASS: differing container IDs fail closed
+PASS: runner uses sudo -n for container and image captures
+PASS: runner has no pipeline inside docker state command substitution
+
+============================================
+Static Docker-state assertion results
+============================================
+Passed: 14
+Failed: 0
+
+RESULT: PASS
+execution_status=0
+
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Static assertions for Docker state capture logic
+#
+# Proves the remote capture commands used in run-phase-b0-preflight.sh:
+#   - successful empty sudo Docker output becomes NONE
+#   - successful non-empty container output is sorted
+#   - successful non-empty image output is sorted and unique
+#   - a mocked Docker command failure returns nonzero
+#   - a mocked sudo failure returns nonzero
+#   - failed commands do not output NONE
+#   - identical NONE files compare successfully
+#   - differing states fail closed
+#
+# Does not contact hada-control.
+#
+set -Eeuo pipefail
+
+PASS_COUNT=0
+FAIL_COUNT=0
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
+
+assert_pass() {
+  local desc="$1"
+  printf 'PASS: %s\n' "${desc}"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+assert_fail() {
+  local desc="$1"
+  printf 'FAIL: %s\n' "${desc}" >&2
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+# Exact remote capture logic from run-phase-b0-preflight.sh (containers)
+capture_containers() {
+  raw="$(sudo -n docker ps -aq)" || {
+    rc=$?
+    echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2
+    return "${rc}"
+  }
+  if [[ -n "${raw}" ]]; then
+    printf '%s\n' "${raw}" | sort
+  else
+    printf 'NONE\n'
+  fi
+}
+
+# Exact remote capture logic from run-phase-b0-preflight.sh (images)
+capture_images() {
+  raw="$(sudo -n docker images -q)" || {
+    rc=$?
+    echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2
+    return "${rc}"
+  }
+  if [[ -n "${raw}" ]]; then
+    printf '%s\n' "${raw}" | sort -u
+  else
+    printf 'NONE\n'
+  fi
+}
+
+install_mock_sudo_passthrough() {
+  local bin_dir="$1"
+  cat > "${bin_dir}/sudo" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1-}" == "-n" ]]; then
+  shift
+fi
+if [[ "$#" -eq 0 ]]; then
+  echo "sudo: missing command" >&2
+  exit 1
+fi
+exec "$@"
+EOF
+  chmod +x "${bin_dir}/sudo"
+}
+
+# ---------------------------------------------------------------------------
+# Test 1: successful empty sudo Docker container output becomes NONE
+# ---------------------------------------------------------------------------
+
+MOCK1="${TEMP_DIR}/mock1"
+mkdir -p "${MOCK1}"
+install_mock_sudo_passthrough "${MOCK1}"
+cat > "${MOCK1}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "ps" && "$2" == "-aq" ]]; then
+  exit 0
+fi
+echo "unexpected docker args: $*" >&2
+exit 99
+EOF
+chmod +x "${MOCK1}/docker"
+
+OUT1="${TEMP_DIR}/empty-ps.txt"
+set +e
+PATH="${MOCK1}:${PATH}" capture_containers >"${OUT1}" 2>"${TEMP_DIR}/empty-ps.err"
+RC1=$?
+set -e
+
+if [[ "${RC1}" -eq 0 && "$(cat "${OUT1}")" == "NONE" ]]; then
+  assert_pass "successful empty sudo Docker container output becomes NONE"
+else
+  assert_fail "empty container output -> NONE (rc=${RC1}, out=$(cat "${OUT1}"), err=$(cat "${TEMP_DIR}/empty-ps.err"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: successful empty sudo Docker image output becomes NONE
+# ---------------------------------------------------------------------------
+
+MOCK2="${TEMP_DIR}/mock2"
+mkdir -p "${MOCK2}"
+install_mock_sudo_passthrough "${MOCK2}"
+cat > "${MOCK2}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "images" && "$2" == "-q" ]]; then
+  exit 0
+fi
+echo "unexpected docker args: $*" >&2
+exit 99
+EOF
+chmod +x "${MOCK2}/docker"
+
+OUT2="${TEMP_DIR}/empty-images.txt"
+set +e
+PATH="${MOCK2}:${PATH}" capture_images >"${OUT2}" 2>"${TEMP_DIR}/empty-images.err"
+RC2=$?
+set -e
+
+if [[ "${RC2}" -eq 0 && "$(cat "${OUT2}")" == "NONE" ]]; then
+  assert_pass "successful empty sudo Docker image output becomes NONE"
+else
+  assert_fail "empty image output -> NONE (rc=${RC2}, out=$(cat "${OUT2}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 3: successful non-empty container output is sorted
+# ---------------------------------------------------------------------------
+
+MOCK3="${TEMP_DIR}/mock3"
+mkdir -p "${MOCK3}"
+install_mock_sudo_passthrough "${MOCK3}"
+cat > "${MOCK3}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "ps" && "$2" == "-aq" ]]; then
+  printf '%s\n' 'def456' 'abc123' 'ghi789'
+  exit 0
+fi
+exit 99
+EOF
+chmod +x "${MOCK3}/docker"
+
+OUT3="${TEMP_DIR}/nonempty-ps.txt"
+set +e
+PATH="${MOCK3}:${PATH}" capture_containers >"${OUT3}" 2>"${TEMP_DIR}/nonempty-ps.err"
+RC3=$?
+set -e
+
+EXPECTED_SORTED=$'abc123\ndef456\nghi789'
+if [[ "${RC3}" -eq 0 && "$(cat "${OUT3}")" == "${EXPECTED_SORTED}" ]]; then
+  assert_pass "successful non-empty container output is sorted"
+else
+  assert_fail "non-empty container sort (rc=${RC3}, out=$(cat "${OUT3}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 4: successful non-empty image output is sorted and unique
+# ---------------------------------------------------------------------------
+
+MOCK4="${TEMP_DIR}/mock4"
+mkdir -p "${MOCK4}"
+install_mock_sudo_passthrough "${MOCK4}"
+cat > "${MOCK4}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "images" && "$2" == "-q" ]]; then
+  printf '%s\n' 'img_bbb' 'img_aaa' 'img_bbb' 'img_ccc'
+  exit 0
+fi
+exit 99
+EOF
+chmod +x "${MOCK4}/docker"
+
+OUT4="${TEMP_DIR}/nonempty-images.txt"
+set +e
+PATH="${MOCK4}:${PATH}" capture_images >"${OUT4}" 2>"${TEMP_DIR}/nonempty-images.err"
+RC4=$?
+set -e
+
+EXPECTED_SORTED_UNIQUE=$'img_aaa\nimg_bbb\nimg_ccc'
+if [[ "${RC4}" -eq 0 && "$(cat "${OUT4}")" == "${EXPECTED_SORTED_UNIQUE}" ]]; then
+  assert_pass "successful non-empty image output is sorted and unique"
+else
+  assert_fail "non-empty image sort -u (rc=${RC4}, out=$(cat "${OUT4}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 5: mocked Docker command failure returns nonzero
+# ---------------------------------------------------------------------------
+
+MOCK5="${TEMP_DIR}/mock5"
+mkdir -p "${MOCK5}"
+install_mock_sudo_passthrough "${MOCK5}"
+cat > "${MOCK5}/docker" <<'EOF'
+#!/usr/bin/env bash
+echo "permission denied while trying to connect to the docker API" >&2
+exit 1
+EOF
+chmod +x "${MOCK5}/docker"
+
+OUT5="${TEMP_DIR}/docker-fail.txt"
+ERR5="${TEMP_DIR}/docker-fail.err"
+set +e
+PATH="${MOCK5}:${PATH}" capture_containers >"${OUT5}" 2>"${ERR5}"
+RC5=$?
+set -e
+
+if [[ "${RC5}" -ne 0 ]]; then
+  assert_pass "mocked Docker command failure returns nonzero (rc=${RC5})"
+else
+  assert_fail "mocked Docker failure should return nonzero"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 6: mocked sudo failure returns nonzero
+# ---------------------------------------------------------------------------
+
+MOCK6="${TEMP_DIR}/mock6"
+mkdir -p "${MOCK6}"
+cat > "${MOCK6}/sudo" <<'EOF'
+#!/usr/bin/env bash
+echo "sudo: a password is required" >&2
+exit 1
+EOF
+chmod +x "${MOCK6}/sudo"
+# docker should not be reached
+cat > "${MOCK6}/docker" <<'EOF'
+#!/usr/bin/env bash
+echo "docker should not run" >&2
+exit 0
+EOF
+chmod +x "${MOCK6}/docker"
+
+OUT6="${TEMP_DIR}/sudo-fail.txt"
+ERR6="${TEMP_DIR}/sudo-fail.err"
+set +e
+PATH="${MOCK6}:${PATH}" capture_images >"${OUT6}" 2>"${ERR6}"
+RC6=$?
+set -e
+
+if [[ "${RC6}" -ne 0 ]]; then
+  assert_pass "mocked sudo failure returns nonzero (rc=${RC6})"
+else
+  assert_fail "mocked sudo failure should return nonzero"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 7: failed commands do not output NONE
+# ---------------------------------------------------------------------------
+
+if grep -q 'NONE' "${OUT5}" 2>/dev/null; then
+  assert_fail "failed Docker command must not output NONE (got: $(cat "${OUT5}"))"
+else
+  assert_pass "failed Docker command does not output NONE"
+fi
+
+if grep -q 'NONE' "${OUT6}" 2>/dev/null; then
+  assert_fail "failed sudo command must not output NONE (got: $(cat "${OUT6}"))"
+else
+  assert_pass "failed sudo command does not output NONE"
+fi
+
+if ! grep -q 'FAIL: sudo -n docker' "${ERR5}" && ! grep -q 'FAIL: sudo -n docker' "${ERR6}"; then
+  assert_fail "failure path should emit FAIL diagnostic on stderr"
+else
+  assert_pass "failure path emits FAIL diagnostic on stderr"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 8: Identical NONE files compare successfully (no diff)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/none-before.txt"
+AFTER_FILE="${TEMP_DIR}/none-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'NONE\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_pass "identical NONE files compare successfully"
+else
+  assert_fail "identical NONE files should compare as equal"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 9: Differing states fail closed (NONE before vs IDs after)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'abc123\ndef456\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing states (NONE before vs IDs after) should fail closed"
+else
+  assert_pass "differing states (NONE before vs IDs after) fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 10: Differing container IDs fail closed
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-ids-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-ids-after.txt"
+printf 'abc123\ndef456\n' > "${BEFORE_FILE}"
+printf 'abc123\nxyz999\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing container IDs should fail closed"
+else
+  assert_pass "differing container IDs fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 11: runner embeds sudo -n and no pipeline-inside-$(...) for captures
+# ---------------------------------------------------------------------------
+
+RUNNER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/run-phase-b0-preflight.sh"
+if [[ ! -f "${RUNNER}" ]]; then
+  assert_fail "runner not found: ${RUNNER}"
+else
+  # Four captures: ps before/after + images before/after
+  SUDO_PS_COUNT="$(grep -c 'sudo -n docker ps -aq' "${RUNNER}" || true)"
+  SUDO_IMG_COUNT="$(grep -c 'sudo -n docker images -q' "${RUNNER}" || true)"
+  BAD_PIPE_PS="$(grep -c 'docker ps -aq | sort' "${RUNNER}" || true)"
+  BAD_PIPE_IMG="$(grep -c 'docker images -q | sort' "${RUNNER}" || true)"
+
+  if [[ "${SUDO_PS_COUNT}" -ge 2 && "${SUDO_IMG_COUNT}" -ge 2 ]]; then
+    assert_pass "runner uses sudo -n for container and image captures"
+  else
+    assert_fail "runner missing sudo -n captures (ps=${SUDO_PS_COUNT}, img=${SUDO_IMG_COUNT})"
+  fi
+
+  if [[ "${BAD_PIPE_PS}" -eq 0 && "${BAD_PIPE_IMG}" -eq 0 ]]; then
+    assert_pass "runner has no pipeline inside docker state command substitution"
+  else
+    assert_fail "runner still pipelines inside docker state \$(...) (ps=${BAD_PIPE_PS}, img=${BAD_PIPE_IMG})"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Static Docker-state assertion results"
+echo "============================================"
+echo "Passed: ${PASS_COUNT}"
+echo "Failed: ${FAIL_COUNT}"
+echo ""
+
+if [[ "${FAIL_COUNT}" -gt 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+else
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+============================================================
+FILE: tests/static/test_port_assertion.sh
+============================================================
+bash_status=0
+shellcheck_status=0
+PASS: extracted port-assertion Python from runner
+PASS: exact port-assertion Python program parses (py_compile)
+PASS: runner has no escaped dict-key expressions in f-strings
+PASS: valid JSON caddy 127.0.0.1:80:80/tcp no 443 returns zero
+PASS: valid JSON with integer published=80 returns zero
+PASS: invalid JSON with published port 443 returns nonzero
+PASS: invalid JSON with target port 443 returns nonzero
+PASS: prior preflight effective-compose.json passes port assertion
+
+============================================
+Static port-assertion results
+============================================
+Passed: 8
+Failed: 0
+
+RESULT: PASS
+execution_status=0
+
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Static assertions for the port-assertion Python program
+#
+# Proves:
+#   - the exact port-assertion Python embedded in run-phase-b0-preflight.sh
+#     parses and runs against valid sample Compose JSON
+#   - valid JSON with caddy 127.0.0.1:80:80/tcp and no 443 returns zero
+#   - invalid JSON containing published or target port 443 returns nonzero
+#   - the runner no longer embeds broken pp[\"...\"] f-string expressions
+#
+# Does not contact hada-control.
+#
+set -Eeuo pipefail
+
+PASS_COUNT=0
+FAIL_COUNT=0
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+RUNNER="${ROOT}/scripts/run-phase-b0-preflight.sh"
+
+assert_pass() {
+  local desc="$1"
+  printf 'PASS: %s\n' "${desc}"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+assert_fail() {
+  local desc="$1"
+  printf 'FAIL: %s\n' "${desc}" >&2
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+if [[ ! -f "${RUNNER}" ]]; then
+  echo "FAIL: runner not found: ${RUNNER}" >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Extract the first python3 -c '...' port-assertion program from the runner
+# ---------------------------------------------------------------------------
+
+EXTRACT_PY="${TEMP_DIR}/extract_port_prog.py"
+cat > "${EXTRACT_PY}" <<'PY'
+import pathlib
+import re
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text()
+# Locate the port-assertion block by unique marker, then take its python3 -c body
+marker = "Validating published ports"
+idx = text.find(marker)
+if idx < 0:
+    sys.stderr.write("marker not found\n")
+    sys.exit(2)
+chunk = text[idx:]
+m = re.search(r"python3 -c '([\s\S]*?)'\s*2>&1\s*\|\s*tee", chunk)
+if not m:
+    sys.stderr.write("python3 -c block not found after marker\n")
+    sys.exit(3)
+prog = m.group(1)
+# The shell source stores double quotes as plain " inside the single-quoted
+# -c argument. Write the program as Python sees it.
+sys.stdout.write(prog)
+PY
+
+PORT_PROG="${TEMP_DIR}/port_assertion_prog.py"
+if ! python3 "${EXTRACT_PY}" "${RUNNER}" > "${PORT_PROG}"; then
+  assert_fail "extract port-assertion Python from runner"
+  echo "RESULT: FAIL"
+  exit 1
+fi
+assert_pass "extracted port-assertion Python from runner"
+
+# ---------------------------------------------------------------------------
+# The extracted program must parse
+# ---------------------------------------------------------------------------
+
+if python3 -m py_compile "${PORT_PROG}" 2>"${TEMP_DIR}/compile.err"; then
+  assert_pass "exact port-assertion Python program parses (py_compile)"
+else
+  assert_fail "port-assertion Python does not parse: $(cat "${TEMP_DIR}/compile.err")"
+fi
+
+# Guard: no broken escaped dict keys inside f-strings in the runner source
+if grep -E 'pp\[\\"|p2\[\\"' "${RUNNER}" >/dev/null 2>&1; then
+  assert_fail "runner still contains escaped dict-key expressions in f-strings"
+else
+  assert_pass "runner has no escaped dict-key expressions in f-strings"
+fi
+
+# ---------------------------------------------------------------------------
+# Valid JSON: caddy 127.0.0.1:80:80/tcp, no 443 -> rc 0
+# (published as string, matching real docker compose config --format json)
+# ---------------------------------------------------------------------------
+
+VALID_JSON="${TEMP_DIR}/valid.json"
+cat > "${VALID_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "mode": "ingress",
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": "80",
+          "protocol": "tcp"
+        }
+      ]
+    },
+    "postgres": {
+      "ports": []
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${VALID_JSON}" >"${TEMP_DIR}/valid.out" 2>"${TEMP_DIR}/valid.err"
+VALID_RC=$?
+set -e
+
+if [[ "${VALID_RC}" -eq 0 ]] && grep -q 'PASS: exactly one published port' "${TEMP_DIR}/valid.out"; then
+  assert_pass "valid JSON caddy 127.0.0.1:80:80/tcp no 443 returns zero"
+else
+  assert_fail "valid JSON should return 0 (rc=${VALID_RC}, out=$(cat "${TEMP_DIR}/valid.out"), err=$(cat "${TEMP_DIR}/valid.err"))"
+fi
+
+# Also accept integer published=80
+VALID_JSON_INT="${TEMP_DIR}/valid-int.json"
+cat > "${VALID_JSON_INT}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": 80,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${VALID_JSON_INT}" >"${TEMP_DIR}/valid-int.out" 2>"${TEMP_DIR}/valid-int.err"
+VALID_INT_RC=$?
+set -e
+
+if [[ "${VALID_INT_RC}" -eq 0 ]]; then
+  assert_pass "valid JSON with integer published=80 returns zero"
+else
+  assert_fail "integer published=80 should return 0 (rc=${VALID_INT_RC})"
+fi
+
+# ---------------------------------------------------------------------------
+# Invalid JSON: published port 443 -> nonzero
+# ---------------------------------------------------------------------------
+
+BAD_PUB_JSON="${TEMP_DIR}/bad-published-443.json"
+cat > "${BAD_PUB_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": "80",
+          "protocol": "tcp"
+        },
+        {
+          "host_ip": "0.0.0.0",
+          "target": 443,
+          "published": "443",
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${BAD_PUB_JSON}" >"${TEMP_DIR}/bad-pub.out" 2>"${TEMP_DIR}/bad-pub.err"
+BAD_PUB_RC=$?
+set -e
+
+if [[ "${BAD_PUB_RC}" -ne 0 ]] && grep -q 'port 443' "${TEMP_DIR}/bad-pub.out"; then
+  assert_pass "invalid JSON with published port 443 returns nonzero"
+else
+  assert_fail "published 443 should fail (rc=${BAD_PUB_RC}, out=$(cat "${TEMP_DIR}/bad-pub.out"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Invalid JSON: target port 443 only -> nonzero
+# ---------------------------------------------------------------------------
+
+BAD_TGT_JSON="${TEMP_DIR}/bad-target-443.json"
+cat > "${BAD_TGT_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 443,
+          "published": "8443",
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${BAD_TGT_JSON}" >"${TEMP_DIR}/bad-tgt.out" 2>"${TEMP_DIR}/bad-tgt.err"
+BAD_TGT_RC=$?
+set -e
+
+if [[ "${BAD_TGT_RC}" -ne 0 ]] && grep -q '443' "${TEMP_DIR}/bad-tgt.out"; then
+  assert_pass "invalid JSON with target port 443 returns nonzero"
+else
+  assert_fail "target 443 should fail (rc=${BAD_TGT_RC}, out=$(cat "${TEMP_DIR}/bad-tgt.out"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Real effective-compose.json from prior preflight render (if present)
+# ---------------------------------------------------------------------------
+
+REAL_JSON="${ROOT}/evidence/phase-b0/preflight-run-20260725170700/effective-compose.json"
+if [[ -f "${REAL_JSON}" ]]; then
+  set +e
+  python3 "${PORT_PROG}" < "${REAL_JSON}" >"${TEMP_DIR}/real.out" 2>"${TEMP_DIR}/real.err"
+  REAL_RC=$?
+  set -e
+  if [[ "${REAL_RC}" -eq 0 ]]; then
+    assert_pass "prior preflight effective-compose.json passes port assertion"
+  else
+    assert_fail "prior effective-compose.json should pass (rc=${REAL_RC}, out=$(cat "${TEMP_DIR}/real.out"))"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Static port-assertion results"
+echo "============================================"
+echo "Passed: ${PASS_COUNT}"
+echo "Failed: ${FAIL_COUNT}"
+echo ""
+
+if [[ "${FAIL_COUNT}" -gt 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+else
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+============================================================
+END LIVE HADA RUNNER SNAPSHOT
+============================================================

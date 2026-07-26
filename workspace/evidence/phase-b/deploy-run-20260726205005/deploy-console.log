@@ -1,0 +1,3 @@
+[2026-07-26T10:50:05Z] PASS: Phase B0 v3 evidence lock verified (locked at /tmp/hada-b0-ck-iXlUzG/b0-evidence-v3)
+[2026-07-26T10:50:05Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-iXlUzG/b0-evidence-v1/candidate-sha256.txt
+[2026-07-26T10:50:06Z] FAIL: B0 compose-version-check.txt contains a FAIL line

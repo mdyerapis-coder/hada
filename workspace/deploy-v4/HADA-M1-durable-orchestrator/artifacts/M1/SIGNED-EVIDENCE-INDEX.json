@@ -1,0 +1,116 @@
+{
+  "created_at": "2026-07-25T01:01:01.562056+00:00",
+  "entries": [
+    {
+      "byte_size": 137,
+      "digest": "0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e",
+      "logical_name": "tests.txt",
+      "manifest_path": "evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 3871,
+      "digest": "8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162",
+      "logical_name": "coverage.txt",
+      "manifest_path": "evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 226,
+      "digest": "ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487",
+      "logical_name": "syntax-and-config.txt",
+      "manifest_path": "evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 1220,
+      "digest": "97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497",
+      "logical_name": "package-build.txt",
+      "manifest_path": "evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 304,
+      "digest": "930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83",
+      "logical_name": "config-parsing.txt",
+      "manifest_path": "evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 860,
+      "digest": "2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a",
+      "logical_name": "environment-limitations.txt",
+      "manifest_path": "evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 8356,
+      "digest": "432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292",
+      "logical_name": "source-tree-sha256.txt",
+      "manifest_path": "evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json",
+      "media_type": "text/plain"
+    },
+    {
+      "byte_size": 6886,
+      "digest": "af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7",
+      "logical_name": "M1-MILESTONE-REPORT.md",
+      "manifest_path": "evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json",
+      "media_type": "text/markdown"
+    },
+    {
+      "byte_size": 2930,
+      "digest": "ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5",
+      "logical_name": "M1-EXTERNAL-REVIEW-CHECKLIST.md",
+      "manifest_path": "evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json",
+      "media_type": "text/markdown"
+    },
+    {
+      "byte_size": 6899,
+      "digest": "251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b",
+      "logical_name": "ARCHITECTURE.md",
+      "manifest_path": "evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json",
+      "media_type": "text/markdown"
+    },
+    {
+      "byte_size": 3959,
+      "digest": "f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151",
+      "logical_name": "RFC-0002-DURABLE-ORCHESTRATOR.md",
+      "manifest_path": "evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json",
+      "media_type": "text/markdown"
+    },
+    {
+      "byte_size": 4866,
+      "digest": "63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220",
+      "logical_name": "compose.yaml",
+      "manifest_path": "evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json",
+      "media_type": "application/yaml"
+    },
+    {
+      "byte_size": 1632,
+      "digest": "9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73",
+      "logical_name": "ci.yml",
+      "manifest_path": "evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json",
+      "media_type": "application/yaml"
+    },
+    {
+      "byte_size": 911,
+      "digest": "acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83",
+      "logical_name": "config.alloy",
+      "manifest_path": "evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json",
+      "media_type": "text/plain"
+    }
+  ],
+  "limitations": [
+    "The bundled public key requires out-of-band fingerprint retention by Party 3.",
+    "CI and live Vast.ai checks remain mandatory before approval."
+  ],
+  "milestone": "M1",
+  "schema_version": 1,
+  "signature": {
+    "algorithm": "ed25519",
+    "key_id": "b5acf693e8261ce592bc968e15dfe1f0",
+    "signature_b64": "xqKimKNbqJig5wv3dz6Lc2zw0eJeL0al7hUBb+UXGJ+xvXMD2ltP+qR1dOM6yV/LdfB764CqT0cVgZjtzBOWBg=="
+  },
+  "signer_key_id": "b5acf693e8261ce592bc968e15dfe1f0",
+  "status": "implementation_candidate_not_approved"
+}

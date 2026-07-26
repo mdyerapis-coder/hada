@@ -1,0 +1,18 @@
+HADA M1 construction-environment limitations
+Date: 2026-07-25
+
+Unavailable locally:
+- Ruff executable/package (not exposed by the internal Python package index)
+- mypy executable/package (not exposed by the internal Python package index)
+- Docker/Compose daemon and CLI
+- PostgreSQL service
+- Valkey service
+- Bubblewrap executable
+- fresh Vast.ai Ubuntu 24.04 host
+
+Consequences:
+- Two integration tests were collected but skipped.
+- Docker Compose semantic rendering, image build, native Alloy validation, live database triggers, live Valkey Streams behaviour and Bubblewrap namespace behaviour require CI or Vast.ai validation.
+- GitHub Actions contains mandatory jobs for Ruff, mypy, PostgreSQL 17, Valkey 8, coverage, Compose rendering, Alloy validation and Docker image build.
+
+This file records limitations; it is not evidence that those checks passed.

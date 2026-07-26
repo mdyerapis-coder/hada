@@ -1,0 +1,25 @@
+# HADA M1 Phase A — SHA256SUMS
+# Generated: 2026-07-25T03:55:05Z
+# Revised: 2026-07-25 (human correction pass)
+# Revised: 2026-07-25 (B0 artifact correction pass)
+# Revised: 2026-07-25 (final B0 candidate correction pass)
+#
+# This file contains SHA-256 checksums of all Phase A evidence files.
+#
+# Verification instructions (human decision #12):
+#
+#   SHA256SUMS verification must run from:
+#     /home/bobthabuilda/hada-deployment/evidence/phase-a/
+#
+#   cd /home/bobthabuilda/hada-deployment/evidence/phase-a/
+#   sha256sum -c SHA256SUMS
+#
+02c3b0e863c9f7877e41054b4a96d99036c1cd0a3ac62ecb9208fdda3c84e005  deployment-plan.md
+8edc9493c50a9edfa8db5e07c7383e2ac115181e302aba2ff9be37c36baab890  infrastructure-inventory.txt
+c0b4ebc358f2639d7866eae7810e53fec8c29567d24dc0b71786eb1255f80932  local-archive-sha256.txt
+17d2ec9a5e6fe03a5736d15f951a1fb94178ce857d744d4097f9db99e5dd6644  package-file-list.txt
+d519748084983b425275e51e30ae254fced3b2f0c60911a6579683223c92d091  package-findings.md
+980aa80eb694e282b1860fe38efaba3c8d851c17c18dbbe4387f81855701945e  proposed-commands.sh
+17077a042a9e0051a2baa1bb06554aee4f73e2ecb3352b7bb174650372ccbc9c  repository-access.txt
+47f75436c3b998fea70325dac9c2f10ad7380d5fabf0dcc8650bc8b373f60112  rollback-plan.md
+c01e01f037c1c8f01db2cf3e30681226600f1c587038c066483256116a2dbd9c  unresolved-findings.md

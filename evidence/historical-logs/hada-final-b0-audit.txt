@@ -1,0 +1,1257 @@
+============================================================
+HADA FINAL B0 AUDIT
+Generated: 2026-07-25T15:46:03+10:00
+============================================================
+
+## 1. REQUIRED FILES
+PASS  HADA-M1-gcp-candidate.zip
+PASS  HADA-M1-gcp-candidate.zip.sha256
+PASS  evidence/phase-b0/candidate-manifest.txt
+PASS  evidence/phase-b0/preflight-plan.md
+PASS  scripts/run-phase-b0-preflight.sh
+PASS  scripts/provision-secrets.sh
+PASS  scripts/supervisor.gcp.sh
+PASS  scripts/validate-host.gcp.sh
+
+## 2. CANDIDATE ARCHIVE CHECKSUM
+HADA-M1-gcp-candidate.zip: OK
+
+## 3. ARCHIVE INTEGRITY
+Archive:  HADA-M1-gcp-candidate.zip
+    testing: HADA-M1-durable-orchestrator/   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/v/   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/v/cache/   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/v/cache/nodeids   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/CACHEDIR.TAG   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/.gitignore   OK
+    testing: HADA-M1-durable-orchestrator/.pytest_cache/README.md   OK
+    testing: HADA-M1-durable-orchestrator/tests/   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_cli_config_runtime.cpython-314-pytest-9.1.1.pyc   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_compose_files.cpython-314-pytest-9.1.1.pyc   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_workspace.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_policy.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_outbox.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_migrations.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/test_governance.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/integration/   OK
+    testing: HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py   OK
+    testing: HADA-M1-durable-orchestrator/src/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/runtime.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/config.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/canonical.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/cli.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/models.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/manager.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/manager.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/supervisor/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/supervisor/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/supervisor/__pycache__/health.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/supervisor/health.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/runtime.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/broker.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/leases.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/broker.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/policy/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/policy/broker.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/policy/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/publisher.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/outbox.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/lifecycle.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/service.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/publisher.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/outbox.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/lifecycle.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/models.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/governance/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/governance/engine.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/store.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/store.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/postgres.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/migrate.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/postgres.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0004_governance_enforcement.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0003_transactional_outbox.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0002_immutable_records.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0001_initial.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrate.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/signing.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/signing.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/config.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/cli.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/canonical.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/chain.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/__init__.cpython-314.pyc   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/chain.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/scripts/   OK
+    testing: HADA-M1-durable-orchestrator/scripts/provision-secrets.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/verify-m1-evidence.py   OK
+    testing: HADA-M1-durable-orchestrator/scripts/validate-host.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/supervisor.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/hada-supervisor.service   OK
+    testing: HADA-M1-durable-orchestrator/scripts/container-entrypoint.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh   OK
+    testing: HADA-M1-durable-orchestrator/pyproject.toml   OK
+    testing: HADA-M1-durable-orchestrator/docs/   OK
+    testing: HADA-M1-durable-orchestrator/docs/security/   OK
+    testing: HADA-M1-durable-orchestrator/docs/security/THREAT-MODEL.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/VAST_AI_PROVISIONING.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/SIGNING_KEYS.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/RECOVERY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/CONTROL_PLANE.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/rfc/   OK
+    testing: HADA-M1-durable-orchestrator/docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M1-MILESTONE-REPORT.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M0-MILESTONE-REPORT.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/architecture/   OK
+    testing: HADA-M1-durable-orchestrator/docs/architecture/ARCHITECTURE.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0007-GRAFANA-ALLOY-LOG-COLLECTION.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0006-FAIL-CLOSED-TOOL-BROKER.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0005-TRANSACTIONAL-OUTBOX.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0004-SIGNED-HASH-CHAIN.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0003-POSTGRES-SOURCE-OF-TRUTH.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0002-EXTERNAL-PARTY-3.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0001-SEPARATE-HADA-AND-HERMESCTL.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/ROADMAP.md   OK
+    testing: HADA-M1-durable-orchestrator/deploy/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/rules/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/rules/hada.yml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/prometheus.yml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/loki/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/loki/config.yml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/datasources/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/datasources/datasources.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/dashboards/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/dashboards/dashboards.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/dashboards/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/dashboards/hada-control-plane.json   OK
+    testing: HADA-M1-durable-orchestrator/deploy/compose/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/compose/compose.gcp.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/compose/compose.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/caddy/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile.gcp   OK
+    testing: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile   OK
+    testing: HADA-M1-durable-orchestrator/deploy/alloy/   OK
+    testing: HADA-M1-durable-orchestrator/deploy/alloy/config.alloy   OK
+    testing: HADA-M1-durable-orchestrator/config/   OK
+    testing: HADA-M1-durable-orchestrator/config/hada.yaml   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/tests.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/syntax-and-config.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/source-tree-sha256.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/evidence-verification.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/environment-limitations.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/coverage.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/config-parsing.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-signing-public.pem   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/SIGNED-EVIDENCE-INDEX.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt   OK
+    testing: HADA-M1-durable-orchestrator/README.md   OK
+    testing: HADA-M1-durable-orchestrator/Dockerfile   OK
+    testing: HADA-M1-durable-orchestrator/.gitignore   OK
+    testing: HADA-M1-durable-orchestrator/.github/   OK
+    testing: HADA-M1-durable-orchestrator/.github/workflows/   OK
+    testing: HADA-M1-durable-orchestrator/.github/workflows/ci.yml   OK
+    testing: HADA-M1-durable-orchestrator/.env.example   OK
+No errors detected in compressed data of HADA-M1-gcp-candidate.zip.
+
+## 4. ARCHIVE EXTRACTION
+Candidate root: /tmp/tmp.p4TwhMnmyD/candidate/HADA-M1-durable-orchestrator
+
+## 5. REQUIRED CANDIDATE CONTENT
+PASS  src/hada/models.py
+PASS  src/hada/supervisor/health.py
+PASS  config/hada.yaml
+PASS  tests/unit/test_compose_files.py
+PASS  deploy/compose/compose.gcp.yaml
+PASS  deploy/caddy/Caddyfile.gcp
+PASS  scripts/supervisor.sh
+PASS  scripts/validate-host.sh
+PASS  scripts/provision-secrets.sh
+
+## 6. MANIFEST SUMMARY
+159 evidence/phase-b0/candidate-manifest.txt
+cbbb464308fa4ca001c57f76d8815b1edd04368d802d149df0e3bc3ead6244e3  HADA-M1-durable-orchestrator/artifacts/M1/evidence-signing-public.pem
+0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e
+9fbc97864dc8e204fd1bada83261d6b11fd0f98609314505e2aa221a4db6caee  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json
+251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b
+a6ce254c2ba8faf42f7cfd1b0884d499b40fe0989dba8b338cfb505e78100a17  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json
+2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a
+cc5393c7fb874eacf7b5ef37510b5fe63bba7e2422614deb901bf40442b5ca9b  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json
+432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292
+7cb602d0af0cf302ef1e0389555c1f15a09b156c55d4bcb81f0aa703e12fb428  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json
+63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220
+9b330972e7066581cc2ba18bea6fef07f222f7abc7dabd4c5340e2eb6e8abd5c  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json
+8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162
+7cc386c6f00c36b7e3f988b02f6289d9e37ed700ca8b1bde9e1a5b42b6e6c670  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json
+930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83
+50ba5bdec2809f2eb8b04c6f01c649faa43ea7d7f0783b63271d5ce73958208b  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json
+97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497
+123f225210aa06dc74d9e9d2531703d1d06960b5cbd1527d4ebdbb9459792422  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json
+9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73
+5675182bf4398ddc04b6968c1ff8d8483cc6daf744e2262c33a8c4416d9d9c88  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json
+acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83
+94ff74dd153e1cac8234c54b3d43a99493ec01efd0c044bf55c50962c28c9db0  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json
+ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5
+598ac98384cb178d1b216e62f963a530ae96076a0860dd0ff7277baccc02359b  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json
+af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7
+19d0bec2dea231770ee73e38951eb9ff0f1ad89d6e24f80937110d17e9b58950  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json
+ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487
+6b05874b86e59e79bd137adb712a08c44067514b073d382bb74e38379ac959a5  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json
+f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151
+c0ba475b6ebca43b801a4eb1188ff4202e7daa9b06c3fc77283086b52b82d49c  HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json
+9e00468135f6ce0029326a11f85ad322b30b59f35f32be3e2b4ad3be531d9293  HADA-M1-durable-orchestrator/artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt
+384b9cd7707ea1537183e668b261d3bb1931ea13cccb41c89d228b836a606808  HADA-M1-durable-orchestrator/artifacts/M1/SIGNED-EVIDENCE-INDEX.json
+930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83  HADA-M1-durable-orchestrator/artifacts/M1/validation/config-parsing.txt
+8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162  HADA-M1-durable-orchestrator/artifacts/M1/validation/coverage.txt
+2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a  HADA-M1-durable-orchestrator/artifacts/M1/validation/environment-limitations.txt
+effe73d27e6010445ee8a6d4a337cef21843af86300f5f525b2a64255eb74387  HADA-M1-durable-orchestrator/artifacts/M1/validation/evidence-verification.txt
+97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497  HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt
+432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292  HADA-M1-durable-orchestrator/artifacts/M1/validation/source-tree-sha256.txt
+ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487  HADA-M1-durable-orchestrator/artifacts/M1/validation/syntax-and-config.txt
+0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e  HADA-M1-durable-orchestrator/artifacts/M1/validation/tests.txt
+06d33e4e3c273871f86c373707da961e48964e72cb8784832e1cf63ec226bef7  HADA-M1-durable-orchestrator/config/hada.yaml
+
+## 7. MANIFEST VERIFICATION
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-signing-public.pem: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-signing-public.pem: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/SIGNED-EVIDENCE-INDEX.json: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/SIGNED-EVIDENCE-INDEX.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/config-parsing.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/config-parsing.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/coverage.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/coverage.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/environment-limitations.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/environment-limitations.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/evidence-verification.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/evidence-verification.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/source-tree-sha256.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/source-tree-sha256.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/syntax-and-config.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/syntax-and-config.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/artifacts/M1/validation/tests.txt: No such file or directory
+HADA-M1-durable-orchestrator/artifacts/M1/validation/tests.txt: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/config/hada.yaml: No such file or directory
+HADA-M1-durable-orchestrator/config/hada.yaml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/alloy/config.alloy: No such file or directory
+HADA-M1-durable-orchestrator/deploy/alloy/config.alloy: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile: No such file or directory
+HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile.gcp: No such file or directory
+HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile.gcp: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/compose/compose.gcp.yaml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/compose/compose.gcp.yaml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/compose/compose.yaml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/compose/compose.yaml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/grafana/dashboards/hada-control-plane.json: No such file or directory
+HADA-M1-durable-orchestrator/deploy/grafana/dashboards/hada-control-plane.json: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/dashboards/dashboards.yaml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/grafana/provisioning/dashboards/dashboards.yaml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/datasources/datasources.yaml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/grafana/provisioning/datasources/datasources.yaml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/loki/config.yml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/loki/config.yml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/prometheus/prometheus.yml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/prometheus/prometheus.yml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/deploy/prometheus/rules/hada.yml: No such file or directory
+HADA-M1-durable-orchestrator/deploy/prometheus/rules/hada.yml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/Dockerfile: No such file or directory
+HADA-M1-durable-orchestrator/Dockerfile: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0001-SEPARATE-HADA-AND-HERMESCTL.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0001-SEPARATE-HADA-AND-HERMESCTL.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0002-EXTERNAL-PARTY-3.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0002-EXTERNAL-PARTY-3.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0003-POSTGRES-SOURCE-OF-TRUTH.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0003-POSTGRES-SOURCE-OF-TRUTH.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0004-SIGNED-HASH-CHAIN.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0004-SIGNED-HASH-CHAIN.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0005-TRANSACTIONAL-OUTBOX.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0005-TRANSACTIONAL-OUTBOX.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0006-FAIL-CLOSED-TOOL-BROKER.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0006-FAIL-CLOSED-TOOL-BROKER.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/adr/ADR-0007-GRAFANA-ALLOY-LOG-COLLECTION.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/adr/ADR-0007-GRAFANA-ALLOY-LOG-COLLECTION.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/architecture/ARCHITECTURE.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/architecture/ARCHITECTURE.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/reports/M0-MILESTONE-REPORT.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/reports/M0-MILESTONE-REPORT.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/reports/M1-MILESTONE-REPORT.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/reports/M1-MILESTONE-REPORT.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/ROADMAP.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/ROADMAP.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/runbooks/CONTROL_PLANE.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/runbooks/CONTROL_PLANE.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/runbooks/RECOVERY.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/runbooks/RECOVERY.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/runbooks/SIGNING_KEYS.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/runbooks/SIGNING_KEYS.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/runbooks/VAST_AI_PROVISIONING.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/runbooks/VAST_AI_PROVISIONING.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/docs/security/THREAT-MODEL.md: No such file or directory
+HADA-M1-durable-orchestrator/docs/security/THREAT-MODEL.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.env.example: No such file or directory
+HADA-M1-durable-orchestrator/.env.example: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.github/workflows/ci.yml: No such file or directory
+HADA-M1-durable-orchestrator/.github/workflows/ci.yml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.gitignore: No such file or directory
+HADA-M1-durable-orchestrator/.gitignore: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/pyproject.toml: No such file or directory
+HADA-M1-durable-orchestrator/pyproject.toml: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.pytest_cache/CACHEDIR.TAG: No such file or directory
+HADA-M1-durable-orchestrator/.pytest_cache/CACHEDIR.TAG: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.pytest_cache/.gitignore: No such file or directory
+HADA-M1-durable-orchestrator/.pytest_cache/.gitignore: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.pytest_cache/README.md: No such file or directory
+HADA-M1-durable-orchestrator/.pytest_cache/README.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/.pytest_cache/v/cache/nodeids: No such file or directory
+HADA-M1-durable-orchestrator/.pytest_cache/v/cache/nodeids: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/README.md: No such file or directory
+HADA-M1-durable-orchestrator/README.md: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh: No such file or directory
+HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/container-entrypoint.sh: No such file or directory
+HADA-M1-durable-orchestrator/scripts/container-entrypoint.sh: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/hada-supervisor.service: No such file or directory
+HADA-M1-durable-orchestrator/scripts/hada-supervisor.service: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/provision-secrets.sh: No such file or directory
+HADA-M1-durable-orchestrator/scripts/provision-secrets.sh: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/supervisor.sh: No such file or directory
+HADA-M1-durable-orchestrator/scripts/supervisor.sh: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/validate-host.sh: No such file or directory
+HADA-M1-durable-orchestrator/scripts/validate-host.sh: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/scripts/verify-m1-evidence.py: No such file or directory
+HADA-M1-durable-orchestrator/scripts/verify-m1-evidence.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/audit/chain.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/audit/chain.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/audit/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/audit/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/chain.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/chain.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/audit/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/canonical.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/canonical.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/cli.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/cli.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/config.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/config.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/crypto/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/crypto/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/signing.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/crypto/__pycache__/signing.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/crypto/signing.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/crypto/signing.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/migrate.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/migrate.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/migrations/0001_initial.sql: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/migrations/0001_initial.sql: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/migrations/0002_immutable_records.sql: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/migrations/0002_immutable_records.sql: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/migrations/0003_transactional_outbox.sql: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/migrations/0003_transactional_outbox.sql: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/migrations/0004_governance_enforcement.sql: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/migrations/0004_governance_enforcement.sql: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/postgres.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/postgres.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/migrate.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/__pycache__/migrate.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/db/__pycache__/postgres.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/db/__pycache__/postgres.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/evidence/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/evidence/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/store.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/evidence/__pycache__/store.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/evidence/store.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/evidence/store.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/governance/engine.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/governance/engine.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/models.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/models.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/lifecycle.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/lifecycle.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/outbox.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/outbox.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/publisher.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/publisher.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/lifecycle.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/lifecycle.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/outbox.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/outbox.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/publisher.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/__pycache__/publisher.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/orchestrator/service.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/orchestrator/service.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/policy/broker.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/policy/broker.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/policy/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/policy/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/canonical.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/canonical.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/cli.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/cli.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/config.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/config.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/models.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/models.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/__pycache__/runtime.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/__pycache__/runtime.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/queue/broker.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/queue/broker.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/queue/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/queue/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/queue/leases.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/queue/leases.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/broker.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/broker.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/queue/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/runtime.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/runtime.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/supervisor/health.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/supervisor/health.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/supervisor/__pycache__/health.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/supervisor/__pycache__/health.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/workspaces/__init__.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/workspaces/__init__.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/workspaces/manager.py: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/workspaces/manager.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/__init__.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/__init__.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/manager.cpython-314.pyc: No such file or directory
+HADA-M1-durable-orchestrator/src/hada/workspaces/__pycache__/manager.cpython-314.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/test_governance.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/test_governance.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_cli_config_runtime.cpython-314-pytest-9.1.1.pyc: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_cli_config_runtime.cpython-314-pytest-9.1.1.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_compose_files.cpython-314-pytest-9.1.1.pyc: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/__pycache__/test_compose_files.cpython-314-pytest-9.1.1.pyc: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_migrations.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_migrations.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_outbox.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_outbox.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_policy.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_policy.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py: FAILED open or read
+sha256sum: HADA-M1-durable-orchestrator/tests/unit/test_workspace.py: No such file or directory
+HADA-M1-durable-orchestrator/tests/unit/test_workspace.py: FAILED open or read
+sha256sum: WARNING: 159 listed files could not be read
+
+## 8. CANDIDATE ARCHIVE REFERENCES
+evidence/phase-a/deployment-plan.md:10:using the archive HADA-M1-durable-orchestrator.zip.
+evidence/phase-a/deployment-plan.md:55:Upload the GCP candidate archive (HADA-M1-gcp-candidate.zip) to hada-control
+evidence/phase-a/deployment-plan.md:61:gcloud compute scp HADA-M1-gcp-candidate.zip hada-control:/tmp/ \
+evidence/phase-a/deployment-plan.md:72:    sha256sum HADA-M1-gcp-candidate.zip && \
+evidence/phase-a/deployment-plan.md:93:    unzip -o /tmp/HADA-M1-gcp-candidate.zip && \
+evidence/phase-a/proposed-commands.sh:46:ARCHIVE="HADA-M1-gcp-candidate.zip"
+evidence/phase-a/proposed-commands.sh:47:EXPECTED_SHA256="f73887bd198ff158c32b3b90f8984d015fff526ba41c5de3a3ce9b6cdeded30f"
+evidence/phase-a/proposed-commands.sh:73:#   echo "Expected: '${EXPECTED_SHA256}'" && \
+evidence/phase-a/proposed-commands.sh:74:#   echo "${EXPECTED_SHA256}  ${ARCHIVE}" | sha256sum -c -'
+
+## 9. PREFLIGHT SCRIPT PERMISSIONS AND SYNTAX
+-rwxr-xr-x 755 bobthabuilda:bobthabuilda scripts/run-phase-b0-preflight.sh
+PASS: bash syntax
+
+In scripts/run-phase-b0-preflight.sh line 43:
+CANDIDATE_ARCHIVE="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip"
+^---------------^ SC2034 (warning): CANDIDATE_ARCHIVE appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- CANDIDATE_ARCHIVE appears unused....
+
+## 10. COMPLETE PREFLIGHT SCRIPT
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Bounded Preflight Script
+#
+# This script runs a bounded preflight on hada-control that:
+#   - creates a uniquely named remote temporary directory;
+#   - uploads only the required preflight files;
+#   - uses a synthetic non-production .env;
+#   - renders effective-compose.json via docker compose config --format json;
+#   - runs structured assertions on ports and volumes;
+#   - captures Compose version and before/after container/image state;
+#   - retrieves evidence into evidence/phase-b0/preflight-run-<timestamp>/;
+#   - safely removes only its remote temporary directory;
+#   - never runs up, build, pull, create, start, restart or reboot.
+#
+# Usage:
+#   ./scripts/run-phase-b0-preflight.sh
+#
+# Prerequisites:
+#   - gcloud CLI authenticated with IAP tunneling access to hada-control
+#   - Docker Compose >= 2.24.4 on hada-control (verified: v5.3.1)
+#   - The candidate archive and production files exist locally
+#
+set -Eeuo pipefail
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+PROJECT="api-intergrations-501314"
+ZONE="australia-southeast1-b"
+VM="hada-control"
+SSH_CMD="gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+SCP_CMD="gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+
+DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+EVIDENCE_DIR="${DEPLOY_DIR}/evidence/phase-b0"
+TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+RUN_DIR="${EVIDENCE_DIR}/preflight-run-${TIMESTAMP}"
+PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+REMOTE_DIR="/tmp/${PREFLIGHT_PREFIX}"
+
+CANDIDATE_ARCHIVE="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip"
+CANDIDATE_SHA256="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip.sha256"
+
+BASE_COMPOSE="${DEPLOY_DIR}/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/deploy/compose/compose.yaml"
+GCP_COMPOSE="${DEPLOY_DIR}/deploy/compose/compose.gcp.yaml"
+CADDYFILE_GCP="${DEPLOY_DIR}/deploy/caddy/Caddyfile.gcp"
+
+mkdir -p "${RUN_DIR}"
+
+echo "============================================"
+echo "HADA M1 Phase B0 — Bounded Preflight"
+echo "Timestamp: ${TIMESTAMP}"
+echo "Remote dir: ${REMOTE_DIR}"
+echo "Evidence dir: ${RUN_DIR}"
+echo "============================================"
+
+# ---------------------------------------------------------------------------
+# Step 1: Capture Docker Compose version
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[1/8] Capturing Docker Compose version..."
+${SSH_CMD} --command='docker compose version --short' 2>/dev/null \
+  | tee "${RUN_DIR}/compose-version.txt"
+echo "  -> Saved to ${RUN_DIR}/compose-version.txt"
+
+# ---------------------------------------------------------------------------
+# Step 2: Capture BEFORE state (containers and images)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[2/8] Capturing BEFORE state..."
+${SSH_CMD} --command='docker ps -aq | sort' 2>/dev/null \
+  | tee "${RUN_DIR}/docker-ps-before.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+
+${SSH_CMD} --command='docker images -q | sort -u' 2>/dev/null \
+  | tee "${RUN_DIR}/docker-images-before.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+
+# ---------------------------------------------------------------------------
+# Step 3: Create remote temporary directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[3/8] Creating remote temporary directory..."
+${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}"
+echo "  -> ${REMOTE_DIR}"
+
+# ---------------------------------------------------------------------------
+# Step 4: Upload preflight files
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[4/8] Uploading preflight files..."
+
+${SCP_CMD} "${BASE_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.yaml" 2>/dev/null
+echo "  -> compose.yaml"
+
+${SCP_CMD} "${GCP_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.gcp.yaml" 2>/dev/null
+echo "  -> compose.gcp.yaml"
+
+${SCP_CMD} "${CADDYFILE_GCP}" "${VM}:${REMOTE_DIR}/deploy/caddy/Caddyfile.gcp" 2>/dev/null
+echo "  -> Caddyfile.gcp"
+
+# Upload the candidate SHA256 for reference
+${SCP_CMD} "${CANDIDATE_SHA256}" "${VM}:${REMOTE_DIR}/candidate.sha256" 2>/dev/null
+echo "  -> candidate.sha256"
+
+# ---------------------------------------------------------------------------
+# Step 5: Create synthetic non-production .env
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[5/8] Creating synthetic .env..."
+
+${SSH_CMD} --command="cat > ${REMOTE_DIR}/.env <<'ENVEOF'
+HADA_ENV=preflight
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=hada
+POSTGRES_USER=hada
+POSTGRES_PASSWORD=synthetic-not-a-real-secret
+VALKEY_PASSWORD=synthetic-not-a-real-secret
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=synthetic-not-a-real-secret
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=postgresql://hada:synthetic-not-a-real-secret@postgres:5432/hada
+HADA_VALKEY_URL=redis://:synthetic-not-a-real-secret@valkey:6379/0
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+ENVEOF
+echo 'synthetic .env created'"
+echo "  -> .env (synthetic, non-production)"
+
+# ---------------------------------------------------------------------------
+# Step 6: Render effective configuration as JSON and run structured assertions
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[6/8] Rendering effective-compose.json and running assertions..."
+
+# Render effective config as JSON (docker compose config --format json)
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>/dev/null \
+  | tee "${RUN_DIR}/effective-compose.json" > /dev/null
+echo "  -> effective-compose.json saved"
+
+# Validate published ports from structured JSON fields
+echo ""
+echo "  [6a] Validating published ports..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>/dev/null \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+services = cfg.get("services", {})
+
+# Collect all published ports from structured fields
+published_ports = []
+for svc_name, svc_def in services.items():
+    ports = svc_def.get("ports", [])
+    for p in ports:
+        # Docker Compose JSON port objects have these fields:
+        #   host_ip, published, target, protocol, app_protocol, mode
+        entry = {
+            "service": svc_name,
+            "host_ip": str(p.get("host_ip", "0.0.0.0")),
+            "published": p.get("published"),
+            "target": p.get("target"),
+            "protocol": str(p.get("protocol", "tcp")),
+            "mode": str(p.get("mode", "host")),
+        }
+        published_ports.append(entry)
+
+print("Published ports found:")
+for pp in published_ports:
+    print(f"  service={pp[\"service\"]} host_ip={pp[\"host_ip\"]} "
+          f"published={pp[\"published\"]} target={pp[\"target\"]} "
+          f"protocol={pp[\"protocol\"]}")
+
+errors = []
+
+# Assert: exactly one published port across all services
+if len(published_ports) != 1:
+    errors.append(
+        f"FAIL: expected exactly 1 published port, found {len(published_ports)}"
+    )
+
+if published_ports:
+    pp = published_ports[0]
+
+    if pp["service"] != "caddy":
+        errors.append(f"FAIL: expected service=caddy, got {pp[\"service\"]}")
+
+    if pp["host_ip"] != "127.0.0.1":
+        errors.append(
+            f"FAIL: expected host_ip=127.0.0.1, got {pp[\"host_ip\"]}"
+        )
+
+    if pp["published"] != 80:
+        errors.append(
+            f"FAIL: expected published=80, got {pp[\"published\"]}"
+        )
+
+    if pp["target"] != 80:
+        errors.append(
+            f"FAIL: expected target=80, got {pp[\"target\"]}"
+        )
+
+    if pp["protocol"] != "tcp":
+        errors.append(
+            f"FAIL: expected protocol=tcp, got {pp[\"protocol\"]}"
+        )
+
+    # Check for port 443 in any published or target
+    for p2 in published_ports:
+        if p2["published"] == 443 or p2["target"] == 443:
+            errors.append(
+                f"FAIL: port 443 found: service={p2[\"service\"]} "
+                f"published={p2[\"published\"]} target={p2[\"target\"]}"
+            )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print("PASS: exactly one published port — caddy, 127.0.0.1:80:80/tcp, "
+          "no 443")
+' 2>&1 | tee "${RUN_DIR}/port-assertion.txt"
+PORT_RC=${PIPESTATUS[0]}
+echo "  -> port-assertion.txt (rc=${PORT_RC})"
+
+# Validate eight top-level volumes from structured JSON
+echo ""
+echo "  [6b] Validating stateful volumes..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>/dev/null \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+volumes = cfg.get("volumes", {})
+
+expected = {
+    "postgres-data":     "/var/lib/hada/docker-volumes/postgres-data",
+    "valkey-data":       "/var/lib/hada/docker-volumes/valkey-data",
+    "prometheus-data":   "/var/lib/hada/docker-volumes/prometheus-data",
+    "loki-data":         "/var/lib/hada/docker-volumes/loki-data",
+    "alloy-data":        "/var/lib/hada/docker-volumes/alloy-data",
+    "grafana-data":      "/var/lib/hada/docker-volumes/grafana-data",
+    "caddy-data":        "/var/lib/hada/docker-volumes/caddy-data",
+    "caddy-config":      "/var/lib/hada/docker-volumes/caddy-config",
+}
+
+errors = []
+print("Volumes found:")
+for name in sorted(volumes.keys()):
+    vol = volumes[name]
+    driver_opts = vol.get("driver_opts", {})
+    t = str(driver_opts.get("type", "NOT SET"))
+    o = str(driver_opts.get("o", "NOT SET"))
+    device = str(driver_opts.get("device", "NOT SET"))
+    print(f"  {name}: type={t} o={o} device={device}")
+
+    if name not in expected:
+        errors.append(f"FAIL: unexpected volume: {name}")
+        continue
+
+    if t != "none":
+        errors.append(f"FAIL: {name} type={t} expected=none")
+    if o != "bind":
+        errors.append(f"FAIL: {name} o={o} expected=bind")
+    if device != expected[name]:
+        errors.append(
+            f"FAIL: {name} device={device} expected={expected[name]}"
+        )
+    if not device.startswith("/var/lib/hada/docker-volumes/"):
+        errors.append(
+            f"FAIL: {name} device not beneath "
+            f"/var/lib/hada/docker-volumes/: {device}"
+        )
+
+for name in sorted(expected.keys()):
+    if name not in volumes:
+        errors.append(f"FAIL: missing volume: {name}")
+
+if len(volumes) != len(expected):
+    errors.append(
+        f"FAIL: expected {len(expected)} volumes, got {len(volumes)}"
+    )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print(f"PASS: all {len(expected)} volumes have type=none, o=bind, "
+          f"device beneath /var/lib/hada/docker-volumes/")
+' 2>&1 | tee "${RUN_DIR}/volume-assertion.txt"
+VOL_RC=${PIPESTATUS[0]}
+echo "  -> volume-assertion.txt (rc=${VOL_RC})"
+
+# ---------------------------------------------------------------------------
+# Step 7: Capture AFTER state (containers and images)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[7/8] Capturing AFTER state..."
+${SSH_CMD} --command='docker ps -aq | sort' 2>/dev/null \
+  | tee "${RUN_DIR}/docker-ps-after.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+
+${SSH_CMD} --command='docker images -q | sort -u' 2>/dev/null \
+  | tee "${RUN_DIR}/docker-images-after.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+
+# Compare before and after
+echo ""
+echo "  Comparing before/after state..."
+if diff "${RUN_DIR}/docker-ps-before.txt" "${RUN_DIR}/docker-ps-after.txt" > /dev/null; then
+  echo "PASS: container list unchanged (no containers started)" \
+    | tee "${RUN_DIR}/before-after-diff.txt"
+else
+  echo "FAIL: container list changed" \
+    | tee "${RUN_DIR}/before-after-diff.txt"
+fi
+if diff "${RUN_DIR}/docker-images-before.txt" "${RUN_DIR}/docker-images-after.txt" > /dev/null; then
+  echo "PASS: image list unchanged (no images pulled or created)" \
+    | tee -a "${RUN_DIR}/before-after-diff.txt"
+else
+  echo "FAIL: image list changed" \
+    | tee -a "${RUN_DIR}/before-after-diff.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 8: Safely remove only the remote temporary directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[8/8] Cleaning up remote temporary directory..."
+
+# Fail-closed cleanup: only remove paths matching /tmp/hada-b0-preflight-*
+# Refuse empty path, /tmp itself, or any other path.
+${SSH_CMD} --command="
+DIR='${REMOTE_DIR}'
+if [[ -z \"\${DIR}\" ]]; then
+  echo 'REFUSED: empty path'
+  exit 1
+elif [[ \"\${DIR}\" == \"/tmp\" || \"\${DIR}\" == \"/tmp/\" ]]; then
+  echo 'REFUSED: refusing to remove /tmp'
+  exit 1
+elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+  echo \"REFUSED: path does not match /tmp/hada-b0-preflight-* : \${DIR}\"
+  exit 1
+else
+  rm -rf \"\${DIR}\"
+  echo \"removed: \${DIR}\"
+fi"
+echo "  -> Cleanup complete"
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Phase B0 Preflight Summary"
+echo "============================================"
+echo "Compose version:  $(cat "${RUN_DIR}/compose-version.txt" 2>/dev/null || echo 'NOT CAPTURED')"
+echo "Port assertion:   $(cat "${RUN_DIR}/port-assertion.txt" 2>/dev/null | tail -1 || echo 'NOT RUN')"
+echo "Volume assertion:  $(cat "${RUN_DIR}/volume-assertion.txt" 2>/dev/null | tail -1 || echo 'NOT RUN')"
+echo "Before/after diff: $(cat "${RUN_DIR}/before-after-diff.txt" 2>/dev/null || echo 'NOT RUN')"
+echo "Evidence dir:      ${RUN_DIR}"
+echo ""
+echo "Files in evidence dir:"
+ls -1 "${RUN_DIR}/"
+echo ""
+echo "Preflight complete. Review evidence in ${RUN_DIR}/"
+
+## 11. REQUIRED PREFLIGHT CONTROLS
+9:#   - renders effective-compose.json via docker compose config --format json;
+24:set -Eeuo pipefail
+40:PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+75:${SSH_CMD} --command='docker ps -aq | sort' 2>/dev/null \
+77:echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+79:${SSH_CMD} --command='docker images -q | sort -u' 2>/dev/null \
+81:echo "  -> docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+150:echo "[6/8] Rendering effective-compose.json and running assertions..."
+152:# Render effective config as JSON (docker compose config --format json)
+157:    --env-file .env config --format json" 2>/dev/null \
+158:  | tee "${RUN_DIR}/effective-compose.json" > /dev/null
+159:echo "  -> effective-compose.json saved"
+161:# Validate published ports from structured JSON fields
+163:echo "  [6a] Validating published ports..."
+168:    --env-file .env config --format json" 2>/dev/null \
+170:import json, sys
+175:# Collect all published ports from structured fields
+176:published_ports = []
+181:        #   host_ip, published, target, protocol, app_protocol, mode
+185:            "published": p.get("published"),
+190:        published_ports.append(entry)
+193:for pp in published_ports:
+195:          f"published={pp[\"published\"]} target={pp[\"target\"]} "
+200:# Assert: exactly one published port across all services
+201:if len(published_ports) != 1:
+203:        f"FAIL: expected exactly 1 published port, found {len(published_ports)}"
+206:if published_ports:
+207:    pp = published_ports[0]
+212:    if pp["host_ip"] != "127.0.0.1":
+214:            f"FAIL: expected host_ip=127.0.0.1, got {pp[\"host_ip\"]}"
+217:    if pp["published"] != 80:
+219:            f"FAIL: expected published=80, got {pp[\"published\"]}"
+232:    # Check for port 443 in any published or target
+233:    for p2 in published_ports:
+234:        if p2["published"] == 443 or p2["target"] == 443:
+237:                f"published={p2[\"published\"]} target={p2[\"target\"]}"
+245:    print("PASS: exactly one published port — caddy, 127.0.0.1:80:80/tcp, "
+258:    --env-file .env config --format json" 2>/dev/null \
+260:import json, sys
+280:    driver_opts = vol.get("driver_opts", {})
+281:    t = str(driver_opts.get("type", "NOT SET"))
+282:    o = str(driver_opts.get("o", "NOT SET"))
+283:    device = str(driver_opts.get("device", "NOT SET"))
+330:${SSH_CMD} --command='docker ps -aq | sort' 2>/dev/null \
+332:echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+334:${SSH_CMD} --command='docker images -q | sort -u' 2>/dev/null \
+336:echo "  -> docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+363:# Fail-closed cleanup: only remove paths matching /tmp/hada-b0-preflight-*
+373:elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+374:  echo \"REFUSED: path does not match /tmp/hada-b0-preflight-* : \${DIR}\"
+377:  rm -rf \"\${DIR}\"
+
+## 12. FORBIDDEN PREFLIGHT OPERATIONS
+14:#   - never runs up, build, pull, create, start, restart or reboot.
+
+## 13. REMOTE CLEANUP GUARD
+grep: warning: stray \ before ~
+40:PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+41:REMOTE_DIR="/tmp/${PREFLIGHT_PREFIX}"
+55:echo "Remote dir: ${REMOTE_DIR}"
+89:${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}"
+90:echo "  -> ${REMOTE_DIR}"
+99:${SCP_CMD} "${BASE_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.yaml" 2>/dev/null
+102:${SCP_CMD} "${GCP_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.gcp.yaml" 2>/dev/null
+105:${SCP_CMD} "${CADDYFILE_GCP}" "${VM}:${REMOTE_DIR}/deploy/caddy/Caddyfile.gcp" 2>/dev/null
+109:${SCP_CMD} "${CANDIDATE_SHA256}" "${VM}:${REMOTE_DIR}/candidate.sha256" 2>/dev/null
+119:${SSH_CMD} --command="cat > ${REMOTE_DIR}/.env <<'ENVEOF'
+153:${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+164:${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+254:${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+363:# Fail-closed cleanup: only remove paths matching /tmp/hada-b0-preflight-*
+366:DIR='${REMOTE_DIR}'
+373:elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+374:  echo \"REFUSED: path does not match /tmp/hada-b0-preflight-* : \${DIR}\"
+377:  rm -rf \"\${DIR}\"
+
+## 14. COMPOSE PORT OVERRIDE
+# HADA M1 Production override for Google Cloud (hada-control VM)
+#
+# Applied on top of deploy/compose/compose.yaml:
+#   docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml ...
+#
+# This override MUST be used together with the base compose.yaml.
+# It is never used standalone.
+#
+# Human decisions applied (Phase A revision):
+#   1. F-002: Docker named volumes with driver_opts bind mounts beneath
+#      /var/lib/hada/docker-volumes/  (Docker global data-root is NOT relocated)
+#   2. Caddy bound to localhost only; port 443 is NOT published.
+#   3. ACME certificate issuance is disabled; localhost-only HTTP via IAP.
+#   4. Orchestrator monitoring listener stays on 0.0.0.0:9108 (unpublished).
+#
+# Container UID/GID requirements (verified via skopeo inspect):
+#   postgres  : UID 70,  GID 70   (postgres:17-alpine)
+#   valkey    : UID 999, GID 1000 (valkey/valkey:8-alpine)
+#   prometheus: UID 65534(nobody) (prom/prometheus:v3.2.1)
+#   loki      : UID 10001,GID 10001 (grafana/loki:3.4.2)
+#   alloy     : UID 473, GID 473 (grafana/alloy:v1.12.0)
+#   grafana   : UID 472, GID 0   (grafana/grafana:11.5.2)
+#   caddy     : UID 0,   GID 0   (caddy:2.10-alpine, runs as root)
+#   orchestrator: UID 10001, GID 10001 (hada, built from Dockerfile)
+#
+# Directory ownership per service (Phase B host preparation):
+#   /var/lib/hada/docker-volumes/postgres-data    -> 70:70   0750
+#   /var/lib/hada/docker-volumes/valkey-data      -> 999:1000 0770
+#   /var/lib/hada/docker-volumes/prometheus-data  -> 65534:65534 0755
+#   /var/lib/hada/docker-volumes/loki-data        -> 10001:10001 0750
+#   /var/lib/hada/docker-volumes/alloy-data       -> 473:473 0770
+#   /var/lib/hada/docker-volumes/grafana-data     -> 472:0   0750
+#   /var/lib/hada/docker-volumes/caddy-data       -> 0:0     0755
+#   /var/lib/hada/docker-volumes/caddy-config     -> 0:0     0755
+#   (Loki UID/GID 10001 matches hada; bootstrap creates hada 10001:10001)
+
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:80:80"
+    volumes:
+      - ../caddy/Caddyfile.gcp:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/postgres-data
+  valkey-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/valkey-data
+  prometheus-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/prometheus-data
+  loki-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/loki-data
+  alloy-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/alloy-data
+  grafana-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/grafana-data
+  caddy-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/caddy-data
+  caddy-config:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/caddy-config
+
+## 15. CANDIDATE CONFIG
+36-    mode: manual
+37-
+38-infrastructure:
+39:  compose_files:
+40-    - /opt/hada/deploy/compose/compose.yaml
+41-    - /opt/hada/deploy/compose/compose.gcp.yaml
+42-  health_check_interval_seconds: 30
+43-  startup_timeout_seconds: 600
+44-  recovery_backoff_seconds: 60
+45-
+46-database:
+47-  dsn_environment_variable: HADA_DATABASE_DSN
+48-  migration_directory: /opt/hada/src/hada/db/migrations
+49-  connect_timeout_seconds: 10
+50-  statement_timeout_seconds: 30
+51-
+
+## 16. CANDIDATE TESTS
+ERROR: file or directory not found: tests/integration/test_cli_config_runtime.py
+
+
+no tests ran in 0.00s
+
+## 17. EVIDENCE CHECKSUMS
+deployment-plan.md: OK
+infrastructure-inventory.txt: OK
+local-archive-sha256.txt: OK
+package-file-list.txt: OK
+package-findings.md: OK
+proposed-commands.sh: OK
+repository-access.txt: OK
+rollback-plan.md: OK
+unresolved-findings.md: OK
+
+============================================================
+END OF HADA FINAL B0 AUDIT
+============================================================

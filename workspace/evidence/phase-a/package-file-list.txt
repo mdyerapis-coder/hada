@@ -1,0 +1,132 @@
+HADA M1 Phase A — Package File List
+Generated: 2026-07-25T13:42:00Z
+
+Archive: HADA-M1-durable-orchestrator.zip
+Total files: 125
+Total uncompressed: 316577 bytes
+Total compressed: 112554 bytes (64.4% compression)
+
+=== File listing (unzip -ZT output) ===
+
+Zip file size: 141540 bytes, number of entries: 125
+
+Category: Configuration templates
+  .env.example                                          756 bytes
+  config/hada.yaml                                    3236 bytes
+
+Category: Docker Compose and deployment configs
+  deploy/compose/compose.yaml                         4866 bytes
+  deploy/caddy/Caddyfile                              376 bytes
+  deploy/alloy/config.alloy                           911 bytes
+  deploy/loki/config.yml                              534 bytes
+  deploy/prometheus/prometheus.yml                    472 bytes
+  deploy/prometheus/rules/hada.yml                    676 bytes
+  deploy/grafana/dashboards/hada-control-plane.json   942 bytes
+  deploy/grafana/provisioning/dashboards/dashboards.yaml  184 bytes
+  deploy/grafana/provisioning/datasources/datasources.yaml 213 bytes
+
+Category: Container and scripts
+  Dockerfile                                         1425 bytes
+  scripts/bootstrap-ubuntu.sh                        2418 bytes
+  scripts/container-entrypoint.sh                     462 bytes
+  scripts/hada-supervisor.service                     621 bytes
+  scripts/supervisor.sh                              1368 bytes
+  scripts/validate-host.sh                           1260 bytes
+  scripts/verify-m1-evidence.py                      2398 bytes
+
+Category: Python source — core
+  pyproject.toml                                     1189 bytes
+  src/hada/__init__.py                                 0 bytes
+  src/hada/canonical.py                              1240 bytes
+  src/hada/config.py                                  251 bytes
+  src/hada/cli.py                                    8660 bytes
+  src/hada/models.py                                 6646 bytes
+  src/hada/runtime.py                                6183 bytes
+
+Category: Python source — audit and crypto
+  src/hada/audit/__init__.py                           0 bytes
+  src/hada/audit/chain.py                            3333 bytes
+  src/hada/crypto/__init__.py                          0 bytes
+  src/hada/crypto/signing.py                         4827 bytes
+
+Category: Python source — database and migrations
+  src/hada/db/__init__.py                             0 bytes
+  src/hada/db/migrate.py                             3561 bytes
+  src/hada/db/postgres.py                           27980 bytes
+  src/hada/db/migrations/0001_initial.sql            6328 bytes
+  src/hada/db/migrations/0002_immutable_records.sql  1818 bytes
+  src/hada/db/migrations/0003_transactional_outbox.sql 1203 bytes
+  src/hada/db/migrations/0004_governance_enforcement.sql 2969 bytes
+
+Category: Python source — evidence
+  src/hada/evidence/__init__.py                        0 bytes
+  src/hada/evidence/store.py                         5993 bytes
+
+Category: Python source — governance
+  src/hada/governance/engine.py                     3260 bytes
+
+Category: Python source — orchestrator
+  src/hada/orchestrator/__init__.py                    0 bytes
+  src/hada/orchestrator/lifecycle.py                2945 bytes
+  src/hada/orchestrator/outbox.py                    379 bytes
+  src/hada/orchestrator/publisher.py                2182 bytes
+  src/hada/orchestrator/service.py                  5101 bytes
+
+Category: Python source — policy
+  src/hada/policy/__init__.py                          0 bytes
+  src/hada/policy/broker.py                         14993 bytes
+
+Category: Python source — queue
+  src/hada/queue/__init__.py                           0 bytes
+  src/hada/queue/broker.py                          12396 bytes
+  src/hada/queue/leases.py                          4947 bytes
+
+Category: Python source — supervisor
+  src/hada/supervisor/health.py                      897 bytes
+
+Category: Python source — workspaces
+  src/hada/workspaces/__init__.py                      0 bytes
+  src/hada/workspaces/manager.py                    9660 bytes
+
+Category: Tests
+  tests/integration/test_control_plane.py           5367 bytes
+  tests/test_governance.py                          5155 bytes
+  tests/unit/test_cli_config_runtime.py             2660 bytes
+  tests/unit/test_crypto_evidence_audit.py          3661 bytes
+  tests/unit/test_lifecycle.py                      1199 bytes
+  tests/unit/test_migrations.py                     1551 bytes
+  tests/unit/test_orchestrator.py                   5483 bytes
+  tests/unit/test_outbox.py                         2085 bytes
+  tests/unit/test_policy.py                         5199 bytes
+  tests/unit/test_queue_and_leases.py               2829 bytes
+  tests/unit/test_workspace.py                      2505 bytes
+
+Category: CI
+  .github/workflows/ci.yml                          1632 bytes
+
+Category: Git
+  .gitignore                                         189 bytes
+
+Category: Documentation
+  README.md                                         4394 bytes
+  docs/ROADMAP.md                                  1621 bytes
+  docs/architecture/ARCHITECTURE.md                6899 bytes
+  docs/adr/ADR-0001 through ADR-0007               4977 bytes total
+  docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md           1004 bytes
+  docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md        3959 bytes
+  docs/reports/M0-MILESTONE-REPORT.md              1069 bytes
+  docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md     2930 bytes
+  docs/reports/M1-MILESTONE-REPORT.md             6886 bytes
+  docs/runbooks/CONTROL_PLANE.md                  2238 bytes
+  docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md    1791 bytes
+  docs/runbooks/RECOVERY.md                        538 bytes
+  docs/runbooks/SIGNING_KEYS.md                    850 bytes
+  docs/runbooks/VAST_AI_PROVISIONING.md           1361 bytes
+  docs/security/THREAT-MODEL.md                   4091 bytes
+
+Category: M1 evidence artifacts (signed)
+  artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt           218 bytes
+  artifacts/M1/SIGNED-EVIDENCE-INDEX.json          5243 bytes
+  artifacts/M1/evidence-signing-public.pem          113 bytes
+  artifacts/M1/evidence-store/sha256/*/ (12 objects + 12 manifests)
+  artifacts/M1/validation/*.txt (8 validation reports)

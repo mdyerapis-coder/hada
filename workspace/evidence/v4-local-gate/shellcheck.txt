@@ -1,0 +1,1 @@
+PASS: shellcheck -S error scripts/*.sh tests/phase-b/*.sh tests/static/*.sh

@@ -1,0 +1,4 @@
+  File "<string>", line 24
+    print(f"  service={pp[\"service\"]} host_ip={pp[\"host_ip\"]} "
+                           ^
+SyntaxError: unexpected character after line continuation character

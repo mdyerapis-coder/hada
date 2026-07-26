@@ -1,0 +1,111 @@
+HADA M1 Phase B0 — Final Preflight Readiness Report
+Generated: 2026-07-25T06:56:00Z
+
+======================================================================
+CANDIDATE ARCHIVE SHA-256 (unchanged — not rebuilt)
+======================================================================
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+SHA-256 file: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256
+Preflight script SHA-256: 462f80bea8d6e7993b380bb761ed6e4afc2ea3f943b11541c419a342475cc9c8
+Preflight script: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+Static test SHA-256: 72ef9c6599d3e01f13a50bd4b00c75efad6095878f580668b25fbaa5fda578b2
+Static test: /home/bobthabuilda/hada-deployment/tests/static/test_docker_state_none_logic.sh
+Archive entries: 129 files (clean, no caches/bytecode/temp)
+
+======================================================================
+VERIFICATION CHECK RESULTS
+======================================================================
+PASS: bash -n all production scripts
+PASS: shellcheck run-phase-b0-preflight.sh
+PASS: shellcheck test_docker_state_none_logic.sh
+PASS: archive checksum verification (sha256sum -c)
+PASS: unzip -t archive integrity
+PASS: no excluded cache/bytecode/temp files
+PASS: candidate-package completeness (all required files)
+PASS (129 OK): candidate manifest verification (from extracted root)
+PASS (9 passed): targeted 9 pytest tests
+PASS (9 passed): NONE-logic static assertions (9 tests)
+
+----------------------------------------------------------------------
+DETAILED CHECK RESULTS
+----------------------------------------------------------------------
+  PASS: bash -n run-phase-b0-preflight.sh
+  PASS: bash -n supervisor.gcp.sh
+  PASS: bash -n validate-host.gcp.sh
+  PASS: bash -n provision-secrets.sh
+  PASS: bash -n proposed-commands.sh
+  PASS: bash -n test_docker_state_none_logic.sh
+  PASS: shellcheck run-phase-b0-preflight.sh
+  PASS: shellcheck test_docker_state_none_logic.sh
+  PASS: archive checksum verification (sha256sum -c)
+  PASS: unzip -t archive integrity
+  PASS: no excluded cache/bytecode/temp files
+
+  Candidate-package completeness (required production files):
+    PASS: src/hada/models.py (7225 bytes)
+    PASS: src/hada/supervisor/health.py (1075 bytes)
+    PASS: config/hada.yaml (3291 bytes)
+    PASS: tests/unit/test_compose_files.py (6490 bytes)
+    PASS: tests/unit/test_cli_config_runtime.py (2660 bytes)
+    PASS: deploy/compose/compose.yaml (4866 bytes)
+    PASS: deploy/compose/compose.gcp.yaml (3095 bytes)
+    PASS: deploy/caddy/Caddyfile.gcp (924 bytes)
+    PASS: deploy/caddy/Caddyfile (376 bytes)
+    PASS: scripts/bootstrap-ubuntu.sh (2418 bytes)
+    PASS: scripts/container-entrypoint.sh (462 bytes)
+    PASS: scripts/hada-supervisor.service (621 bytes)
+    PASS: scripts/supervisor.sh (1865 bytes)
+    PASS: scripts/validate-host.sh (1713 bytes)
+    PASS: scripts/provision-secrets.sh (2933 bytes)
+    PASS: scripts/verify-m1-evidence.py (2398 bytes)
+    PASS: Dockerfile (1425 bytes)
+    PASS: pyproject.toml (1189 bytes)
+    PASS: README.md (4394 bytes)
+    PASS: .env.example (756 bytes)
+    PASS: .gitignore (189 bytes)
+  PASS: candidate manifest verification (129 files OK)
+  PASS: targeted 9 pytest tests (9 passed)
+  PASS: NONE-logic static assertions (9 tests)
+
+======================================================================
+DOCKER STATE NONE-LOGIC CORRECTION
+======================================================================
+The preflight script was corrected so that empty Docker state
+captures write 'NONE' instead of an empty file. This ensures:
+  - docker-ps-before.txt, docker-images-before.txt,
+    docker-ps-after.txt, docker-images-after.txt are always non-empty
+  - A fresh Docker host (no containers/images) produces 'NONE'
+    in all four files, which compare as identical (no change)
+  - Differing states still fail closed
+
+Remote capture command pattern:
+  output="$(docker ps -aq | sort)"; \
+  if [[ -n "$output" ]]; then printf "%s\n" "$output"; \
+  else printf "NONE\n"; fi
+
+The candidate archive was NOT rebuilt (preflight runner is external).
+Candidate SHA-256 is unchanged.
+
+Static assertions prove:
+  1. Empty container output becomes NONE
+  2. Empty image output becomes NONE
+  3. Non-empty sorted IDs are preserved
+  4. Identical NONE files compare successfully
+  5. Differing states fail closed
+  6. Fresh Docker host (both NONE) compares as unchanged
+  7. All NONE files are non-empty
+
+Preflight script safety features (unchanged):
+  - REMOTE_DIR_CREATED=0; set to 1 only after remote mkdir succeeds
+  - cleanup trap contacts hada-control only when REMOTE_DIR_CREATED=1
+  - local failures do not contact hada-control
+  - strict remote path guard: ^/tmp/hada-b0-preflight-[0-9]+$
+  - cleanup preserves original exit status
+
+======================================================================
+OVERALL RESULT
+======================================================================
+ALL CHECKS PASSED
+
+Remote preflight has NOT been executed.
+Awaiting human review to approve execution.

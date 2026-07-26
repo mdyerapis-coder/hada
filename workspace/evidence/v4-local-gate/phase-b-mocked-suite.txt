@@ -1,0 +1,418 @@
+==================================================
+HADA M1 Phase B — deployment-runner test suite
+==================================================
+
+--- RUN: test_ssh_sudo_capture.sh ---
+PASS: a: successful empty output -> rc 0 and NONE
+PASS: b: successful nonempty output -> rc 0 and sorted output
+PASS: c: sudo failure stays nonzero after the local tee pipeline (rc=42)
+PASS: c: exact sudo failure status (42) preserved through capture
+PASS: c: failed query does not emit NONE
+PASS: d: docker failure stays nonzero after the local tee pipeline (rc=17)
+PASS: d: exact docker failure status (17) preserved through capture
+PASS: d: failed query does not emit NONE
+PASS: generated remote command begins with 'set -Eeuo pipefail'
+PASS: no sort or pipeline inside the Docker command substitution
+PASS: inner command is not quoted as a single executable
+PASS: sort occurs only after the success check in generated command
+PASS: all 4 generated remote commands begin with set -Eeuo pipefail
+
+============================================
+ssh_sudo_capture mocked test results
+============================================
+Passed: 13
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_ssh_sudo_capture.sh ---
+
+--- RUN: test_prohibited_operation_scanner.sh ---
+PASS: flags uncommented 'docker system prune'
+PASS: flags uncommented 'docker volume prune'
+PASS: flags uncommented 'docker compose down -v'
+PASS: flags uncommented 'rm -rf /var/lib/hada'
+PASS: flags uncommented 'rm -rf /opt/hada'
+PASS: flags uncommented 'mkfs.ext4 /dev/sdb'
+PASS: flags indented uncommented 'docker system prune'
+PASS: ignores commented 'docker system prune'
+PASS: ignores echo documentation of 'docker volume prune'
+PASS: ignores refusal message naming 'docker compose down -v'
+PASS: ignores log documentation about 'docker compose down -v'
+PASS: ignores prohibition text naming mkfs.ext4 /dev/sdb
+PASS: ignores grep-check for 'rm -rf /var/lib/hada'
+PASS: ignores assert helper naming 'rm -rf /opt/hada'
+PASS: comment/documentation-only file with all six patterns is fully clean
+PASS: all production scripts are free of uncommented prohibited operations
+
+============================================
+Prohibited-operation scanner fixture results
+============================================
+Passed: 16
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_prohibited_operation_scanner.sh ---
+
+--- RUN: test_stage_aware_rollback.sh ---
+PASS: existing HADA resources cause immediate refusal (rc=1)
+PASS: refusal issued exactly one remote command (the read-only check)
+PASS: existing-resource refusal performed zero rollback/mutation commands
+PASS: refusal happened before remote temp-dir creation (REMOTE_DIR_CREATED=0)
+PASS: Gate 2 completes on a clean host (rc=0)
+PASS: Gate 2's first remote command is the read-only existing-resource check
+PASS: no mutation command in Gate 2's first remote action
+PASS: remote temp-dir creation is Gate 2's final step (first mutation)
+PASS: bounded_rollback with nothing tracked returns 0
+PASS: bounded_rollback with nothing tracked issues ZERO remote commands
+PASS: tracked supervisor start -> supervisor stopped in rollback
+PASS: tracked compose up -> compose down WITHOUT -v in rollback
+PASS: tracked unit install -> unit removed in rollback
+PASS: rollback never deletes /var/lib/hada or /opt/hada
+PASS: after Gate-2-only progress, rollback touches no compose/service/unit
+
+============================================
+Stage-aware rollback mocked test results
+============================================
+Passed: 15
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_stage_aware_rollback.sh ---
+
+--- RUN: test_remote_temp_permissions.sh ---
+PASS: remote temp dir creation command succeeds under umask 077
+PASS: remote temp dir has exact mode 0700
+PASS: remote temp dir is not group/world readable (drwx------)
+PASS: umask 077 precedes directory creation in generated command
+PASS: render_validate_compose succeeds on valid streamed JSON
+PASS: resolved Compose JSON deleted immediately after validation
+PASS: resolved JSON temp file pattern yields mode 0600 (not group/world readable)
+PASS: remote render block pipes JSON to stdout (no remote temp JSON)
+PASS: runner creates remote temp dir with umask 077 / mode 0700
+PASS: runner chmods streamed JSON 0600 and deletes it after validation
+PASS: runner contains no world-readable JSON permission pattern
+
+============================================
+Remote temp-material permission test results
+============================================
+Passed: 11
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_remote_temp_permissions.sh ---
+
+--- RUN: test_env_validation.sh ---
+PASS: consistent .env with strong distinct secrets is accepted
+PASS: empty POSTGRES_PASSWORD rejected
+PASS: empty VALKEY_PASSWORD rejected
+PASS: CHANGE_ME value rejected
+PASS: embedded CHANGE_ME substring rejected
+PASS: *** redaction placeholder in DSN rejected
+PASS: *** as password rejected
+PASS: synthetic placeholder value rejected
+PASS: embedded 'synthetic' substring rejected
+PASS: known test secret 'actual-test-secret' rejected
+PASS: known example secret 'example-secret' rejected
+PASS: DSN carrying the wrong password rejected (inconsistent with POSTGRES_PASSWORD)
+PASS: Valkey URL carrying the wrong password rejected (inconsistent with VALKEY_PASSWORD)
+PASS: non-postgresql DSN scheme rejected
+PASS: non-redis Valkey URL scheme rejected
+PASS: missing GRAFANA_ADMIN_PASSWORD rejected
+PASS: GRAFANA_ADMIN_PASSWORD reusing POSTGRES_PASSWORD rejected
+PASS: Gate 4 remote block never echoes secret-bearing variables
+PASS: Gate 4 failure messages report key names only
+
+============================================
+.env validation test results
+============================================
+Passed: 19
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_env_validation.sh ---
+
+--- RUN: test_installed_manifest.sh ---
+PASS: Gate 1 produced candidate-app.sha256
+PASS: Gate 1 produced candidate-unit.sha256
+PASS: app manifest excludes the service unit (no path mismatch possible)
+PASS: unit checksum line carries the installed path
+PASS: byte-identical app tree and unit pass verification
+PASS: unit was content-verified (not merely existence-checked)
+PASS: modified app file fails verification
+PASS: modified service unit fails verification (content-verified)
+PASS: missing service unit fails verification
+
+============================================
+Installed-manifest integration test results
+============================================
+Passed: 9
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_installed_manifest.sh ---
+
+--- RUN: test_recoverable_install.sh ---
+PASS: Gate 3 failure: incomplete /opt/hada release removed (next run unblocked)
+PASS: Gate 3 failure: unit installed by this run removed
+PASS: /var/lib/hada data preserved after Gate 3 rollback
+PASS: Gate 3 rollback issued no compose/service commands
+PASS: Gate 4 failure: this run's release (incl. its .env) removed — recoverable
+PASS: /var/lib/hada data preserved after Gate 4 rollback
+PASS: pre-existing installation untouched when this run created nothing
+PASS: zero remote commands issued for pre-existing-tree rollback
+PASS: marker-mismatch guard preserved a foreign tree despite forced flag
+PASS: remote guard explicitly refused on marker mismatch
+PASS: after services started, /opt/hada release is preserved
+PASS: bounded_rollback contains no /var/lib/hada deletion path (static)
+PASS: the only recursive removal in rollback is marker-guarded
+
+============================================
+Recoverable-installation test results
+============================================
+Passed: 13
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_recoverable_install.sh ---
+
+--- RUN: test_cross_gate_happy_path.sh ---
+PASS: gate1-candidate-extraction passed as part of the single workflow
+PASS: gate2-remote-preparation passed as part of the single workflow
+PASS: gate3-upload-install passed as part of the single workflow
+PASS: gate4-env-validation passed as part of the single workflow
+PASS: gate5-compose-render passed as part of the single workflow
+PASS: installed: /opt/hada/deploy/compose/compose.yaml
+PASS: installed: /opt/hada/deploy/compose/compose.gcp.yaml
+PASS: installed: /opt/hada/deploy/caddy/Caddyfile.gcp
+PASS: installed: /opt/hada/Dockerfile
+PASS: installed: /opt/hada/config/hada.yaml
+PASS: installed: /opt/hada/scripts/provision-secrets.sh
+PASS: installed: /opt/hada/scripts/supervisor.sh
+PASS: installed: /opt/hada/scripts/validate-host.sh
+PASS: installed: /opt/hada/scripts/container-entrypoint.sh
+PASS: installed: /opt/hada/src tree
+PASS: installed: service unit at /etc/systemd/system
+PASS: release marker stamped by this run
+PASS: provision-secrets created /opt/hada/.env (Gate 4 reachable, no manual intermission)
+PASS: runner recorded ENV_CREATED=1 (env created by this run)
+PASS: runner recorded OPT_HADA_CREATED=1 (tree created by this run)
+PASS: provisioned DSN carries the real password (no *** placeholder)
+PASS: provisioned DSN is consistent with POSTGRES_PASSWORD
+PASS: no secret value found in evidence, gate logs, or transmitted commands
+PASS: no valkey-cli -a in any transmitted command
+PASS: Gate 5 deleted the temporary resolved Compose JSON
+PASS: evidence artifact present: check-existing-hada.txt
+PASS: evidence artifact present: verify-hada-mount-uuid.txt
+PASS: evidence artifact present: stage-release.txt
+PASS: evidence artifact present: create-dirs.txt
+PASS: evidence artifact present: install-release.txt
+PASS: evidence artifact present: verify-install.txt
+PASS: evidence artifact present: provision-secrets.txt
+PASS: evidence artifact present: validate-env.txt
+
+============================================
+Cross-gate happy-path (Gates 1-5) results
+============================================
+Passed: 33
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_cross_gate_happy_path.sh ---
+
+--- RUN: test_complete_payload.sh ---
+PASS: every Dockerfile COPY/ADD source present in installed /opt/hada
+PASS: every Compose host-bind source present in candidate
+PASS: validate_build_context passes on a complete installed tree
+PASS: validate_build_context fails when pyproject.toml is omitted
+PASS: validate_build_context fails when README.md is omitted
+PASS: validate_build_context fails when deploy/prometheus/prometheus.yml is omitted
+PASS: validate_build_context fails when deploy/loki/config.yml is omitted
+PASS: validate_build_context fails when deploy/alloy/config.alloy is omitted
+PASS: Gate 6 (pull/build) reaches a valid complete build context
+
+============================================
+Complete runtime payload test results
+============================================
+Passed: 9
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_complete_payload.sh ---
+
+--- RUN: test_supervisor_invocation.sh ---
+PASS: supervisor issued 11 docker compose call(s)
+PASS: every compose invocation uses -p hada-m1 + both compose files + --env-file (HADA_ROOT=/tmp/hada-sup-test-mNVsKi/sandbox/opt/hada)
+PASS: supervisor does not start/manage a second project named 'hada'
+PASS: supervisor does not depend on /opt/hada/.venv
+PASS: supervisor issues up (bounded recovery)
+
+============================================
+Host supervisor invocation test results
+============================================
+Passed: 5
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_supervisor_invocation.sh ---
+
+--- RUN: test_valkey_secret_absence.sh ---
+PASS
+PASS: rendered Compose contains no sentinel Valkey password in valkey command or healthcheck
+PASS
+PASS: valkey uses valkey-server /run/secrets/valkey.conf (no --requirepass-file, no inline password); healthcheck uses VALKEYCLI_AUTH (no valkey-cli -a)
+
+============================================
+Valkey secret-absence (rendered Compose) test results
+============================================
+Passed: 2
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_valkey_secret_absence.sh ---
+
+--- RUN: test_valkey_durability_v4.sh ---
+PASS: v4 effective Compose has eight durable volumes
+PASS: valkey-data is bound to /var/lib/hada/docker-volumes/valkey-data and mounted rw at /data
+PASS: removing the Valkey service mount reproduces seven-volume failure
+PASS: valkey.conf remains protected and password-free in Valkey args/environment
+--- OK:  test_valkey_durability_v4.sh ---
+
+--- RUN: test_valkey_health.sh ---
+PASS: VALKEY_PASSWORD is absent from the valkey container environment
+PASS: healthcheck uses VALKEYCLI_AUTH from the protected file (no valkey-cli -a)
+PASS: healthcheck succeeds with the correct protected-file password
+PASS: healthcheck fails with an incorrect password
+PASS: healthcheck fails when the protected config file is unreadable
+
+============================================
+Valkey health validation test results
+============================================
+Passed: 5
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_valkey_health.sh ---
+
+--- RUN: test_grafana_proxy.sh ---
+PASS: GCP Grafana GF_SERVER_ROOT_URL is http://localhost:8080/grafana/
+PASS: Caddy reverse-proxies /grafana/* to grafana:3000
+PASS: proxy request through Caddy for Grafana returns 200 (no redirect to HTTPS :443)
+
+============================================
+Grafana GCP root URL + Caddy proxy test results
+============================================
+Passed: 3
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_grafana_proxy.sh ---
+
+--- RUN: test_b0_checksum_manifest_evidence.sh ---
+PASS: checksum gate passes for the locked v4 archive (from deployment root)
+PASS: wrong archive hash fails the checksum gate (before SSH)
+PASS: wrong SHA file fails the checksum gate (before SSH)
+PASS: untouched v4 extraction passes the versioned manifest gate
+PASS: one modified extracted file fails the versioned manifest gate
+PASS: stale v1 manifest cannot satisfy the v4 manifest gate
+PASS: missing v4 manifest fails the manifest gate (before SSH)
+[2026-07-26T11:12:19Z] PASS: Phase B0 v4 evidence lock verified (locked at /tmp/hada-b0-ck-hnRcal/b0-evidence-v4)
+PASS: synthetic v4 evidence with correct identity + all PASS files is accepted by Phase B Gate 0f
+PASS: no remote command attempted during Gate 0f (DEPLOY_EXECUTE=0 honored)
+[2026-07-26T11:12:19Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-hnRcal/b0-evidence-v1/candidate-sha256.txt
+PASS: stale v1 Phase B0 evidence (no v4 files) is REJECTED by Gate 0f
+[2026-07-26T11:12:19Z] FAIL: B0 candidate-sha256.txt (b2f43880c22527284e9938b53f20e5035260db78cc55a46e458063c702011ffa) does not match locked v4 hash
+PASS: stale v2 Phase B0 evidence is REJECTED by Gate 0f
+[2026-07-26T11:12:19Z] FAIL: B0 candidate-sha256.txt (7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204) does not match locked v4 hash
+PASS: stale v3 Phase B0 evidence is REJECTED by Gate 0f
+[2026-07-26T11:12:19Z] FAIL: B0 compose-version-check.txt contains a FAIL line
+PASS: malformed evidence with a FAIL line is REJECTED by Gate 0f
+[2026-07-26T11:12:20Z] FAIL: B0 target-identity.txt has 2 'project=' lines (expected exactly 1)
+PASS: evidence with duplicate identity field is REJECTED by Gate 0f
+
+============================================
+v4 B0 checksum / manifest / evidence-binding test results
+============================================
+Passed: 14
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_b0_checksum_manifest_evidence.sh ---
+
+--- RUN: test_b0_failure_evidence_v4.sh ---
+PASS: mocked v4 assertion failure preserves complete fail-closed AFTER-state and cleanup evidence
+PASS: cleanup failure cannot convert or retain an overall PASS
+--- OK:  test_b0_failure_evidence_v4.sh ---
+
+--- RUN: test_deploy_execute_zero_no_remote_v4.sh ---
+PASS: DEPLOY_EXECUTE=0 completed local review with zero remote transport calls
+--- OK:  test_deploy_execute_zero_no_remote_v4.sh ---
+
+--- RUN: test_compose_rollback_safety.sh ---
+PASS: partial-create rollback brings down the explicit hada-m1 project
+PASS: partial-create rollback removes Docker volume metadata created by this run
+PASS: /var/lib/hada bind-mounted data survives partial-create rollback
+PASS: rollback never deletes /var/lib/hada or /opt/hada
+PASS: /var/lib/hada bind-mounted data survives post-startup rollback
+PASS: post-startup rollback preserves /var/lib/hada and /opt/hada
+PASS: orchestrator image removed (it was built by this run)
+PASS: retry: Gate 2 refusal check passes (no stale hada-m1 resources block the retry)
+
+============================================
+Compose partial/retry rollback safety test results
+============================================
+Passed: 8
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_compose_rollback_safety.sh ---
+
+--- RUN: test_full_gates_1_10.sh ---
+PASS: gate1-candidate-extraction passed as part of the single workflow
+PASS: gate2-remote-preparation passed as part of the single workflow
+PASS: gate3-upload-install passed as part of the single workflow
+PASS: gate4-env-validation passed as part of the single workflow
+PASS: gate5-compose-render passed as part of the single workflow
+PASS: gate5b-build-context passed as part of the single workflow
+PASS: gate6-image-pull-build passed as part of the single workflow
+PASS: gate7-compose-startup passed as part of the single workflow
+PASS: gate8-health passed as part of the single workflow
+PASS: gate9-final-state passed as part of the single workflow
+PASS: gate10-repo-connectivity passed as part of the single workflow
+PASS: installed: /opt/hada/pyproject.toml
+PASS: installed: /opt/hada/README.md
+PASS: installed: /opt/hada/Dockerfile
+PASS: installed: /opt/hada/src
+PASS: installed: /opt/hada/config
+PASS: installed: /opt/hada/deploy
+PASS: installed: /opt/hada/scripts
+PASS: service unit installed at /etc/systemd/system
+PASS: .env provisioned
+PASS: valkey protected config file created (0400, not in evidence)
+PASS: valkey config file mode 0400
+PASS: all Compose invocations use project name hada-m1
+PASS: no Compose invocation uses the mismatched project name 'hada'
+PASS: supervisor started via systemd (Gate 9)
+PASS: no valkey-cli -a in any transmitted command
+PASS: valkey health uses VALKEYCLI_AUTH (in-container, no secret in argv)
+PASS: caddy published only on loopback 127.0.0.1:80
+PASS: final Docker state captured (Gate 9)
+PASS: git ls-remote from host (user hada) succeeded (marker LS_REMOTE_HOST_OK)
+PASS: git ls-remote from orchestrator container succeeded (marker LS_REMOTE_CONTAINER_OK)
+PASS: git ls-remote host failure fixture fails closed (rc!=0, no success marker)
+PASS: no secret value found in evidence, gate logs, or transmitted commands
+PASS: clean bounded rollback removes only this run's tracked resources
+PASS: persistent data preserved under /var/lib/hada after clean rollback
+
+============================================
+Full Gates 1-10 acceptance test results
+============================================
+Passed: 35
+Failed: 0
+
+RESULT: PASS
+--- OK:  test_full_gates_1_10.sh ---
+
+==================================================
+Suite summary: 19/19 test scripts passed
+==================================================
+SUITE RESULT: PASS

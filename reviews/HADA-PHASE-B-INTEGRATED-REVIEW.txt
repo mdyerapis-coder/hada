@@ -1,0 +1,162 @@
+================================================================================
+HADA M1 — PHASE B CROSS-GATE INTEGRATION CORRECTION — REVIEW
+================================================================================
+Date (UTC):           2026-07-26
+Working directory:    /home/bobthabuilda/hada-deployment
+Scope:                LOCAL-ONLY. No SSH, no SCP, no deploy, no pull, no
+                      build, no contact with hada-control, no real secrets
+                      created, no candidate modification.
+
+Locked candidate SHA-256 (re-verified after all work, unchanged):
+  9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+
+Corrected artifact:
+  scripts/run-phase-b-deploy.sh
+
+Test suite (tests/phase-b/run_all.sh — 8 scripts, 128 assertions, ALL PASS):
+  test_ssh_sudo_capture.sh               13 assertions
+  test_prohibited_operation_scanner.sh   16 assertions
+  test_stage_aware_rollback.sh           15 assertions
+  test_remote_temp_permissions.sh        11 assertions
+  test_env_validation.sh                 19 assertions
+  test_installed_manifest.sh              9 assertions   (NEW)
+  test_recoverable_install.sh            13 assertions   (NEW)
+  test_cross_gate_happy_path.sh          32 assertions   (NEW)
+  + lib_mock_remote.sh                   shared executing-sandbox harness (NEW)
+
+Verification performed locally:
+  - bash -n + shellcheck -S error (v0.11.0): clean on runner and all tests;
+  - tests/phase-b/run_all.sh: SUITE RESULT PASS (8/8, 128 assertions);
+  - ./scripts/run-phase-b-deploy.sh (DEPLOY_EXECUTE unset): Gates 0-1 pass,
+    exit 0, no remote contact;
+  - the bundle itself was extracted to a scratch directory and
+    tests/phase-b/run_all.sh re-run from inside it: SUITE RESULT PASS
+    (self-containment proven, see bundle-selftest note below).
+
+--------------------------------------------------------------------------------
+CORRECTION 1 — INSTALLED MANIFEST FIXED (no unavoidable path mismatch)
+--------------------------------------------------------------------------------
+Defect: Gate 1 built one manifest including scripts/hada-supervisor.service,
+but the unit installs to /etc/systemd/system/, and Gate 3e omitted it from
+installed.sha256 — guaranteeing a diff failure (and the unit itself was only
+existence-checked).
+
+Fix (explicit two-manifest approach):
+  - Gate 1 now emits candidate-app.sha256 (42 files, everything installed
+    under /opt/hada, paths relative to /opt/hada on BOTH sides) and
+    candidate-unit.sha256 (single line whose path is rewritten to the
+    installed location /etc/systemd/system/hada-supervisor.service).
+  - Gate 3b verifies staging against the app manifest via sha256sum -c and
+    verifies the staged unit's hash against the unit checksum explicitly.
+  - Gate 3e (verify_installed_tree, now a separately testable function)
+    diffs the installed /opt/hada hashes against candidate-app.sha256 and
+    CONTENT-verifies the installed unit by comparing its SHA-256 against
+    the unit checksum. Never a mere existence check.
+
+Executable integration test (test_installed_manifest.sh) runs the REAL
+Gate 1 manifest generation and the REAL Gate 3e remote command in a sandbox:
+byte-identical tree+unit PASS; modified app file FAILS; modified unit FAILS;
+missing unit FAILS; app manifest proven to exclude the unit and the unit
+line proven to carry the installed path (no path mismatch remains).
+
+--------------------------------------------------------------------------------
+CORRECTION 2 — SECRET PROVISIONING NOW REACHABLE (preferred workflow)
+--------------------------------------------------------------------------------
+Defect: Gate 2 refuses any existing /opt/hada; Gate 3 creates it; Gate 4
+expected /opt/hada/.env to already exist — nothing provisioned it. The flow
+was impossible on exactly the fresh host it required.
+
+Fix: new Gate 3f (provision_secrets_remote, separately testable) runs AFTER
+the installed tree (including provision-secrets.sh itself) is checksum-
+verified:
+  - executes sudo -n /opt/hada/scripts/provision-secrets.sh remotely;
+  - secrets are generated ON hada-control by the verified script (openssl
+    rand); they never enter local command arguments, local logs, or
+    evidence — only safe status text is captured;
+  - a known candidate defect (the script writes the DSN with a ':***@'
+    redaction placeholder instead of the real password) is remediated
+    ON-HOST: the DSN is rebuilt from the on-host POSTGRES_PASSWORD using
+    remote shell variables and builtin printf only — the secret never
+    appears in any argv and never leaves the VM;
+  - .env is then verified root:hada mode 0640;
+  - ENV_CREATED=1 records that the .env was created by this run.
+Gate 4 then validates the .env (names only, never values) as before.
+
+The cross-gate happy-path test proves a fresh host proceeds Gate 2 -> Gate 3
+-> Gate 4 with no manual intermission, and greps every local log, every
+evidence file, and the full transmitted command stream for the three
+generated secret values: zero leaks.
+
+--------------------------------------------------------------------------------
+CORRECTION 3 — FAILED INSTALLATION RECOVERABLE
+--------------------------------------------------------------------------------
+Tracking: Gate 2 proves /opt/hada absent; Gate 3c stamps
+/opt/hada/.hada-release-id with this run's unique prefix and sets
+OPT_HADA_CREATED=1. ENV_CREATED tracks .env provisioning.
+
+bounded_rollback now: on failure BEFORE services start
+(SUPERVISor/COMPOSE both 0) and only when OPT_HADA_CREATED=1, removes the
+incomplete /opt/hada release — with an independent REMOTE guard that reads
+the release marker and REFUSES unless it matches this run's identity. The
+unit is removed only when UNIT_INSTALLED=1. /var/lib/hada is preserved by
+every branch (no deletion path exists — statically asserted). Pre-existing
+resources: with OPT_HADA_CREATED=0 zero removal commands are issued; even
+with the flag adversarially forced, the marker guard preserves a foreign
+tree.
+
+Tests (test_recoverable_install.sh) prove: Gate 3 failure removes the
+incomplete release so the next run is NOT permanently blocked; Gate 4
+failure is recoverable; /var/lib/hada data survives every rollback;
+pre-existing installations are never modified (zero commands, and explicit
+marker-mismatch refusal); after services start the tree is preserved.
+
+--------------------------------------------------------------------------------
+CORRECTION 4 — CROSS-GATE HAPPY-PATH TEST (Gates 1-5, one workflow)
+--------------------------------------------------------------------------------
+test_cross_gate_happy_path.sh executes the runner's REAL gate functions
+sequentially against a mocked fresh host (executing mock SSH/SCP transport +
+PATH shims; the exact generated remote commands run in a sandbox):
+locked candidate extracted -> manifests generated -> payload staged (mock
+SCP) and staging-verified -> directories + release marker -> atomic install
+-> installed checksums verified -> provision-secrets executed without
+leaking values -> .env validated -> Compose JSON rendered (fixture) and
+structurally validated (ports + volumes) -> temp JSON deleted.
+32 assertions, including per-file installed-tree checks, handoff evidence
+artifacts for every remote step, ENV_CREATED/OPT_HADA_CREATED state, DSN
+placeholder remediation, and full secret-leak sweeps of logs/evidence/
+command stream. This catches path mismatches and missing handoffs between
+gates by construction — it runs the real functions in order.
+
+--------------------------------------------------------------------------------
+CORRECTION 5 — SELF-CONTAINED REVIEW BUNDLE
+--------------------------------------------------------------------------------
+The bundle contains everything tests/phase-b/run_all.sh needs, with no
+reference outside the extracted tree:
+  scripts/run-phase-b-deploy.sh
+  scripts/provision-secrets.sh
+  scripts/supervisor.gcp.sh
+  scripts/validate-host.gcp.sh
+  scripts/run-phase-b0-preflight.sh
+  tests/phase-b/  (run_all.sh, lib_mock_remote.sh, all 8 test scripts)
+  tests/static/   (retained Phase B0 tests — NOT substituted for the new ones)
+  HADA-M1-gcp-candidate.zip + .sha256   (read-only inputs for Gate 1 tests;
+                                         byte-identical to the locked copy)
+  REVIEW.txt (this document)
+
+Self-containment was PROVEN by extracting the produced tar.gz into a scratch
+directory and executing tests/phase-b/run_all.sh from inside it (the tests
+derive DEPLOY_ROOT from their own location): SUITE RESULT PASS, 8/8 scripts,
+128 assertions, zero references to files outside the bundle.
+
+--------------------------------------------------------------------------------
+EXECUTION-GATE GUARANTEE (unchanged)
+--------------------------------------------------------------------------------
+With DEPLOY_EXECUTE unset or != "1" the runner performs local static
+validation and candidate verification/extraction only — re-verified during
+this correction: exit 0, no SSH/SCP, no remote contact. Nothing in this
+correction executed any deployment step, created any real secret, or
+modified the candidate archive.
+
+================================================================================
+PHASE_B_INTEGRATION_GATE_ALL_PASS_NOT_EXECUTED
+================================================================================

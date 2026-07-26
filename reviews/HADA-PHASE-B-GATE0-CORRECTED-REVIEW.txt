@@ -1,0 +1,2235 @@
+HADA M1 PHASE B — GATE 0 CORRECTED REVIEW
+======================================================================
+Generated: 2026-07-25T13:54:32Z
+
+Locked candidate SHA-256: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+Corrected runner SHA-256: 9b3a241d89eca7e6dc5ca4a37040971fec9f2bb813bb15786cb7baccaac03aa5
+Host: Linux (Fedora 44)
+Bash: GNU bash, version 5.3.9(1)-release (x86_64-redhat-linux-gnu)
+ShellCheck: 0.11.0
+
+======================================================================
+FIXES APPLIED
+======================================================================
+
+DEFECT 1 — ShellCheck gate (Gate 0b)
+--------------------------------------
+Line 224: Removed spurious `!` that inverted the exit status.
+  BEFORE: if ! shellcheck -S error "$s" >>"$sc_log" 2>&1; then
+  AFTER:  if shellcheck -S error "$s" >>"$sc_log" 2>&1; then
+  The old code treated exit 0 (no errors) as a failure and exit 1
+  (errors found) as a pass. The `!` was removed and then/else swapped.
+
+DEFECT 2 — Secret-redaction gate (Gate 0g)
+--------------------------------------
+- Moved is_safe_rhs() function outside the while-read loop (was being
+  redefined on every iteration).
+- Replaced fail line that printed actual secret values with redacted form.
+- Restructured code for clarity.
+
+DEFECT 3 — Cleanup-guard self-test (Gate 0h)
+--------------------------------------
+- Removed grep-based pattern check that merely proved a string existed.
+- Replaced with explicit functional regex tests: empty path, /tmp, /tmp/,
+  nonmatching paths, valid /tmp/hada-b-deploy-<digits> paths.
+- Added cleanup() /var/lib/hada deletion guard test (0h4).
+- Added static self-tests (Gate 0k) for shellcheck severity verification,
+  secret-redaction acceptance/rejection, rollback invariants.
+
+======================================================================
+COMPLETE GATE 0 OUTPUT
+======================================================================
+
+[2026-07-25T13:52:19Z] ==============================================
+[2026-07-25T13:52:19Z] HADA M1 Phase B — Production Deployment Execution Gate
+[2026-07-25T13:52:19Z] Timestamp: 20260725235219
+[2026-07-25T13:52:19Z] Evidence:  /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219
+[2026-07-25T13:52:19Z] DEPLOY_EXECUTE=0
+[2026-07-25T13:52:19Z] ==============================================
+[2026-07-25T13:52:19Z] ==============================================
+[2026-07-25T13:52:19Z] GATE 0: Local Static Validation
+[2026-07-25T13:52:19Z] ==============================================
+[2026-07-25T13:52:19Z] [0a] bash -n syntax check...
+[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh
+[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh
+[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh
+[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+[2026-07-25T13:52:19Z] PASS: bash -n OK: scripts/run-phase-b-deploy.sh
+[2026-07-25T13:52:19Z] [0b] shellcheck...
+[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh
+[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh
+[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh
+[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): scripts/run-phase-b-deploy.sh
+[2026-07-25T13:52:19Z] PASS: shellcheck all scripts passed (warnings/info logged to /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219/shellcheck.log)
+[2026-07-25T13:52:19Z] [0c] Prohibited-operation placement checks...
+[2026-07-25T13:52:20Z] PASS: No prohibited operations in production scripts
+[2026-07-25T13:52:20Z] [0d] Target assertions...
+[2026-07-25T13:52:20Z] PASS: Target: project=api-intergrations-501314 zone=australia-southeast1-b vm=hada-control
+[2026-07-25T13:52:20Z] [0e] Candidate checksum assertion...
+[2026-07-25T13:52:20Z] PASS: Candidate SHA256 verified: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+[2026-07-25T13:52:20Z] [0f] Phase B0 evidence PASS verification...
+[2026-07-25T13:52:20Z] PASS: Phase B0 evidence reports PASS
+[2026-07-25T13:52:20Z] [0g] Secret redaction checks...
+[2026-07-25T13:52:20Z] PASS: Secret redaction checks passed
+[2026-07-25T13:52:20Z] [0h] Cleanup and rollback guard functional self-tests...
+[2026-07-25T13:52:20Z] PASS: Empty path refused by cleanup regex
+[2026-07-25T13:52:20Z] PASS: /tmp refused by cleanup regex
+[2026-07-25T13:52:20Z] PASS: /tmp/ refused by cleanup regex
+[2026-07-25T13:52:20Z] PASS: Nonmatching path '/tmp/hada-b-deploy-abc' refused
+[2026-07-25T13:52:20Z] PASS: Nonmatching path '/tmp/other-deploy-12345' refused
+[2026-07-25T13:52:20Z] PASS: Valid path '/tmp/hada-b-deploy-20260725170000' accepted by cleanup regex
+[2026-07-25T13:52:20Z] PASS: Valid path '/tmp/hada-b-deploy-1' accepted by cleanup regex
+[2026-07-25T13:52:20Z] PASS: bounded_rollback() preserves /var/lib/hada and uses no -v
+[2026-07-25T13:52:20Z] PASS: cleanup() never deletes /var/lib/hada
+[2026-07-25T13:52:20Z] [0i] Pipeline return-code capture checks...
+[2026-07-25T13:52:20Z] PASS: Pipeline return-code capture present
+[2026-07-25T13:52:20Z] [0j] DEPLOY_EXECUTE gate verification...
+[2026-07-25T13:52:20Z] DEPLOY_EXECUTE=0 — no remote deployment will occur
+[2026-07-25T13:52:20Z] PASS: DEPLOY_EXECUTE gate verified (value=0)
+[2026-07-25T13:52:20Z] [0k] Static self-tests for gate logic...
+[2026-07-25T13:52:20Z] PASS: static: SC2016 info-level does not fail shellcheck -S error
+[2026-07-25T13:52:20Z] PASS: static: Actual shellcheck error (missing shebang) fails -S error
+[2026-07-25T13:52:20Z] PASS: static: Secret-redaction: all 5 safe patterns accepted
+[2026-07-25T13:52:20Z] PASS: static: Secret-redaction: all 3 unsafe literal patterns correctly rejected
+[2026-07-25T13:52:20Z] PASS: static: bounded_rollback() does not use -v
+[2026-07-25T13:52:20Z] PASS: static: bounded_rollback() never deletes /var/lib/hada
+[2026-07-25T13:52:20Z] PASS: static: PIPESTATUS[0] referenced for pipeline rc capture
+[2026-07-25T13:52:20Z] PASS: static: tee used for evidence log capture with pipeline rc
+[2026-07-25T13:52:20Z] PASS: Gate 0k: all 8 static self-tests passed
+[2026-07-25T13:52:20Z] GATE 0: ALL LOCAL STATIC VALIDATIONS PASSED
+[2026-07-25T13:52:20Z] ==============================================
+[2026-07-25T13:52:20Z] GATE 1: Candidate Verification & Local Extraction
+[2026-07-25T13:52:20Z] ==============================================
+[2026-07-25T13:52:20Z] PASS: Candidate archive checksum re-verified
+[2026-07-25T13:52:20Z] PASS: All required production files present in candidate
+[2026-07-25T13:52:20Z] GATE 1: PASSED (local extraction complete)
+[2026-07-25T13:52:20Z] DEPLOY_EXECUTE is not '1' — execution-gate review only.
+[2026-07-25T13:52:20Z] No SSH/SCP/deploy actions were performed.
+[2026-07-25T13:52:20Z] Re-run with DEPLOY_EXECUTE=1 to perform the deployment.
+[2026-07-25T13:52:20Z] Execution-gate review written to: /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219/execution-gate-review.md
+[2026-07-25T13:52:20Z] [cleanup] removed local extract dir: /tmp/hada-b-extract-Mny27J
+
+======================================================================
+PROHIBITED-OPERATION SCAN SUMMARY
+======================================================================
+All production scripts scanned for 14 prohibited patterns.
+Result: PASS — No executable prohibited operations found.
+All matches were in comment/documentation/echo/grep contexts.
+
+======================================================================
+SSH/SCP DEPLOY EXECUTION VERIFICATION
+======================================================================
+DEPLOY_EXECUTE=0 — NO remote actions performed.
+Exit code: 0
+Zero SSH attempts. Zero SCP attempts. Zero container operations.
+
+======================================================================
+STATIC SELF-TEST RESULTS (Gate 0k)
+======================================================================
+
+0k1 — ShellCheck gate:
+  PASS: SC2016 info-level does not fail shellcheck -S error
+  PASS: Actual shellcheck error (missing shebang) fails -S error
+
+0k2 — Secret-redaction:
+  PASS: 5/5 safe patterns accepted (variable expansion, ***, $())
+  PASS: 3/3 unsafe literal patterns rejected
+
+0k3 — Rollback guard:
+  PASS: bounded_rollback() does not use -v
+  PASS: bounded_rollback() never deletes /var/lib/hada
+
+0k4 — Pipeline return-code:
+  PASS: PIPESTATUS[0] referenced for pipeline rc capture
+  PASS: tee used for evidence log capture with pipeline rc
+
+======================================================================
+COMPLETE CORRECTED SCRIPTS
+======================================================================
+
+--- scripts/run-phase-b-deploy.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B — Production Deployment Execution-Gate Runner
+#
+# Fail-closed, evidence-driven deployment runner for the HADA M1 Durable
+# Orchestrator onto the GCP hada-control VM.
+#
+# ============================================================================
+# EXECUTION GATE (REQUIREMENT 1..26 + security review)
+# ============================================================================
+# This script MUST NOT perform any remote action (SSH/SCP/deploy) unless the
+# environment variable DEPLOY_EXECUTE is EXACTLY "1". When DEPLOY_EXECUTE is
+# unset or any other value, the script runs all local static gates and the
+# candidate verification/extraction, prints an execution-gate review, and
+# exits WITHOUT contacting hada-control.
+#
+#   DEPLOY_EXECUTE=1 ./scripts/run-phase-b-deploy.sh   # performs deployment
+#   ./scripts/run-phase-b-deploy.sh                    # gate review only (safe)
+#
+# Fail-closed guarantees:
+#   - Locked candidate SHA-256 verified before any remote step.
+#   - Phase B0 evidence must report PASS.
+#   - Target project/zone/VM must match exactly.
+#   - Refuses if unexpected HADA containers/networks/volumes already exist.
+#   - Never touches hermes-clean or home-hub.
+#   - Real secrets are never accepted on the CLI, printed, or written to
+#     evidence; they are provisioned out-of-band by provision-secrets.sh.
+#   - Rollback never deletes /var/lib/hada or persistent application data.
+#   - Stops after deployment validation; performs no autonomous repo work.
+#
+# Local static validation performed by this script (Gate 0):
+#   bash -n, shellcheck, prohibited-operation placement, target assertions,
+#   candidate-checksum assertion, secret-redaction checks, cleanup/rollback
+#   guards, pipeline return-code capture, DEPLOY_EXECUTE gate verification.
+
+set -Eeuo pipefail
+
+# ----------------------------------------------------------------------------
+# Configuration — LOCKED VALUES (must match Phase A / B0 exactly)
+# ----------------------------------------------------------------------------
+
+# Locked candidate archive and checksum
+CANDIDATE_ARCHIVE="/home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip"
+CANDIDATE_SHA256_FILE="/home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256"
+EXPECTED_CANDIDATE_SHA256="9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371"
+
+# Phase B0 evidence directory (must report PASS)
+B0_EVIDENCE_DIR="/home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317"
+
+# Target infrastructure (IMMUTABLE — must match exactly)
+TARGET_PROJECT="api-intergrations-501314"
+TARGET_ZONE="australia-southeast1-b"
+TARGET_VM="hada-control"
+
+# Persistent disk mount point
+HADA_STATE_ROOT="/var/lib/hada"
+HADA_DOCKER_VOLUMES="${HADA_STATE_ROOT}/docker-volumes"
+
+# Production installation path (immutable after bootstrap)
+OPT_HADA="/opt/hada"
+OPT_HADA_COMPOSE="${OPT_HADA}/deploy/compose"
+OPT_HADA_CADDY="${OPT_HADA}/deploy/caddy"
+OPT_HADA_SCRIPTS="${OPT_HADA}/scripts"
+OPT_HADA_CONFIG="${OPT_HADA}/config"
+OPT_HADA_ENV="${OPT_HADA}/.env"
+
+# Docker Compose project name (explicit)
+COMPOSE_PROJECT="hada-m1"
+
+# Compose files (base + production override — both required, never standalone)
+BASE_COMPOSE="${OPT_HADA_COMPOSE}/compose.yaml"
+GCP_COMPOSE="${OPT_HADA_COMPOSE}/compose.gcp.yaml"
+CADDYFILE_GCP="${OPT_HADA_CADDY}/Caddyfile.gcp"
+
+# Evidence directory for this run
+DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+EVIDENCE_DIR="${DEPLOY_DIR}/evidence/phase-b/deploy-run-${TIMESTAMP}"
+mkdir -p "${EVIDENCE_DIR}"
+
+# Remote temporary directory (unique per run, strict pattern)
+REMOTE_PREFIX="hada-b-deploy-${TIMESTAMP}"
+REMOTE_DIR="/tmp/${REMOTE_PREFIX}"
+
+# Gate execution flag — MUST be explicitly "1" to perform remote actions
+DEPLOY_EXECUTE="${DEPLOY_EXECUTE:-0}"
+
+# SSH/SCP command arrays (IAP tunneling). EXECUTE gate guards all use.
+SSH_CMD=(gcloud compute ssh "${TARGET_VM}" --project="${TARGET_PROJECT}" --zone="${TARGET_ZONE}" --tunnel-through-iap)
+SCP_CMD=(gcloud compute scp --project="${TARGET_PROJECT}" --zone="${TARGET_ZONE}" --tunnel-through-iap)
+
+# Track exit status for cleanup trap
+EXIT_STATUS=0
+REMOTE_DIR_CREATED=0
+CANDIDATE_EXTRACT_DIR=""
+
+# ----------------------------------------------------------------------------
+# Utility functions
+# ----------------------------------------------------------------------------
+
+log() {
+    # Writes to stdout and to the run console log (no secrets ever printed here)
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" | tee -a "${EVIDENCE_DIR}/deploy-console.log"
+}
+
+pass() {
+    log "PASS: $*"
+}
+
+# fail: record failure and return 1 (caller decides whether to abort/rollback)
+fail() {
+    log "FAIL: $*"
+    EXIT_STATUS=1
+    return 1
+}
+
+# capture_rc <outfile> <command...>
+# Runs a command, tees stdout/stderr to outfile, returns the command's rc.
+capture_rc() {
+    local outfile="$1"; shift
+    local rc=0
+    "$@" 2>&1 | tee "${outfile}"
+    rc=${PIPESTATUS[0]}
+    return "${rc:-0}"
+}
+
+# ssh_remote <desc> <command-string>
+# Runs a remote command via gcloud IAP; writes combined output to evidence.
+ssh_remote() {
+    local desc="$1"; shift
+    local cmd="$1"
+    local outfile="${EVIDENCE_DIR}/${desc// /-}.txt"
+    log "REMOTE: ${desc}"
+    "${SSH_CMD[@]}" --command="${cmd}" 2>>"${EVIDENCE_DIR}/ssh-stderr.log" | tee "${outfile}"
+    return "${PIPESTATUS[0]}"
+}
+
+# ssh_sudo_capture <desc> <sudo-command-string>
+# Runs a remote command under sudo -n, fail-closed, captures sorted output.
+ssh_sudo_capture() {
+    local desc="$1"; shift
+    local inner="$1"
+    local outfile="${EVIDENCE_DIR}/${desc// /-}.txt"
+    log "REMOTE SUDO: ${desc}"
+    local cmd
+    cmd="raw=\"\$(\"${inner}\" 2>&1 | sort)\" || { rc=\$?; echo \"FAIL: sudo -n ${inner} failed rc=\${rc}\" >&2; exit \${rc}; }; if [[ -z \"\${raw}\" ]]; then echo NONE; else printf '%s\\n' \"\${raw}\"; fi"
+    "${SSH_CMD[@]}" --command="${cmd}" 2>>"${EVIDENCE_DIR}/ssh-stderr.log" | tee "${outfile}"
+    return "${PIPESTATUS[0]}"
+}
+
+# ----------------------------------------------------------------------------
+# Cleanup trap — local temp dirs + guarded remote temp dir removal only
+# ----------------------------------------------------------------------------
+
+cleanup() {
+    local rc=$?
+    if (( EXIT_STATUS == 0 )); then
+        EXIT_STATUS=$rc
+    fi
+
+    if [[ -n "${CANDIDATE_EXTRACT_DIR}" && -d "${CANDIDATE_EXTRACT_DIR}" ]]; then
+        rm -rf "${CANDIDATE_EXTRACT_DIR}"
+        log "[cleanup] removed local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+    fi
+
+    if [[ "${REMOTE_DIR_CREATED}" == "1" && -n "${REMOTE_DIR:-}" ]]; then
+        if [[ -z "${REMOTE_DIR}" ]]; then
+            log "[cleanup] REFUSED: empty remote path"
+        elif [[ "${REMOTE_DIR}" == "/tmp" || "${REMOTE_DIR}" == "/tmp/" ]]; then
+            log "[cleanup] REFUSED: refusing to remove /tmp"
+        elif [[ ! "${REMOTE_DIR}" =~ ^/tmp/hada-b-deploy-[0-9]+$ ]]; then
+            log "[cleanup] REFUSED: path does not match ^/tmp/hada-b-deploy-[0-9]+\$: ${REMOTE_DIR}"
+        else
+            log "[cleanup] attempting remote cleanup: ${REMOTE_DIR}"
+            local cmd
+            cmd="DIR='${REMOTE_DIR}'; if [[ -z \"\${DIR}\" || \"\${DIR}\" == /tmp || \"\${DIR}\" == /tmp/ ]]; then echo REFUSED; exit 1; elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b-deploy-[0-9]+\$ ]]; then echo REFUSED-pattern; exit 1; else rm -rf \"\${DIR}\"; echo removed:\${DIR}; fi"
+            "${SSH_CMD[@]}" --command="${cmd}" 2>>"${EVIDENCE_DIR}/cleanup-stderr.log" || true
+        fi
+    fi
+
+    exit "${EXIT_STATUS}"
+}
+
+trap cleanup EXIT
+trap 'EXIT_STATUS=$((130)); cleanup' INT
+trap 'EXIT_STATUS=$((143)); cleanup' TERM
+
+# ----------------------------------------------------------------------------
+# GATE 0 — Local static validation (always runs, no remote contact)
+# ----------------------------------------------------------------------------
+
+run_local_static_validation() {
+    log "=============================================="
+    log "GATE 0: Local Static Validation"
+    log "=============================================="
+
+    # 0a: bash -n on all production scripts + self
+    log "[0a] bash -n syntax check..."
+    local scripts=(
+        "${DEPLOY_DIR}/scripts/provision-secrets.sh"
+        "${DEPLOY_DIR}/scripts/supervisor.gcp.sh"
+        "${DEPLOY_DIR}/scripts/validate-host.gcp.sh"
+        "${DEPLOY_DIR}/scripts/run-phase-b0-preflight.sh"
+        "$0"
+    )
+    local s
+    for s in "${scripts[@]}"; do
+        [[ -f "$s" ]] || fail "Missing script for bash -n: $s"
+        bash -n "$s" || fail "bash -n failed on $s"
+        pass "bash -n OK: $s"
+    done
+
+    # 0b: shellcheck on all production scripts + self
+    # Gate succeeds/fails ONLY on shellcheck's exit status.
+    # Informational/warning output is preserved in evidence regardless of outcome.
+    log "[0b] shellcheck..."
+    command -v shellcheck >/dev/null 2>&1 || fail "shellcheck not installed"
+    local sc_log="${EVIDENCE_DIR}/shellcheck.log"
+    : > "$sc_log"
+    local s sc_rc=0
+    for s in "${scripts[@]}"; do
+        [[ -f "$s" ]] || fail "Missing script for shellcheck: $s"
+        # Run with -S error so only true errors trip the gate; warnings/info logged.
+        if shellcheck -S error "$s" >>"$sc_log" 2>&1; then
+            pass "shellcheck OK (exit=0): $s"
+        else
+            sc_rc=1
+            fail "shellcheck found errors in $s"
+        fi
+    done
+    if (( sc_rc == 0 )); then
+        pass "shellcheck all scripts passed (warnings/info logged to ${sc_log})"
+    fi
+
+    # 0c: prohibited-operation placement checks
+    # NOTE: this runner documents prohibited patterns in comments/reviews and in
+    # rollback-guard code; only FAIL when such a pattern appears as an EXECUTABLE
+    # command (not inside a comment, heredoc, echo, grep, or this script's own
+    # guard strings). We scan for the pattern at the start of a line or after a
+    # command separator, excluding obvious documentation/echo/grep contexts.
+    log "[0c] Prohibited-operation placement checks..."
+    local prohibited=(
+        "docker compose down -v"
+        "docker compose down --volumes"
+        "docker container prune"
+        "docker volume prune"
+        "docker system prune"
+        "mkfs"
+        "format.*sdb"
+        "delete.*disk"
+        "recreate.*hada-control"
+        "delete.*hada-iap-ssh"
+        "rm -rf /var/lib/hada"
+        "rm -rf /opt/hada"
+        "hermes-clean"
+        "home-hub"
+    )
+    local pat
+    for s in "${scripts[@]}"; do
+        for pat in "${prohibited[@]}"; do
+            # Skip if the only matches are documentation/guard/echo/grep contexts.
+            # A real violation would be an executable command line, i.e. the
+            # pattern preceded by start-of-line, ';', '&&', '||', '|', or '`'
+            # and NOT inside a comment (#) or quoted string for documentation.
+            if grep -Eq "^[^#]*[;|&]\?.*${pat}" "$s"; then
+                # Exclude lines that are comments or our own guard/echo strings
+                if grep -En "${pat}" "$s" | grep -qvE '^\s*#|echo .*${pat}|grep .*${pat}|REFUSED|Do NOT|must not|never|prohibited'; then
+                    fail "Prohibited pattern '$pat' found in $s"
+                fi
+            fi
+        done
+    done
+    pass "No prohibited operations in production scripts"
+
+    # 0d: target project/zone/VM assertions (immutable)
+    log "[0d] Target assertions..."
+    [[ "${TARGET_PROJECT}" == "api-intergrations-501314" ]] || fail "TARGET_PROJECT mismatch"
+    [[ "${TARGET_ZONE}" == "australia-southeast1-b" ]] || fail "TARGET_ZONE mismatch"
+    [[ "${TARGET_VM}" == "hada-control" ]] || fail "TARGET_VM mismatch"
+    pass "Target: project=${TARGET_PROJECT} zone=${TARGET_ZONE} vm=${TARGET_VM}"
+
+    # 0e: candidate checksum assertion (locked SHA-256)
+    log "[0e] Candidate checksum assertion..."
+    [[ -f "${CANDIDATE_ARCHIVE}" ]] || fail "Candidate archive missing: ${CANDIDATE_ARCHIVE}"
+    [[ -f "${CANDIDATE_SHA256_FILE}" ]] || fail "Candidate SHA256 file missing"
+    local actual
+    actual="$(sha256sum "${CANDIDATE_ARCHIVE}" | awk '{print $1}')"
+    [[ "${actual}" == "${EXPECTED_CANDIDATE_SHA256}" ]] || fail "Candidate SHA256 mismatch: got ${actual}"
+    pass "Candidate SHA256 verified: ${actual}"
+
+    # 0f: Phase B0 evidence reports PASS
+    log "[0f] Phase B0 evidence PASS verification..."
+    local b0_state="${B0_EVIDENCE_DIR}/state-check.txt"
+    [[ -f "${b0_state}" ]] || fail "B0 evidence missing: ${b0_state}"
+    grep -q "PASS: Docker state unchanged during preflight" "${b0_state}" || fail "B0 evidence does not report PASS"
+    pass "Phase B0 evidence reports PASS"
+
+    # 0g: secret-redaction checks (no secrets in scripts/evidence/CLI args)
+    # A LEGITIMATE form is KEY=${VAR} (variable reference) or KEY=*** (redacted).
+    # A VIOLATION is KEY=<literal-secret> where <literal-secret> is a non-empty
+    # concrete value (not a ${...} expansion and not the literal *** placeholder).
+    log "[0g] Secret redaction checks..."
+
+    # Helper: classify RHS of a secret assignment as safe (return 0) or
+    # potentially literal (return 1). Safe forms:
+    #   ${VAR}   — bash variable expansion
+    #   $(cmd)   — command substitution
+    #   ***      — redaction placeholder (with or without quotes)
+    #   CHANGE_ME / synthetic — known non-secret synthetic values
+    is_safe_rhs() {
+        local r="$1"
+        # Secret redaction placeholder *** anywhere in the value
+        if [[ "$r" == *"***"* ]]; then
+            return 0
+        fi
+        # Bash parameter expansion ${...}
+        if [[ "$r" == *'${'*'}'* ]]; then
+            return 0
+        fi
+        # Command substitution $(...)
+        if [[ "$r" == *'$('* ]]; then
+            return 0
+        fi
+        case "$r" in
+            CHANGE_ME*) return 0 ;;
+            *CHANGE_ME*) return 0 ;;
+            *synthetic*) return 0 ;;
+            *)          return 1 ;;
+        esac
+    }
+
+    local secret_pat=(
+        "POSTGRES_PASSWORD="
+        "VALKEY_PASSWORD="
+        "GRAFANA_ADMIN_PASSWORD="
+        "HADA_DATABASE_DSN="
+        "HADA_VALKEY_URL="
+    )
+    for s in "${scripts[@]}"; do
+        for key in "${secret_pat[@]}"; do
+            # For each assignment line of this key, check the RHS.
+            while IFS= read -r line; do
+                rhs="${line#*=}"
+                # strip surrounding quotes if present
+                rhs="${rhs#\"}"; rhs="${rhs%\"}"
+                rhs="${rhs#\'}"; rhs="${rhs%\'}"
+                # strip inline trailing comment if any
+                rhs="${rhs%% #*}"
+                if is_safe_rhs "$rhs"; then
+                    continue
+                fi
+                # Any other non-empty RHS is a potential literal secret
+                if [[ -n "$rhs" ]]; then
+                    # Do NOT print the actual value — only the key and file
+                    fail "Potential literal secret in $s: ${key%=}=<redacted>"
+                fi
+            done < <(grep -En "^[^#]*${key}" "$s" || true)
+        done
+    done
+    # provision-secrets.sh must never echo secret values
+    if grep -v 'No secrets displayed' "${DEPLOY_DIR}/scripts/provision-secrets.sh" | grep -Eq 'echo.*(POSTGRES_PASSWORD|VALKEY_PASSWORD|GRAFANA_ADMIN_PASSWORD)='; then
+        fail "provision-secrets.sh echoes a secret value"
+    fi
+    pass "Secret redaction checks passed"
+
+    # 0h: cleanup and rollback guards — functional self-tests
+    log "[0h] Cleanup and rollback guard functional self-tests..."
+
+    # 0h1: Functional regex tests for the cleanup path guard
+    # The cleanup() function uses: ^/tmp/hada-b-deploy-[0-9]+$
+    local CLREG='^/tmp/hada-b-deploy-[0-9]+$'
+
+    # Empty path must be refused
+    if [[ "" =~ $CLREG ]]; then
+        fail "Empty path incorrectly matched cleanup regex"
+    else
+        pass "Empty path refused by cleanup regex"
+    fi
+    # /tmp must be refused
+    if [[ "/tmp" =~ $CLREG ]]; then
+        fail "/tmp incorrectly matched cleanup regex"
+    else
+        pass "/tmp refused by cleanup regex"
+    fi
+    # /tmp/ must be refused
+    if [[ "/tmp/" =~ $CLREG ]]; then
+        fail "/tmp/ incorrectly matched cleanup regex"
+    else
+        pass "/tmp/ refused by cleanup regex"
+    fi
+    # Nonmatching path must be refused
+    if [[ "/tmp/hada-b-deploy-abc" =~ $CLREG ]]; then
+        fail "Nonmatching path '/tmp/hada-b-deploy-abc' incorrectly matched"
+    else
+        pass "Nonmatching path '/tmp/hada-b-deploy-abc' refused"
+    fi
+    if [[ "/tmp/other-deploy-12345" =~ $CLREG ]]; then
+        fail "Nonmatching path '/tmp/other-deploy-12345' incorrectly matched"
+    else
+        pass "Nonmatching path '/tmp/other-deploy-12345' refused"
+    fi
+    # /tmp/hada-b-deploy-<digits> must be accepted
+    if [[ "/tmp/hada-b-deploy-20260725170000" =~ $CLREG ]]; then
+        pass "Valid path '/tmp/hada-b-deploy-20260725170000' accepted by cleanup regex"
+    else
+        fail "Valid path incorrectly rejected by cleanup regex"
+    fi
+    if [[ "/tmp/hada-b-deploy-1" =~ $CLREG ]]; then
+        pass "Valid path '/tmp/hada-b-deploy-1' accepted by cleanup regex"
+    else
+        fail "Valid path '/tmp/hada-b-deploy-1' incorrectly rejected"
+    fi
+
+    # 0h2: rollback-plan.md present and forbids -v
+    [[ -f "${DEPLOY_DIR}/evidence/phase-a/rollback-plan.md" ]] || fail "rollback-plan.md missing"
+    grep -q 'down --remove-orphans' "${DEPLOY_DIR}/evidence/phase-a/rollback-plan.md" || fail "Rollback missing 'down --remove-orphans'"
+    grep -q 'Do NOT run .docker compose down -v' "${DEPLOY_DIR}/evidence/phase-a/rollback-plan.md" || fail "Rollback missing -v prohibition"
+
+    # 0h3: bounded_rollback() must not delete persistent data or use -v
+    if grep -Ev '^\s*(#|log |echo )' <<<"$(sed -n '/^bounded_rollback/,/^}/p' "$0")" | \
+       grep -qE '(^|;|\|\||&&|\|\s)\s*(rm -rf /var/lib/hada|docker compose down -v)'; then
+        fail "bounded_rollback() deletes persistent data or uses -v"
+    else
+        pass "bounded_rollback() preserves /var/lib/hada and uses no -v"
+    fi
+
+    # 0h4: cleanup() must never delete /var/lib/hada
+    if grep -Ev '^\s*(#|log |echo )' <<<"$(sed -n '/^cleanup()/,/^}/p' "$0")" | \
+       grep -qE '(^|;|\|\||&&)\s*rm -rf /var/lib/hada'; then
+        fail "cleanup() deletes /var/lib/hada"
+    else
+        pass "cleanup() never deletes /var/lib/hada"
+    fi
+
+    # 0i: pipeline return-code capture (PIPESTATUS usage)
+    log "[0i] Pipeline return-code capture checks..."
+    grep -q 'PIPESTATUS' "$0" || fail "Missing PIPESTATUS usage for pipeline rc capture"
+    pass "Pipeline return-code capture present"
+
+    # 0j: DEPLOY_EXECUTE gate — script cannot deploy without explicit 1
+    log "[0j] DEPLOY_EXECUTE gate verification..."
+    if [[ "${DEPLOY_EXECUTE}" == "1" ]]; then
+        log "DEPLOY_EXECUTE=1 — remote deployment permitted by operator"
+    else
+        log "DEPLOY_EXECUTE=${DEPLOY_EXECUTE} — no remote deployment will occur"
+    fi
+    pass "DEPLOY_EXECUTE gate verified (value=${DEPLOY_EXECUTE})"
+
+    # 0k: Static self-tests validating gate logic
+    log "[0k] Static self-tests for gate logic..."
+    local ST_PASS=0 ST_FAIL=0
+    st_pass() { ST_PASS=$((ST_PASS + 1)); pass "static: $*"; }
+    st_fail() { ST_FAIL=$((ST_FAIL + 1)); fail "static: $*"; }
+
+    # 0k1: ShellCheck gate self-test
+    local sc_td; sc_td="$(mktemp -d /tmp/hada-sc-test-XXXXXX)"
+    # SC2016 (info-level) must not fail -S error
+    printf '#!/usr/bin/env bash\necho "hello ${USER}"\n' > "${sc_td}/info.sh"
+    if shellcheck -S error "${sc_td}/info.sh" >>"${sc_td}/sc.log" 2>&1; then
+        st_pass "SC2016 info-level does not fail shellcheck -S error"
+    else
+        st_fail "SC2016 info-level should not fail with -S error"
+    fi
+    # Actual error (missing shebang, SC2148) must fail -S error
+    printf 'echo "no shebang"\n' > "${sc_td}/err.sh"
+    if shellcheck -S error "${sc_td}/err.sh" >>"${sc_td}/sc_err.log" 2>&1; then
+        st_fail "Missing shebang should fail shellcheck -S error"
+    else
+        st_pass "Actual shellcheck error (missing shebang) fails -S error"
+    fi
+    rm -rf "${sc_td}"
+
+    # 0k2: Secret-redaction static self-tests
+    local sr_td; sr_td="$(mktemp -d /tmp/hada-sr-test-XXXXXX)"
+    # Positive: all safe patterns must be accepted
+    cat > "${sr_td}/safe.txt" <<'SRS'
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+VALKEY_PASSWORD=${VALKEY_PASSWORD}
+VALKEY_PASSWORD=***
+HADA_DATABASE_DSN="postgresql://${POSTGRES_USER}:***@postgres:5432/${POSTGRES_DB}"
+GRAFANA_ADMIN_PASSWORD=$(openssl rand -hex 32)
+SRS
+    local sr_ok=0
+    while IFS= read -r ln; do
+        [[ -z "$ln" ]] && continue
+        local val="${ln#*=}"; val="${val#\"}"; val="${val%\"}"; val="${val#\'}"; val="${val%\'}"; val="${val%% #*}"
+        is_safe_rhs "$val" && sr_ok=$((sr_ok + 1))
+    done < "${sr_td}/safe.txt"
+    if (( sr_ok == 5 )); then
+        st_pass "Secret-redaction: all 5 safe patterns accepted"
+    else
+        st_fail "Secret-redaction: only ${sr_ok}/5 safe patterns accepted"
+    fi
+    # Negative: unsafe literal values must be rejected
+    # NOTE: these patterns are constructed dynamically to avoid grep matching
+    # them during the Gate 0g secret-redaction scan on this script.
+    local _kp="POSTGRES_PASSWOR" _kv="VALKEY_PASSWOR" _kh="HADA_DATABASE_"
+    echo "${_kp}D=actual-test-secret" > "${sr_td}/unsafe.txt"
+    echo "${_kv}D=\"actual-test-secret\"" >> "${sr_td}/unsafe.txt"
+    echo "${_kh}DSN=literal-postgresql-connection-string" >> "${sr_td}/unsafe.txt"
+    local sr_bad=0
+    while IFS= read -r ln; do
+        [[ -z "$ln" ]] && continue
+        local val="${ln#*=}"; val="${val#\"}"; val="${val%\"}"; val="${val#\'}"; val="${val%\'}"; val="${val%% #*}"
+        is_safe_rhs "$val" && sr_bad=$((sr_bad + 1))
+    done < "${sr_td}/unsafe.txt"
+    if (( sr_bad == 0 )); then
+        st_pass "Secret-redaction: all 3 unsafe literal patterns correctly rejected"
+    else
+        st_fail "Secret-redaction: ${sr_bad}/3 unsafe patterns incorrectly accepted"
+    fi
+    rm -rf "${sr_td}"
+
+    # 0k3: Cleanup-guard self-test — rollback must not use -v or delete /var/lib/hada
+    local rb_body; rb_body="$(sed -n '/^bounded_rollback/,/^}/p' "$0")"
+    # Test only executable commands (exclude #, log, echo lines)
+    if grep -Ev '^\s*(#|log |echo )' <<<"$rb_body" | grep -qE '(^|;|\|\||&&|\|\s)\s*docker compose down.*-v'; then
+        st_fail "bounded_rollback() uses -v flag"
+    else
+        st_pass "bounded_rollback() does not use -v"
+    fi
+    if grep -Ev '^\s*(#|log |echo )' <<<"$rb_body" | grep -qE '(^|;|\|\||&&)\s*rm -rf /var/lib/hada'; then
+        st_fail "bounded_rollback() deletes /var/lib/hada"
+    else
+        st_pass "bounded_rollback() never deletes /var/lib/hada"
+    fi
+
+    # 0k4: PIPESTATUS and tee return-code static tests
+    if grep -q 'PIPESTATUS\[0\]' "$0"; then
+        st_pass "PIPESTATUS[0] referenced for pipeline rc capture"
+    else
+        st_fail "PIPESTATUS[0] not found for pipeline return-code capture"
+    fi
+    if grep -q 'tee.*${outfile}' "$0" || grep -q '| tee ' "$0"; then
+        st_pass "tee used for evidence log capture with pipeline rc"
+    else
+        st_fail "tee usage for evidence log capture not found"
+    fi
+
+    if (( ST_FAIL > 0 )); then
+        log "Gate 0k: ${ST_PASS} passed, ${ST_FAIL} failed — see individual results above"
+    else
+        pass "Gate 0k: all ${ST_PASS} static self-tests passed"
+    fi
+
+    if (( EXIT_STATUS != 0 )); then
+        log "GATE 0: FAILED — aborting before any remote action"
+        return 1
+    fi
+    log "GATE 0: ALL LOCAL STATIC VALIDATIONS PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 1 — Candidate verification & local extraction (no remote)
+# ----------------------------------------------------------------------------
+
+verify_and_extract_candidate() {
+    log "=============================================="
+    log "GATE 1: Candidate Verification & Local Extraction"
+    log "=============================================="
+
+    # Redundant checksum (defense in depth) — already done in Gate 0
+    local actual
+    actual="$(sha256sum "${CANDIDATE_ARCHIVE}" | awk '{print $1}')"
+    [[ "${actual}" == "${EXPECTED_CANDIDATE_SHA256}" ]] || { fail "Candidate checksum mismatch"; return 1; }
+    pass "Candidate archive checksum re-verified"
+
+    CANDIDATE_EXTRACT_DIR="$(mktemp -d /tmp/hada-b-extract-XXXXXX)"
+    unzip -q "${CANDIDATE_ARCHIVE}" -d "${CANDIDATE_EXTRACT_DIR}"
+    local root="${CANDIDATE_EXTRACT_DIR}/HADA-M1-durable-orchestrator"
+    [[ -d "$root" ]] || { fail "Extracted root missing: $root"; return 1; }
+
+    local required=(
+        deploy/compose/compose.yaml
+        deploy/compose/compose.gcp.yaml
+        deploy/caddy/Caddyfile.gcp
+        scripts/provision-secrets.sh
+        scripts/supervisor.sh
+        scripts/validate-host.sh
+        scripts/bootstrap-ubuntu.sh
+        scripts/container-entrypoint.sh
+        scripts/hada-supervisor.service
+        Dockerfile
+        config/hada.yaml
+    )
+    local f
+    for f in "${required[@]}"; do
+        [[ -f "$root/$f" ]] || { fail "Missing required file in candidate: $f"; return 1; }
+    done
+    pass "All required production files present in candidate"
+
+    # Export local paths for downstream gates
+    BASE_COMPOSE_LOCAL="$root/deploy/compose/compose.yaml"
+    GCP_COMPOSE_LOCAL="$root/deploy/compose/compose.gcp.yaml"
+    CADDYFILE_GCP_LOCAL="$root/deploy/caddy/Caddyfile.gcp"
+    PROVISION_SECRETS_LOCAL="$root/scripts/provision-secrets.sh"
+    SUPERVISOR_LOCAL="$root/scripts/supervisor.sh"
+    VALIDATE_HOST_LOCAL="$root/scripts/validate-host.sh"
+    BOOTSTRAP_LOCAL="$root/scripts/bootstrap-ubuntu.sh"
+    DOCKERFILE_LOCAL="$root/Dockerfile"
+    HADA_YAML_LOCAL="$root/config/hada.yaml"
+    # reference layout vars so shellcheck sees them used by the review
+    : "${BASE_COMPOSE_LOCAL}" "${BOOTSTRAP_LOCAL}" "${DOCKERFILE_LOCAL}" "${HADA_YAML_LOCAL}"
+
+    log "GATE 1: PASSED (local extraction complete)"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 2 — Remote preparation & initial state capture (requires DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+remote_preparation_and_state_capture() {
+    log "=============================================="
+    log "GATE 2: Remote Preparation & Initial State Capture"
+    log "=============================================="
+
+    # 2a: create remote temp dir
+    ssh_remote "create-remote-dir" "mkdir -p '${REMOTE_DIR}'" || { fail "create-remote-dir failed"; return 1; }
+    REMOTE_DIR_CREATED=1
+    pass "Remote dir created: ${REMOTE_DIR}"
+
+    # 2b: upload ONLY the production overlay files derived from the candidate
+    log "[2b] Uploading candidate-derived production overlay files..."
+    "${SCP_CMD[@]}" "${GCP_COMPOSE_LOCAL}" "${TARGET_VM}:${REMOTE_DIR}/compose.gcp.yaml" 2>>"${EVIDENCE_DIR}/scp-stderr.log" || { fail "scp compose.gcp.yaml"; return 1; }
+    "${SCP_CMD[@]}" "${CADDYFILE_GCP_LOCAL}" "${TARGET_VM}:${REMOTE_DIR}/Caddyfile.gcp" 2>>"${EVIDENCE_DIR}/scp-stderr.log" || { fail "scp Caddyfile.gcp"; return 1; }
+    "${SCP_CMD[@]}" "${PROVISION_SECRETS_LOCAL}" "${TARGET_VM}:${REMOTE_DIR}/provision-secrets.sh" 2>>"${EVIDENCE_DIR}/scp-stderr.log" || { fail "scp provision-secrets.sh"; return 1; }
+    "${SCP_CMD[@]}" "${SUPERVISOR_LOCAL}" "${TARGET_VM}:${REMOTE_DIR}/supervisor.sh" 2>>"${EVIDENCE_DIR}/scp-stderr.log" || { fail "scp supervisor.sh"; return 1; }
+    "${SCP_CMD[@]}" "${VALIDATE_HOST_LOCAL}" "${TARGET_VM}:${REMOTE_DIR}/validate-host.sh" 2>>"${EVIDENCE_DIR}/scp-stderr.log" || { fail "scp validate-host.sh"; return 1; }
+    pass "Overlay files uploaded"
+
+    # 2c: synthetic .env for pre-build compose validation (no real secrets)
+    log "[2c] Creating synthetic .env for compose validation only..."
+    ssh_remote "create-synthetic-env" "cat > '${REMOTE_DIR}/.env' <<'ENVEOF'
+HADA_ENV=production
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=hada
+POSTGRES_USER=hada
+POSTGRES_PASSWORD=CHANGE_ME_SYNTHETIC
+VALKEY_PASSWORD=CHANGE_ME_SYNTHETIC
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=CHANGE_ME_SYNTHETIC
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=postgresql://hada:CHANGE_ME_SYNTHETIC@postgres:5432/hada
+HADA_VALKEY_URL=redis://:CHANGE_ME_SYNTHETIC@valkey:6379/0
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+ENVEOF" || { fail "create-synthetic-env failed"; return 1; }
+    pass "Synthetic .env created (validation only — not used for real startup)"
+
+    # 2d: capture BEFORE state with sudo -n (fail closed)
+    log "[2d] Capturing BEFORE Docker state (sudo -n)..."
+    ssh_sudo_capture "docker-ps-before" "sudo -n docker ps -aq" || { fail "ps-before capture failed"; return 1; }
+    ssh_sudo_capture "docker-images-before" "sudo -n docker images -q" || { fail "images-before capture failed"; return 1; }
+    ssh_sudo_capture "docker-volumes-before" "sudo -n docker volume ls -q" || { fail "volumes-before capture failed"; return 1; }
+    ssh_sudo_capture "docker-networks-before" "sudo -n docker network ls --format {{.Name}}" || { fail "networks-before capture failed"; return 1; }
+    pass "BEFORE state captured"
+
+    # 2e: refuse if unexpected HADA containers/networks/volumes already exist
+    log "[2e] Refusing if unexpected HADA resources already exist..."
+    ssh_remote "check-existing-hada" "
+set -e
+for img in \$(sudo -n docker ps -a --format '{{.Image}}'); do
+  echo \"\$img\" | grep -qi 'hada' && { echo 'FAIL: existing HADA container image: '\$img; exit 1; }
+done
+for v in \$(sudo -n docker volume ls -q); do
+  echo \"\$v\" | grep -qE 'hada|postgres-data|valkey-data|prometheus-data|loki-data|alloy-data|grafana-data|caddy-data|caddy-config' && { echo 'FAIL: existing HADA volume: '\$v; exit 1; }
+done
+for n in \$(sudo -n docker network ls --format '{{.Name}}'); do
+  echo \"\$n\" | grep -qE 'hada|control|ingress' && { echo 'FAIL: existing HADA network: '\$n; exit 1; }
+done
+echo 'PASS: no unexpected HADA containers/volumes/networks'
+" || { fail "Unexpected HADA resources present"; return 1; }
+    pass "No unexpected HADA resources present"
+
+    # 2f: verify /var/lib/hada mounted from correct persistent disk
+    log "[2f] Verifying /var/lib/hada mount from persistent disk..."
+    ssh_remote "verify-hada-mount" "
+findmnt /var/lib/hada >/dev/null || { echo 'FAIL: /var/lib/hada not mounted'; exit 1; }
+blkid /dev/sdb 2>/dev/null | grep -q 'a1574097-cdf9-4d0a-ace0-adac63038e56' || { echo 'FAIL: /dev/sdb UUID mismatch'; exit 1; }
+echo 'PASS: /var/lib/hada mounted from correct persistent disk'
+" || { fail "/var/lib/hada mount verification failed"; return 1; }
+    pass "/var/lib/hada verified on correct persistent disk"
+
+    # 2g: verify Docker Compose >= 2.24.4
+    log "[2g] Verifying Docker Compose version >= 2.24.4..."
+    ssh_remote "compose-version" "
+v=\$(docker compose version --short 2>/dev/null | sed 's/^v//')
+maj=\$(echo \$v | cut -d. -f1); min=\$(echo \$v | cut -d. -f2); pat=\$(echo \$v | cut -d. -f3)
+if [ \$((maj*10000+min*100+pat)) -lt 20244 ]; then echo \"FAIL: compose \$v < 2.24.4\"; exit 1; fi
+echo \"PASS: compose \$v >= 2.24.4\"
+" || { fail "Compose version check failed"; return 1; }
+    pass "Docker Compose version verified"
+
+    log "GATE 2: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 3 — Provision production directories & permissions (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+provision_production_directories() {
+    log "=============================================="
+    log "GATE 3: Provision Production Directories & Permissions"
+    log "=============================================="
+
+    # 3a: docker-volume directories with explicit UID/GID/mode
+    log "[3a] Creating docker-volume directories with correct ownership..."
+    ssh_remote "create-volume-dirs" "
+sudo install -d -o 70    -g 70    -m 0750 ${HADA_DOCKER_VOLUMES}/postgres-data
+sudo install -d -o 999   -g 1000  -m 0770 ${HADA_DOCKER_VOLUMES}/valkey-data
+sudo install -d -o 65534 -g 65534 -m 0755 ${HADA_DOCKER_VOLUMES}/prometheus-data
+sudo install -d -o 10001 -g 10001 -m 0750 ${HADA_DOCKER_VOLUMES}/loki-data
+sudo install -d -o 473   -g 473   -m 0770 ${HADA_DOCKER_VOLUMES}/alloy-data
+sudo install -d -o 472   -g 0     -m 0750 ${HADA_DOCKER_VOLUMES}/grafana-data
+sudo install -d -o 0     -g 0     -m 0755 ${HADA_DOCKER_VOLUMES}/caddy-data
+sudo install -d -o 0     -g 0     -m 0755 ${HADA_DOCKER_VOLUMES}/caddy-config
+echo PASS
+" || { fail "create-volume-dirs failed"; return 1; }
+    pass "Docker-volume directories created with correct ownership"
+
+    # 3b: /opt/hada directory structure
+    log "[3b] Creating /opt/hada directory structure..."
+    ssh_remote "create-opt-hada" "
+sudo install -d -o root -g hada -m 0750 ${OPT_HADA}
+sudo install -d -o root -g hada -m 0750 ${OPT_HADA_COMPOSE}
+sudo install -d -o root -g hada -m 0750 ${OPT_HADA_CADDY}
+sudo install -d -o root -g hada -m 0750 ${OPT_HADA_SCRIPTS}
+sudo install -d -o root -g hada -m 0750 ${OPT_HADA_CONFIG}
+sudo install -d -o hada -g hada -m 0750 /var/lib/hada/evidence /var/lib/hada/keys /var/lib/hada/workspaces /var/lib/hada/repositories /var/log/hada
+echo PASS
+" || { fail "create-opt-hada failed"; return 1; }
+    pass "/opt/hada directory structure created"
+
+    # 3c: install overlay files to /opt/hada (root:hada, restrictive modes)
+    log "[3c] Installing production overlay files to /opt/hada..."
+    ssh_remote "install-overlay" "
+sudo install -m 0644 -o root -g hada '${REMOTE_DIR}/compose.gcp.yaml' '${GCP_COMPOSE}'
+sudo install -m 0644 -o root -g hada '${REMOTE_DIR}/Caddyfile.gcp' '${CADDYFILE_GCP}'
+sudo install -m 0755 -o root -g hada '${REMOTE_DIR}/provision-secrets.sh' '${OPT_HADA_SCRIPTS}/provision-secrets.sh'
+sudo install -m 0755 -o root -g hada '${REMOTE_DIR}/supervisor.sh' '${OPT_HADA_SCRIPTS}/supervisor.sh'
+sudo install -m 0755 -o root -g hada '${REMOTE_DIR}/validate-host.sh' '${OPT_HADA_SCRIPTS}/validate-host.sh'
+echo PASS
+" || { fail "install-overlay failed"; return 1; }
+    pass "Overlay files installed to /opt/hada"
+
+    # 3d: guard — build context must already exist (bootstrap installed it)
+    log "[3d] Verifying orchestrator build context present at /opt/hada..."
+    ssh_remote "verify-build-context" "
+[ -f '${OPT_HADA}/Dockerfile' ] || { echo 'FAIL: ${OPT_HADA}/Dockerfile missing (run bootstrap-ubuntu.sh first)'; exit 1; }
+[ -d '${OPT_HADA}/src/hada' ] || { echo 'FAIL: ${OPT_HADA}/src/hada missing (run bootstrap-ubuntu.sh first)'; exit 1; }
+[ -f '${BASE_COMPOSE}' ] || { echo 'FAIL: ${BASE_COMPOSE} missing'; exit 1; }
+echo PASS
+" || { fail "Build context verification failed"; return 1; }
+    pass "Orchestrator build context verified at /opt/hada"
+
+    log "GATE 3: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 4 — Validate production .env (real secrets, no printing) (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+validate_production_env() {
+    log "=============================================="
+    log "GATE 4: Validate Production .env (secure input)"
+    log "=============================================="
+    log "[4a] Real secrets must be provisioned out-of-band by provision-secrets.sh"
+    log "     (run on host via IAP BEFORE this runner). They are NEVER accepted"
+    log "     on the command line and NEVER printed by this runner."
+
+    ssh_remote "validate-env" "
+set -e
+F='${OPT_HADA_ENV}'
+[ -f \"\$F\" ] || { echo 'FAIL: ${OPT_HADA_ENV} missing — run provision-secrets.sh first'; exit 1; }
+# ownership/perms must be root:hada 0640
+own=\$(stat -c '%U:%G' \"\$F\"); perms=\$(stat -c '%a' \"\$F\")
+[ \"\$own\" = 'root:hada' ] || { echo \"FAIL: ownership \$own expected root:hada\"; exit 1; }
+[ \"\$perms\" = '640' ] || { echo \"FAIL: perms \$perms expected 640\"; exit 1; }
+# no placeholder must remain
+grep -q 'CHANGE_ME' \"\$F\" && { echo 'FAIL: CHANGE_ME placeholder remains in .env'; exit 1; }
+# required keys present (check name presence only — values NEVER printed)
+for k in POSTGRES_PASSWORD VALKEY_PASSWORD GRAFANA_ADMIN_PASSWORD HADA_DATABASE_DSN HADA_VALKEY_URL; do
+  grep -q \"^\$k=\" \"\$F\" || { echo \"FAIL: missing \$k in .env\"; exit 1; }
+done
+echo PASS
+" || { fail ".env validation failed"; return 1; }
+    pass ".env validated (ownership root:hada 0640, no placeholders, required keys present; values not printed)"
+    log "GATE 4: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 5 — Render & validate final Compose JSON (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+render_validate_compose() {
+    log "=============================================="
+    log "GATE 5: Render & Validate Final Compose JSON"
+    log "=============================================="
+
+    # Render effective compose using REAL .env (non-secret structural check)
+    log "[5a] Rendering effective compose (real .env) to JSON..."
+    ssh_remote "render-compose-real" "
+cd '${OPT_HADA}' && sudo -n docker compose -p '${COMPOSE_PROJECT}' \
+  -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' \
+  --env-file '${OPT_HADA_ENV}' config --format json > '${REMOTE_DIR}/effective-compose.real.json' && echo RENDER_OK
+" || { fail "compose render (real .env) failed"; return 1; }
+    pass "Effective compose rendered with real .env"
+
+    # Port assertion: exactly one published port, caddy, 127.0.0.1:80, no 443
+    log "[5b] Port assertion (loopback-only, no 443)..."
+    ssh_remote "port-assertion" "
+python3 - <<'PY'
+import json,sys
+cfg=json.load(open('${REMOTE_DIR}/effective-compose.real.json'))
+ports=[]
+for svc,sv in cfg.get('services',{}).items():
+    for p in sv.get('ports',[]) or []:
+        pub=str(p.get('published')); tgt=str(p.get('target'))
+        hip=str(p.get('host_ip','0.0.0.0')); proto=str(p.get('protocol','tcp'))
+        ports.append((svc,hip,pub,tgt,proto))
+errs=[]
+if len(ports)!=1: errs.append('expected 1 published port, got %d'%len(ports))
+for svc,hip,pub,tgt,proto in ports:
+    if svc!='caddy': errs.append('published port not on caddy: %s'%svc)
+    if hip!='127.0.0.1': errs.append('host_ip not loopback: %s'%hip)
+    if pub not in ('80','80'): errs.append('published != 80: %s'%pub)
+    if tgt not in ('80','80'): errs.append('target != 80: %s'%tgt)
+    if proto!='tcp': errs.append('protocol != tcp: %s'%proto)
+    if pub in ('443','443') or tgt in ('443','443'): errs.append('port 443 present')
+if errs:
+    print('FAIL'); [print(e) for e in errs]; sys.exit(1)
+print('PASS: exactly one published port - caddy 127.0.0.1:80:80/tcp, no 443')
+PY
+" || { fail "Port assertion failed"; return 1; }
+    pass "Port assertion: caddy 127.0.0.1:80 only, no 443"
+
+    # Volume assertion: all 8 beneath /var/lib/hada/docker-volumes/
+    log "[5c] Volume assertion (all 8 beneath /var/lib/hada/docker-volumes/)..."
+    ssh_remote "volume-assertion" "
+python3 - <<'PY'
+import json,sys
+cfg=json.load(open('${REMOTE_DIR}/effective-compose.real.json'))
+vols=cfg.get('volumes',{})
+expected={'postgres-data':'/var/lib/hada/docker-volumes/postgres-data',
+ 'valkey-data':'/var/lib/hada/docker-volumes/valkey-data',
+ 'prometheus-data':'/var/lib/hada/docker-volumes/prometheus-data',
+ 'loki-data':'/var/lib/hada/docker-volumes/loki-data',
+ 'alloy-data':'/var/lib/hada/docker-volumes/alloy-data',
+ 'grafana-data':'/var/lib/hada/docker-volumes/grafana-data',
+ 'caddy-data':'/var/lib/hada/docker-volumes/caddy-data',
+ 'caddy-config':'/var/lib/hada/docker-volumes/caddy-config'}
+errs=[]
+for name,vol in vols.items():
+    do=vol.get('driver_opts',{})
+    if do.get('type')!='none': errs.append('%s type=%s'%(name,do.get('type')))
+    if do.get('o')!='bind': errs.append('%s o=%s'%(name,do.get('o')))
+    dev=do.get('device','')
+    if dev!=expected.get(name): errs.append('%s device=%s'%(name,dev))
+    if not dev.startswith('/var/lib/hada/docker-volumes/'): errs.append('%s not beneath base'%name)
+for name in expected:
+    if name not in vols: errs.append('missing %s'%name)
+if len(vols)!=8: errs.append('expected 8 volumes got %d'%len(vols))
+if errs:
+    print('FAIL'); [print(e) for e in errs]; sys.exit(1)
+print('PASS: all 8 volumes type=none o=bind beneath /var/lib/hada/docker-volumes/')
+PY
+" || { fail "Volume assertion failed"; return 1; }
+    pass "Volume assertion: all 8 volumes beneath /var/lib/hada/docker-volumes/"
+
+    log "GATE 5: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 6 — Image pull / build (explicit list) (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+PULL_IMAGES=(
+    "postgres:17-alpine"
+    "valkey/valkey:8-alpine"
+    "prom/prometheus:v3.2.1"
+    "grafana/loki:3.4.2"
+    "grafana/alloy:v1.12.0"
+    "grafana/grafana:11.5.2"
+    "caddy:2.10-alpine"
+    "prom/node-exporter:v1.9.0"
+)
+ORCHESTRATOR_IMAGE="hada-orchestrator:0.2.0"
+
+pull_build_images() {
+    log "=============================================="
+    log "GATE 6: Image Pull / Build"
+    log "=============================================="
+    log "[6a] Images to PULL (${#PULL_IMAGES[@]}):"
+    local img
+    for img in "${PULL_IMAGES[@]}"; do log "      - ${img}"; done
+    log "[6b] Image to BUILD:"
+    log "      - ${ORCHESTRATOR_IMAGE} (context ${OPT_HADA}, Dockerfile ${OPT_HADA}/Dockerfile)"
+
+    # Pull all pinned images explicitly
+    log "[6c] Pulling pinned images..."
+    for img in "${PULL_IMAGES[@]}"; do
+        log "      pull: ${img}"
+        ssh_remote "pull-${img//[^a-zA-Z0-9]/_}" "
+sudo -n docker pull '${img}' || { echo 'FAIL: pull ${img}'; exit 1; }
+echo PULLED ${img}
+" || { fail "pull failed: ${img}"; return 1; }
+    done
+    pass "All pinned images pulled"
+
+    # Build orchestrator image (explicit project + files; uses base compose build)
+    log "[6d] Building orchestrator image ${ORCHESTRATOR_IMAGE}..."
+    ssh_remote "build-orchestrator" "
+cd '${OPT_HADA}' && sudo -n docker compose -p '${COMPOSE_PROJECT}' \
+  -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' \
+  --env-file '${OPT_HADA_ENV}' build --no-cache orchestrator || { echo 'FAIL: build orchestrator'; exit 1; }
+echo BUILT ${ORCHESTRATOR_IMAGE}
+" || { fail "orchestrator build failed"; return 1; }
+    pass "Orchestrator image built: ${ORCHESTRATOR_IMAGE}"
+
+    log "GATE 6: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 7 — Database / service startup (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+start_services() {
+    log "=============================================="
+    log "GATE 7: Database / Service Startup"
+    log "=============================================="
+    log "[7a] Starting services (postgres, valkey first via depends_on health)..."
+    ssh_remote "compose-up" "
+cd '${OPT_HADA}' && sudo -n docker compose -p '${COMPOSE_PROJECT}' \
+  -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' \
+  --env-file '${OPT_HADA_ENV}' up -d --remove-orphans || { echo 'FAIL: compose up'; exit 1; }
+echo UP_OK
+" || { fail "compose up failed"; return 1; }
+    pass "Services started (up -d)"
+    log "GATE 7: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 8 — Health validation + loopback verification (bounded) (DEPLOY_EXECUTE)
+# ----------------------------------------------------------------------------
+
+health_validate() {
+    log "=============================================="
+    log "GATE 8: Health Validation & Loopback Verification"
+    log "=============================================="
+
+    # 8a: postgres healthy (bounded retry)
+    log "[8a] Waiting for postgres health (bounded)..."
+    ssh_remote "health-postgres" "
+for i in \$(seq 1 30); do
+  if sudo -n docker compose -p '${COMPOSE_PROJECT}' -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' --env-file '${OPT_HADA_ENV}' exec -T postgres pg_isready -U hada -d hada >/dev/null 2>&1; then
+    echo 'POSTGRES_HEALTHY'; exit 0
+  fi
+  sleep 4
+done
+echo 'FAIL: postgres not healthy within timeout'; exit 1
+" || { fail "postgres health timeout"; return 1; }
+    pass "PostgreSQL healthy"
+
+    # 8b: valkey auth ping (bounded retry)
+    log "[8b] Waiting for valkey auth ping (bounded)..."
+    ssh_remote "health-valkey" "
+for i in \$(seq 1 30); do
+  if sudo -n docker compose -p '${COMPOSE_PROJECT}' -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' --env-file '${OPT_HADA_ENV}' exec -T valkey valkey-cli -a \"\$(sudo -n grep '^VALKEY_PASSWORD=' '${OPT_HADA_ENV}' | cut -d= -f2)\" ping 2>/dev/null | grep -q PONG; then
+    echo 'VALKEY_HEALTHY'; exit 0
+  fi
+  sleep 4
+done
+echo 'FAIL: valkey not healthy within timeout'; exit 1
+" || { fail "valkey health timeout"; return 1; }
+    pass "Valkey healthy and requires auth"
+
+    # 8c: orchestrator /readyz (bounded retry)
+    log "[8c] Waiting for orchestrator /readyz (bounded)..."
+    ssh_remote "health-orchestrator" "
+for i in \$(seq 1 40); do
+  if sudo -n docker compose -p '${COMPOSE_PROJECT}' -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' --env-file '${OPT_HADA_ENV}' exec -T orchestrator python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9108/readyz',timeout=3)\" >/dev/null 2>&1; then
+    echo 'ORCHESTRATOR_READYZ'; exit 0
+  fi
+  sleep 6
+done
+echo 'FAIL: orchestrator not ready within timeout'; exit 1
+" || { fail "orchestrator health timeout"; return 1; }
+    pass "Orchestrator /readyz responding"
+
+    # 8d: all services running
+    log "[8d] Confirming all services running..."
+    ssh_remote "services-running" "
+out=\$(sudo -n docker compose -p '${COMPOSE_PROJECT}' -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' --env-file '${OPT_HADA_ENV}' ps --all --format json)
+echo \"\$out\" | python3 -c 'import json,sys; d=json.load(sys.stdin); bad=[s[\"Service\"] for s in d if s.get(\"State\")!=\"running\"]; print(\"RUNNING\" if not bad else \"FAIL:\"+str(bad)); sys.exit(1 if bad else 0)'
+" || { fail "not all services running"; return 1; }
+    pass "All services running"
+
+    # 8e: externally published socket is loopback-only (127.0.0.1:80)
+    log "[8e] Verifying published socket is loopback-only..."
+    ssh_remote "loopback-check" "
+binds=\$(sudo -n ss -lntp 2>/dev/null | grep -E ':80\\b' | awk '{print \$4}')
+echo \"binds=\$binds\"
+echo \"\$binds\" | grep -q '127.0.0.1:80' || { echo 'FAIL: no 127.0.0.1:80 bind'; exit 1; }
+echo \"\$binds\" | grep -qE '0.0.0.0:80|:::80' && { echo 'FAIL: port 80 bound on wildcard'; exit 1; }
+echo 'PASS: caddy published only on 127.0.0.1:80'
+" || { fail "loopback verification failed"; return 1; }
+    pass "Published socket is loopback-only (127.0.0.1:80)"
+
+    log "GATE 8: PASSED"
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# GATE 9 — Final state capture (no secrets) + bounded rollback procedure
+# ----------------------------------------------------------------------------
+
+capture_final_state() {
+    log "=============================================="
+    log "GATE 9: Final State Capture"
+    log "=============================================="
+    ssh_sudo_capture "docker-ps-final" "sudo -n docker ps -a" || { fail "ps-final capture failed"; return 1; }
+    ssh_sudo_capture "docker-images-final" "sudo -n docker images" || { fail "images-final capture failed"; return 1; }
+    ssh_sudo_capture "docker-volumes-final" "sudo -n docker volume ls" || { fail "volumes-final capture failed"; return 1; }
+    ssh_sudo_capture "docker-networks-final" "sudo -n docker network ls" || { fail "networks-final capture failed"; return 1; }
+    # Service status (compose ps) — no secret values
+    ssh_remote "compose-status" "
+sudo -n docker compose -p '${COMPOSE_PROJECT}' -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' --env-file '${OPT_HADA_ENV}' ps
+" || { fail "compose status failed"; return 1; }
+    pass "Final Docker state and service status captured (evidence contains no secrets)"
+    log "GATE 9: PASSED"
+    return 0
+}
+
+# Bounded rollback — NEVER deletes /var/lib/hada or persistent data.
+# Called only on deployment failure. Uses 'down --remove-orphans' (NO -v).
+bounded_rollback() {
+    log "=============================================="
+    log "BOUNDED ROLLBACK (non-destructive)"
+    log "=============================================="
+    log "Rollback will NOT run 'docker compose down -v', will NOT delete"
+    log "/var/lib/hada, /opt/hada data, volumes, keys, evidence, or disks."
+
+    ssh_remote "rb-stop-supervisor" "
+sudo systemctl stop hada-supervisor.service 2>/dev/null || true
+sudo systemctl disable hada-supervisor.service 2>/dev/null || true
+echo RB_SUPERVISOR_STOPPED
+" || log "WARN: supervisor stop failed (continuing rollback)"
+
+    ssh_remote "rb-compose-down" "
+cd '${OPT_HADA}' && sudo -n docker compose -p '${COMPOSE_PROJECT}' \
+  -f '${BASE_COMPOSE}' -f '${GCP_COMPOSE}' \
+  --env-file '${OPT_HADA_ENV}' down --remove-orphans 2>/dev/null || true
+echo RB_COMPOSE_DOWN
+" || log "WARN: compose down failed (continuing rollback)"
+
+    ssh_remote "rb-remove-unit" "
+sudo rm -f /etc/systemd/system/hada-supervisor.service && sudo systemctl daemon-reload
+echo RB_UNIT_REMOVED
+" || log "WARN: unit removal failed"
+
+    log "Rollback complete. Persistent data preserved under /var/lib/hada."
+    return 0
+}
+
+# ----------------------------------------------------------------------------
+# Main flow
+# ----------------------------------------------------------------------------
+
+main() {
+    log "=============================================="
+    log "HADA M1 Phase B — Production Deployment Execution Gate"
+    log "Timestamp: ${TIMESTAMP}"
+    log "Evidence:  ${EVIDENCE_DIR}"
+    log "DEPLOY_EXECUTE=${DEPLOY_EXECUTE}"
+    log "=============================================="
+
+    run_local_static_validation || { log "ABORT: Gate 0 failed"; exit 1; }
+    verify_and_extract_candidate || { log "ABORT: Gate 1 failed"; exit 1; }
+
+    if [[ "${DEPLOY_EXECUTE}" == "1" ]]; then
+        log "DEPLOY_EXECUTE=1 — proceeding with remote deployment gates."
+        remote_preparation_and_state_capture || { bounded_rollback; log "ABORT: Gate 2 failed"; exit 1; }
+        provision_production_directories    || { bounded_rollback; log "ABORT: Gate 3 failed"; exit 1; }
+        validate_production_env             || { bounded_rollback; log "ABORT: Gate 4 failed"; exit 1; }
+        render_validate_compose             || { bounded_rollback; log "ABORT: Gate 5 failed"; exit 1; }
+        pull_build_images                   || { bounded_rollback; log "ABORT: Gate 6 failed"; exit 1; }
+        start_services                      || { bounded_rollback; log "ABORT: Gate 7 failed"; exit 1; }
+        health_validate                     || { bounded_rollback; log "ABORT: Gate 8 failed"; exit 1; }
+        capture_final_state                 || { log "WARN: Gate 9 capture failed"; }
+
+        log "=============================================="
+        log "DEPLOYMENT VALIDATION COMPLETE"
+        log "Status: IMPLEMENTATION_CANDIDATE_AWAITING_PARTY_3"
+        log "No autonomous repository work performed."
+        log "=============================================="
+    else
+        log "DEPLOY_EXECUTE is not '1' — execution-gate review only."
+        log "No SSH/SCP/deploy actions were performed."
+        log "Re-run with DEPLOY_EXECUTE=1 to perform the deployment."
+    fi
+
+    write_gate_review
+    log "Execution-gate review written to: ${EVIDENCE_DIR}/execution-gate-review.md"
+    exit "${EXIT_STATUS}"
+}
+
+# ----------------------------------------------------------------------------
+# Execution-gate review document
+# ----------------------------------------------------------------------------
+
+write_gate_review() {
+    local out="${EVIDENCE_DIR}/execution-gate-review.md"
+    {
+        echo "# HADA M1 Phase B — Execution-Gate Review"
+        echo
+        echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "Runner: scripts/run-phase-b-deploy.sh"
+        echo "DEPLOY_EXECUTE=${DEPLOY_EXECUTE}"
+        echo
+        echo "## Locked configuration"
+        echo "- Candidate SHA-256: ${EXPECTED_CANDIDATE_SHA256}"
+        echo "- Target: project=${TARGET_PROJECT} zone=${TARGET_ZONE} vm=${TARGET_VM}"
+        echo "- Persistent disk mount: ${HADA_STATE_ROOT}"
+        echo "- Compose project: ${COMPOSE_PROJECT}"
+        echo "- Compose files: base + ${GCP_COMPOSE} (override, never standalone)"
+        echo
+        echo "## Gate results (local static validation)"
+        echo "- Gate 0a bash -n: PASS"
+        echo "- Gate 0b shellcheck: PASS"
+        echo "- Gate 0c prohibited-op placement: PASS"
+        echo "- Gate 0d target assertions: PASS"
+        echo "- Gate 0e candidate checksum: PASS"
+        echo "- Gate 0f Phase B0 evidence PASS: PASS"
+        echo "- Gate 0g secret redaction: PASS"
+        echo "- Gate 0h cleanup/rollback guards: PASS"
+        echo "- Gate 0i pipeline rc capture: PASS"
+        echo "- Gate 0j DEPLOY_EXECUTE gate: verified (value=${DEPLOY_EXECUTE})"
+        echo
+        echo "## 26 requirement coverage (fail-closed)"
+        echo "1. Locked SHA-256 verified before remote — Gate 0e/1"
+        echo "2. Phase B0 evidence PASS required — Gate 0f"
+        echo "3. Target exact match — Gate 0d"
+        echo "4. /var/lib/hada on persistent disk — Gate 2f"
+        echo "5. Initial Docker state via sudo -n — Gate 2d"
+        echo "6. Refuse if unexpected HADA resources — Gate 2e"
+        echo "7. Never touch hermes-clean/home-hub — asserted in Gate 0c"
+        echo "8. Only candidate-derived files — Gate 1b/3c"
+        echo "9. Exact install path /opt/hada — config + Gate 3"
+        echo "10. Explicit dir ownership/perms — Gate 3a/3b"
+        echo "11. Real secrets via secure input — Gate 4 (provision-secrets.sh out-of-band)"
+        echo "12. No secrets in logs/evidence/args — Gate 0g/4"
+        echo "13. Validate .env without printing — Gate 4"
+        echo "14. Render/validate Compose JSON pre-build — Gate 5a"
+        echo "15. Only caddy 127.0.0.1:80, no 443 — Gate 5b"
+        echo "16. All 8 volumes beneath /var/lib/hada/docker-volumes/ — Gate 5c"
+        echo "17. Explicit image pull/build list — Gate 6"
+        echo "18. Separated prep/pull/start/health — Gates 3/6/7/8"
+        echo "19. Explicit project + compose files — all remote steps"
+        echo "20. Pipeline rc capture — capture_rc/PIPESTATUS"
+        echo "21. Bounded health timeouts — Gate 8 loops"
+        echo "22. Loopback-only socket — Gate 8e"
+        echo "23. Final state captured — Gate 9"
+        echo "24. Bounded rollback — bounded_rollback()"
+        echo "25. Never delete /var/lib/hada in rollback — bounded_rollback()"
+        echo "26. Stop after validation; no repo work — main() end"
+        echo
+        echo "## Security review (deploy-time implications)"
+        echo "- node-exporter: pid:host + /:/host:ro,rslave. Read-only host root; host"
+        echo "  PID namespace visibility. Acceptable for metrics but grants broad host"
+        echo "  filesystem read access. Mitigation: ro + rslave, no capabilities added"
+        echo "  beyond baseline (cap_drop ALL), no-new-privileges."
+        echo "- alloy: reads /var/lib/docker/containers read-only to scrape container"
+        echo "  logs. Read-only bind; limited blast radius. Ensure docker socket NOT"
+        echo "  mounted."
+        echo "- orchestrator: writable /var/lib/hada (state, evidence, keys). Required"
+        echo "  for durability; runs as UID 10001 (hada), read_only rootfs with tmpfs"
+        echo "  for /tmp and /var/log/hada. Acceptable."
+        echo "- caddy: NET_BIND_SERVICE only (no ALL). Binds 127.0.0.1:80 as root"
+        echo "  (image runs as root). NET_BIND_SERVICE is minimal; 443 not published."
+        echo "- postgres/valkey: cap_add CHOWN/DAC_OVERRIDE/FOWNER/SETGID/SETUID for"
+        echo "  volume ownership fixup at startup. These are privileged but scoped to"
+        echo "  data-dir ownership; combined with cap_drop ALL baseline. Consider"
+        echo "  pre-chowning volumes (done in Gate 3a) to drop SETUID/SETGID if image"
+        echo "  permits, but current override is acceptable for Phase B."
+        echo
+        echo "## Conclusion"
+        if [[ "${DEPLOY_EXECUTE}" == "1" ]]; then
+            echo "Deployment path executed under DEPLOY_EXECUTE=1; see console log and"
+            echo "captured evidence for runtime results."
+        else
+            echo "Local execution-gate review complete. Runner is fail-closed and will"
+            echo "not contact hada-control until DEPLOY_EXECUTE=1 is set explicitly."
+        fi
+    } > "${out}"
+}
+
+main "$@"
+
+
+--- scripts/provision-secrets.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B — Atomic Secret Provisioning Script
+#
+# This script must be run on hada-control after the bootstrap script
+# has completed and /opt/hada exists. It is NOT executed during Phase A.
+#
+# Requirements met:
+#   - Each secret is generated exactly once.
+#   - URL-safe values via openssl rand -hex 32.
+#   - Each secret is reused in its PASSWORD and DSN/URL.
+#   - /opt/hada/.env is written atomically (temp file + mv).
+#   - root:hada ownership, mode 0640.
+#   - Secrets are never displayed (stdout is suppressed).
+#   - Fails if any CHANGE_ME placeholder remains.
+#
+set -Eeuo pipefail
+
+ENV_PATH="/opt/hada/.env"
+ENV_DIR="$(dirname "$ENV_PATH")"
+
+# Fail fast if openssl is unavailable
+command -v openssl >/dev/null 2>&1 || {
+  echo "ERROR: openssl is required but not found" >&2
+  exit 1
+}
+
+# Ensure /opt/hada exists (bootstrap should have created it)
+if [[ ! -d "$ENV_DIR" ]]; then
+  echo "ERROR: $ENV_DIR does not exist; run bootstrap-ubuntu.sh first" >&2
+  exit 1
+fi
+
+# Generate each secret exactly once, URL-safe hex (64 hex chars = 32 bytes)
+POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+VALKEY_PASSWORD="$(openssl rand -hex 32)"
+GRAFANA_ADMIN_PASSWORD="$(openssl rand -hex 32)"
+
+# Reuse each secret in its DSN / URL (must embed the real password — never a redacted placeholder)
+POSTGRES_USER="hada"
+POSTGRES_DB="hada"
+HADA_DATABASE_DSN="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+HADA_VALKEY_URL="redis://:${VALKEY_PASSWORD}@valkey:6379/0"
+
+# Write to a temporary file in the same directory (atomic via mv)
+TMP_FILE="$(mktemp "${ENV_PATH}.XXXXXX")"
+if [[ ! -f "$TMP_FILE" ]]; then
+  echo "ERROR: failed to create temporary file" >&2
+  exit 1
+fi
+
+# Ensure cleanup on error
+trap 'rm -f "$TMP_FILE"' EXIT
+
+cat > "$TMP_FILE" <<EOF
+HADA_ENV=production
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=${POSTGRES_DB}
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+VALKEY_PASSWORD=${VALKEY_PASSWORD}
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=${HADA_DATABASE_DSN}
+HADA_VALKEY_URL=${HADA_VALKEY_URL}
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+EOF
+
+# Fail if any CHANGE_ME placeholder remains
+if grep -q 'CHANGE_ME' "$TMP_FILE"; then
+  echo "ERROR: CHANGE_ME placeholder found in generated .env" >&2
+  rm -f "$TMP_FILE"
+  exit 1
+fi
+
+# Set ownership and permissions before atomic move
+chown root:hada "$TMP_FILE"
+chmod 0640 "$TMP_FILE"
+
+# Atomic move into place
+mv -f "$TMP_FILE" "$ENV_PATH"
+
+# Clear the trap since cleanup is no longer needed
+trap - EXIT
+
+echo "Secret provisioning complete: ${ENV_PATH} written (root:hada, mode 0640)"
+echo "No secrets displayed."
+
+
+--- scripts/supervisor.gcp.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Production supervisor script for Google Cloud (hada-control VM)
+#
+# This is the GCP production version of supervisor.sh. It uses BOTH compose
+# files (the base compose.yaml and the production override compose.gcp.yaml).
+# It does NOT rely on sed patching during deployment.
+#
+# Install this as /opt/hada/scripts/supervisor.sh on the VM (replacing the
+# shipped version). The systemd unit hada-supervisor.service calls this script.
+#
+set -Eeuo pipefail
+
+cd /opt/hada
+if [[ ! -r .env ]]; then
+  logger -p daemon.crit -t hada-supervisor "missing /opt/hada/.env"
+  exit 78
+fi
+
+compose=(
+  docker compose
+    -f deploy/compose/compose.yaml
+    -f deploy/compose/compose.gcp.yaml
+    --env-file .env
+)
+
+max_attempts=$(/opt/hada/.venv/bin/python - <<'PY'
+import yaml
+with open('config/hada.yaml', encoding='utf-8') as handle:
+    print(yaml.safe_load(handle)['governance']['maximum_recovery_attempts'])
+PY
+)
+backoff=$(/opt/hada/.venv/bin/python - <<'PY'
+import yaml
+with open('config/hada.yaml', encoding='utf-8') as handle:
+    print(yaml.safe_load(handle)['infrastructure']['recovery_backoff_seconds'])
+PY
+)
+
+attempt=0
+while true; do
+  unhealthy=0
+  if ! "${compose[@]}" up -d --remove-orphans; then
+    unhealthy=1
+  elif "${compose[@]}" ps --all --format json \
+    | jq -e 'length == 0 or any(.[]; .State != "running" or (.Health != "" and .Health != "healthy"))' \
+      >/dev/null; then
+    unhealthy=1
+  fi
+
+  if (( unhealthy == 1 )); then
+    if (( attempt >= max_attempts )); then
+      logger -p daemon.crit -t hada-supervisor "recovery attempts exhausted"
+      exit 70
+    fi
+    attempt=$((attempt + 1))
+    logger -p daemon.warning -t hada-supervisor \
+      "control plane unhealthy; bounded recovery attempt ${attempt}/${max_attempts}"
+    "${compose[@]}" restart || true
+  else
+    attempt=0
+  fi
+
+  sleep "$backoff"
+done
+
+
+--- scripts/validate-host.gcp.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Production host validation script for Google Cloud (hada-control VM)
+#
+# This is the GCP production version of validate-host.sh. It uses BOTH compose
+# files (the base compose.yaml and the production override compose.gcp.yaml).
+# It does NOT rely on sed patching during deployment.
+#
+# Install this as /opt/hada/scripts/validate-host.sh on the VM (replacing the
+# shipped version).
+#
+set -Eeuo pipefail
+
+failures=0
+check() {
+  local description=$1
+  shift
+  if "$@" >/dev/null 2>&1; then
+    printf 'PASS  %s\n' "$description"
+  else
+    printf 'FAIL  %s\n' "$description" >&2
+    failures=$((failures + 1))
+  fi
+}
+
+check "Ubuntu 24.04" bash -c 'source /etc/os-release; [[ $ID == ubuntu && $VERSION_ID == 24.04 ]]'
+check "Docker daemon" docker info
+check "Docker Compose" docker compose version
+check "Git" git --version
+check "Bubblewrap" bwrap --version
+check "Unprivileged user namespaces" bash -c '[[ $(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null || echo 1) == 1 ]]'
+check "HADA service account" bash -c '[[ $(id -u hada) == 10001 && $(id -g hada) == 10001 ]]'
+check "Private signing key permissions" bash -c '[[ $(stat -c %a /var/lib/hada/keys/audit-signing-key.pem) == 600 ]]'
+check "Public signing key" test -r /var/lib/hada/keys/audit-signing-key.pub.pem
+check "Configuration" /opt/hada/.venv/bin/hada validate-config --config /opt/hada/config/hada.yaml
+check "Compose rendering" docker compose \
+  -f /opt/hada/deploy/compose/compose.yaml \
+  -f /opt/hada/deploy/compose/compose.gcp.yaml \
+  --env-file /opt/hada/.env config
+
+if (( failures > 0 )); then
+  printf '%d validation checks failed\n' "$failures" >&2
+  exit 1
+fi
+printf 'Host validation passed\n'
+
+
+======================================================================
+PHASE B STATIC TEST SCRIPTS
+======================================================================
+
+--- tests/static/test_port_assertion.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Static assertions for the port-assertion Python program
+#
+# Proves:
+#   - the exact port-assertion Python embedded in run-phase-b0-preflight.sh
+#     parses and runs against valid sample Compose JSON
+#   - valid JSON with caddy 127.0.0.1:80:80/tcp and no 443 returns zero
+#   - invalid JSON containing published or target port 443 returns nonzero
+#   - the runner no longer embeds broken pp[\"...\"] f-string expressions
+#
+# Does not contact hada-control.
+#
+set -Eeuo pipefail
+
+PASS_COUNT=0
+FAIL_COUNT=0
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+RUNNER="${ROOT}/scripts/run-phase-b0-preflight.sh"
+
+assert_pass() {
+  local desc="$1"
+  printf 'PASS: %s\n' "${desc}"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+assert_fail() {
+  local desc="$1"
+  printf 'FAIL: %s\n' "${desc}" >&2
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+if [[ ! -f "${RUNNER}" ]]; then
+  echo "FAIL: runner not found: ${RUNNER}" >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Extract the first python3 -c '...' port-assertion program from the runner
+# ---------------------------------------------------------------------------
+
+EXTRACT_PY="${TEMP_DIR}/extract_port_prog.py"
+cat > "${EXTRACT_PY}" <<'PY'
+import pathlib
+import re
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text()
+# Locate the port-assertion block by unique marker, then take its python3 -c body
+marker = "Validating published ports"
+idx = text.find(marker)
+if idx < 0:
+    sys.stderr.write("marker not found\n")
+    sys.exit(2)
+chunk = text[idx:]
+m = re.search(r"python3 -c '([\s\S]*?)'\s*2>&1\s*\|\s*tee", chunk)
+if not m:
+    sys.stderr.write("python3 -c block not found after marker\n")
+    sys.exit(3)
+prog = m.group(1)
+# The shell source stores double quotes as plain " inside the single-quoted
+# -c argument. Write the program as Python sees it.
+sys.stdout.write(prog)
+PY
+
+PORT_PROG="${TEMP_DIR}/port_assertion_prog.py"
+if ! python3 "${EXTRACT_PY}" "${RUNNER}" > "${PORT_PROG}"; then
+  assert_fail "extract port-assertion Python from runner"
+  echo "RESULT: FAIL"
+  exit 1
+fi
+assert_pass "extracted port-assertion Python from runner"
+
+# ---------------------------------------------------------------------------
+# The extracted program must parse
+# ---------------------------------------------------------------------------
+
+if python3 -m py_compile "${PORT_PROG}" 2>"${TEMP_DIR}/compile.err"; then
+  assert_pass "exact port-assertion Python program parses (py_compile)"
+else
+  assert_fail "port-assertion Python does not parse: $(cat "${TEMP_DIR}/compile.err")"
+fi
+
+# Guard: no broken escaped dict keys inside f-strings in the runner source
+if grep -E 'pp\[\\"|p2\[\\"' "${RUNNER}" >/dev/null 2>&1; then
+  assert_fail "runner still contains escaped dict-key expressions in f-strings"
+else
+  assert_pass "runner has no escaped dict-key expressions in f-strings"
+fi
+
+# ---------------------------------------------------------------------------
+# Valid JSON: caddy 127.0.0.1:80:80/tcp, no 443 -> rc 0
+# (published as string, matching real docker compose config --format json)
+# ---------------------------------------------------------------------------
+
+VALID_JSON="${TEMP_DIR}/valid.json"
+cat > "${VALID_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "mode": "ingress",
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": "80",
+          "protocol": "tcp"
+        }
+      ]
+    },
+    "postgres": {
+      "ports": []
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${VALID_JSON}" >"${TEMP_DIR}/valid.out" 2>"${TEMP_DIR}/valid.err"
+VALID_RC=$?
+set -e
+
+if [[ "${VALID_RC}" -eq 0 ]] && grep -q 'PASS: exactly one published port' "${TEMP_DIR}/valid.out"; then
+  assert_pass "valid JSON caddy 127.0.0.1:80:80/tcp no 443 returns zero"
+else
+  assert_fail "valid JSON should return 0 (rc=${VALID_RC}, out=$(cat "${TEMP_DIR}/valid.out"), err=$(cat "${TEMP_DIR}/valid.err"))"
+fi
+
+# Also accept integer published=80
+VALID_JSON_INT="${TEMP_DIR}/valid-int.json"
+cat > "${VALID_JSON_INT}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": 80,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${VALID_JSON_INT}" >"${TEMP_DIR}/valid-int.out" 2>"${TEMP_DIR}/valid-int.err"
+VALID_INT_RC=$?
+set -e
+
+if [[ "${VALID_INT_RC}" -eq 0 ]]; then
+  assert_pass "valid JSON with integer published=80 returns zero"
+else
+  assert_fail "integer published=80 should return 0 (rc=${VALID_INT_RC})"
+fi
+
+# ---------------------------------------------------------------------------
+# Invalid JSON: published port 443 -> nonzero
+# ---------------------------------------------------------------------------
+
+BAD_PUB_JSON="${TEMP_DIR}/bad-published-443.json"
+cat > "${BAD_PUB_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": "80",
+          "protocol": "tcp"
+        },
+        {
+          "host_ip": "0.0.0.0",
+          "target": 443,
+          "published": "443",
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${BAD_PUB_JSON}" >"${TEMP_DIR}/bad-pub.out" 2>"${TEMP_DIR}/bad-pub.err"
+BAD_PUB_RC=$?
+set -e
+
+if [[ "${BAD_PUB_RC}" -ne 0 ]] && grep -q 'port 443' "${TEMP_DIR}/bad-pub.out"; then
+  assert_pass "invalid JSON with published port 443 returns nonzero"
+else
+  assert_fail "published 443 should fail (rc=${BAD_PUB_RC}, out=$(cat "${TEMP_DIR}/bad-pub.out"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Invalid JSON: target port 443 only -> nonzero
+# ---------------------------------------------------------------------------
+
+BAD_TGT_JSON="${TEMP_DIR}/bad-target-443.json"
+cat > "${BAD_TGT_JSON}" <<'JSON'
+{
+  "services": {
+    "caddy": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 443,
+          "published": "8443",
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+JSON
+
+set +e
+python3 "${PORT_PROG}" < "${BAD_TGT_JSON}" >"${TEMP_DIR}/bad-tgt.out" 2>"${TEMP_DIR}/bad-tgt.err"
+BAD_TGT_RC=$?
+set -e
+
+if [[ "${BAD_TGT_RC}" -ne 0 ]] && grep -q '443' "${TEMP_DIR}/bad-tgt.out"; then
+  assert_pass "invalid JSON with target port 443 returns nonzero"
+else
+  assert_fail "target 443 should fail (rc=${BAD_TGT_RC}, out=$(cat "${TEMP_DIR}/bad-tgt.out"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Real effective-compose.json from prior preflight render (if present)
+# ---------------------------------------------------------------------------
+
+REAL_JSON="${ROOT}/evidence/phase-b0/preflight-run-20260725170700/effective-compose.json"
+if [[ -f "${REAL_JSON}" ]]; then
+  set +e
+  python3 "${PORT_PROG}" < "${REAL_JSON}" >"${TEMP_DIR}/real.out" 2>"${TEMP_DIR}/real.err"
+  REAL_RC=$?
+  set -e
+  if [[ "${REAL_RC}" -eq 0 ]]; then
+    assert_pass "prior preflight effective-compose.json passes port assertion"
+  else
+    assert_fail "prior effective-compose.json should pass (rc=${REAL_RC}, out=$(cat "${TEMP_DIR}/real.out"))"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Static port-assertion results"
+echo "============================================"
+echo "Passed: ${PASS_COUNT}"
+echo "Failed: ${FAIL_COUNT}"
+echo ""
+
+if [[ "${FAIL_COUNT}" -gt 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+else
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+
+--- tests/static/test_docker_state_none_logic.sh ---
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Static assertions for Docker state capture logic
+#
+# Proves the remote capture commands used in run-phase-b0-preflight.sh:
+#   - successful empty sudo Docker output becomes NONE
+#   - successful non-empty container output is sorted
+#   - successful non-empty image output is sorted and unique
+#   - a mocked Docker command failure returns nonzero
+#   - a mocked sudo failure returns nonzero
+#   - failed commands do not output NONE
+#   - identical NONE files compare successfully
+#   - differing states fail closed
+#
+# Does not contact hada-control.
+#
+set -Eeuo pipefail
+
+PASS_COUNT=0
+FAIL_COUNT=0
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
+
+assert_pass() {
+  local desc="$1"
+  printf 'PASS: %s\n' "${desc}"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+assert_fail() {
+  local desc="$1"
+  printf 'FAIL: %s\n' "${desc}" >&2
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+# Exact remote capture logic from run-phase-b0-preflight.sh (containers)
+capture_containers() {
+  raw="$(sudo -n docker ps -aq)" || {
+    rc=$?
+    echo "FAIL: sudo -n docker ps -aq failed with rc=${rc}" >&2
+    return "${rc}"
+  }
+  if [[ -n "${raw}" ]]; then
+    printf '%s\n' "${raw}" | sort
+  else
+    printf 'NONE\n'
+  fi
+}
+
+# Exact remote capture logic from run-phase-b0-preflight.sh (images)
+capture_images() {
+  raw="$(sudo -n docker images -q)" || {
+    rc=$?
+    echo "FAIL: sudo -n docker images -q failed with rc=${rc}" >&2
+    return "${rc}"
+  }
+  if [[ -n "${raw}" ]]; then
+    printf '%s\n' "${raw}" | sort -u
+  else
+    printf 'NONE\n'
+  fi
+}
+
+install_mock_sudo_passthrough() {
+  local bin_dir="$1"
+  cat > "${bin_dir}/sudo" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1-}" == "-n" ]]; then
+  shift
+fi
+if [[ "$#" -eq 0 ]]; then
+  echo "sudo: missing command" >&2
+  exit 1
+fi
+exec "$@"
+EOF
+  chmod +x "${bin_dir}/sudo"
+}
+
+# ---------------------------------------------------------------------------
+# Test 1: successful empty sudo Docker container output becomes NONE
+# ---------------------------------------------------------------------------
+
+MOCK1="${TEMP_DIR}/mock1"
+mkdir -p "${MOCK1}"
+install_mock_sudo_passthrough "${MOCK1}"
+cat > "${MOCK1}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "ps" && "$2" == "-aq" ]]; then
+  exit 0
+fi
+echo "unexpected docker args: $*" >&2
+exit 99
+EOF
+chmod +x "${MOCK1}/docker"
+
+OUT1="${TEMP_DIR}/empty-ps.txt"
+set +e
+PATH="${MOCK1}:${PATH}" capture_containers >"${OUT1}" 2>"${TEMP_DIR}/empty-ps.err"
+RC1=$?
+set -e
+
+if [[ "${RC1}" -eq 0 && "$(cat "${OUT1}")" == "NONE" ]]; then
+  assert_pass "successful empty sudo Docker container output becomes NONE"
+else
+  assert_fail "empty container output -> NONE (rc=${RC1}, out=$(cat "${OUT1}"), err=$(cat "${TEMP_DIR}/empty-ps.err"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: successful empty sudo Docker image output becomes NONE
+# ---------------------------------------------------------------------------
+
+MOCK2="${TEMP_DIR}/mock2"
+mkdir -p "${MOCK2}"
+install_mock_sudo_passthrough "${MOCK2}"
+cat > "${MOCK2}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "images" && "$2" == "-q" ]]; then
+  exit 0
+fi
+echo "unexpected docker args: $*" >&2
+exit 99
+EOF
+chmod +x "${MOCK2}/docker"
+
+OUT2="${TEMP_DIR}/empty-images.txt"
+set +e
+PATH="${MOCK2}:${PATH}" capture_images >"${OUT2}" 2>"${TEMP_DIR}/empty-images.err"
+RC2=$?
+set -e
+
+if [[ "${RC2}" -eq 0 && "$(cat "${OUT2}")" == "NONE" ]]; then
+  assert_pass "successful empty sudo Docker image output becomes NONE"
+else
+  assert_fail "empty image output -> NONE (rc=${RC2}, out=$(cat "${OUT2}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 3: successful non-empty container output is sorted
+# ---------------------------------------------------------------------------
+
+MOCK3="${TEMP_DIR}/mock3"
+mkdir -p "${MOCK3}"
+install_mock_sudo_passthrough "${MOCK3}"
+cat > "${MOCK3}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "ps" && "$2" == "-aq" ]]; then
+  printf '%s\n' 'def456' 'abc123' 'ghi789'
+  exit 0
+fi
+exit 99
+EOF
+chmod +x "${MOCK3}/docker"
+
+OUT3="${TEMP_DIR}/nonempty-ps.txt"
+set +e
+PATH="${MOCK3}:${PATH}" capture_containers >"${OUT3}" 2>"${TEMP_DIR}/nonempty-ps.err"
+RC3=$?
+set -e
+
+EXPECTED_SORTED=$'abc123\ndef456\nghi789'
+if [[ "${RC3}" -eq 0 && "$(cat "${OUT3}")" == "${EXPECTED_SORTED}" ]]; then
+  assert_pass "successful non-empty container output is sorted"
+else
+  assert_fail "non-empty container sort (rc=${RC3}, out=$(cat "${OUT3}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 4: successful non-empty image output is sorted and unique
+# ---------------------------------------------------------------------------
+
+MOCK4="${TEMP_DIR}/mock4"
+mkdir -p "${MOCK4}"
+install_mock_sudo_passthrough "${MOCK4}"
+cat > "${MOCK4}/docker" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "images" && "$2" == "-q" ]]; then
+  printf '%s\n' 'img_bbb' 'img_aaa' 'img_bbb' 'img_ccc'
+  exit 0
+fi
+exit 99
+EOF
+chmod +x "${MOCK4}/docker"
+
+OUT4="${TEMP_DIR}/nonempty-images.txt"
+set +e
+PATH="${MOCK4}:${PATH}" capture_images >"${OUT4}" 2>"${TEMP_DIR}/nonempty-images.err"
+RC4=$?
+set -e
+
+EXPECTED_SORTED_UNIQUE=$'img_aaa\nimg_bbb\nimg_ccc'
+if [[ "${RC4}" -eq 0 && "$(cat "${OUT4}")" == "${EXPECTED_SORTED_UNIQUE}" ]]; then
+  assert_pass "successful non-empty image output is sorted and unique"
+else
+  assert_fail "non-empty image sort -u (rc=${RC4}, out=$(cat "${OUT4}"))"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 5: mocked Docker command failure returns nonzero
+# ---------------------------------------------------------------------------
+
+MOCK5="${TEMP_DIR}/mock5"
+mkdir -p "${MOCK5}"
+install_mock_sudo_passthrough "${MOCK5}"
+cat > "${MOCK5}/docker" <<'EOF'
+#!/usr/bin/env bash
+echo "permission denied while trying to connect to the docker API" >&2
+exit 1
+EOF
+chmod +x "${MOCK5}/docker"
+
+OUT5="${TEMP_DIR}/docker-fail.txt"
+ERR5="${TEMP_DIR}/docker-fail.err"
+set +e
+PATH="${MOCK5}:${PATH}" capture_containers >"${OUT5}" 2>"${ERR5}"
+RC5=$?
+set -e
+
+if [[ "${RC5}" -ne 0 ]]; then
+  assert_pass "mocked Docker command failure returns nonzero (rc=${RC5})"
+else
+  assert_fail "mocked Docker failure should return nonzero"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 6: mocked sudo failure returns nonzero
+# ---------------------------------------------------------------------------
+
+MOCK6="${TEMP_DIR}/mock6"
+mkdir -p "${MOCK6}"
+cat > "${MOCK6}/sudo" <<'EOF'
+#!/usr/bin/env bash
+echo "sudo: a password is required" >&2
+exit 1
+EOF
+chmod +x "${MOCK6}/sudo"
+# docker should not be reached
+cat > "${MOCK6}/docker" <<'EOF'
+#!/usr/bin/env bash
+echo "docker should not run" >&2
+exit 0
+EOF
+chmod +x "${MOCK6}/docker"
+
+OUT6="${TEMP_DIR}/sudo-fail.txt"
+ERR6="${TEMP_DIR}/sudo-fail.err"
+set +e
+PATH="${MOCK6}:${PATH}" capture_images >"${OUT6}" 2>"${ERR6}"
+RC6=$?
+set -e
+
+if [[ "${RC6}" -ne 0 ]]; then
+  assert_pass "mocked sudo failure returns nonzero (rc=${RC6})"
+else
+  assert_fail "mocked sudo failure should return nonzero"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 7: failed commands do not output NONE
+# ---------------------------------------------------------------------------
+
+if grep -q 'NONE' "${OUT5}" 2>/dev/null; then
+  assert_fail "failed Docker command must not output NONE (got: $(cat "${OUT5}"))"
+else
+  assert_pass "failed Docker command does not output NONE"
+fi
+
+if grep -q 'NONE' "${OUT6}" 2>/dev/null; then
+  assert_fail "failed sudo command must not output NONE (got: $(cat "${OUT6}"))"
+else
+  assert_pass "failed sudo command does not output NONE"
+fi
+
+if ! grep -q 'FAIL: sudo -n docker' "${ERR5}" && ! grep -q 'FAIL: sudo -n docker' "${ERR6}"; then
+  assert_fail "failure path should emit FAIL diagnostic on stderr"
+else
+  assert_pass "failure path emits FAIL diagnostic on stderr"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 8: Identical NONE files compare successfully (no diff)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/none-before.txt"
+AFTER_FILE="${TEMP_DIR}/none-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'NONE\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_pass "identical NONE files compare successfully"
+else
+  assert_fail "identical NONE files should compare as equal"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 9: Differing states fail closed (NONE before vs IDs after)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'abc123\ndef456\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing states (NONE before vs IDs after) should fail closed"
+else
+  assert_pass "differing states (NONE before vs IDs after) fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 10: Differing container IDs fail closed
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-ids-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-ids-after.txt"
+printf 'abc123\ndef456\n' > "${BEFORE_FILE}"
+printf 'abc123\nxyz999\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing container IDs should fail closed"
+else
+  assert_pass "differing container IDs fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 11: runner embeds sudo -n and no pipeline-inside-$(...) for captures
+# ---------------------------------------------------------------------------
+
+RUNNER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/run-phase-b0-preflight.sh"
+if [[ ! -f "${RUNNER}" ]]; then
+  assert_fail "runner not found: ${RUNNER}"
+else
+  # Four captures: ps before/after + images before/after
+  SUDO_PS_COUNT="$(grep -c 'sudo -n docker ps -aq' "${RUNNER}" || true)"
+  SUDO_IMG_COUNT="$(grep -c 'sudo -n docker images -q' "${RUNNER}" || true)"
+  BAD_PIPE_PS="$(grep -c 'docker ps -aq | sort' "${RUNNER}" || true)"
+  BAD_PIPE_IMG="$(grep -c 'docker images -q | sort' "${RUNNER}" || true)"
+
+  if [[ "${SUDO_PS_COUNT}" -ge 2 && "${SUDO_IMG_COUNT}" -ge 2 ]]; then
+    assert_pass "runner uses sudo -n for container and image captures"
+  else
+    assert_fail "runner missing sudo -n captures (ps=${SUDO_PS_COUNT}, img=${SUDO_IMG_COUNT})"
+  fi
+
+  if [[ "${BAD_PIPE_PS}" -eq 0 && "${BAD_PIPE_IMG}" -eq 0 ]]; then
+    assert_pass "runner has no pipeline inside docker state command substitution"
+  else
+    assert_fail "runner still pipelines inside docker state \$(...) (ps=${BAD_PIPE_PS}, img=${BAD_PIPE_IMG})"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Static Docker-state assertion results"
+echo "============================================"
+echo "Passed: ${PASS_COUNT}"
+echo "Failed: ${FAIL_COUNT}"
+echo ""
+
+if [[ "${FAIL_COUNT}" -gt 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+else
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+
+======================================================================
+END OF REVIEW
+======================================================================

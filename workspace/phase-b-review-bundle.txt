@@ -1,0 +1,1128 @@
+============================================================
+HADA PHASE B REVIEW BUNDLE
+Generated: 2026-07-25T14:36:03+10:00
+============================================================
+
+## 1. FILE INVENTORY
+deploy/caddy/Caddyfile.gcp
+deploy/compose/compose.gcp.yaml
+evidence/phase-a/deployment-plan.md
+evidence/phase-a/infrastructure-inventory.txt
+evidence/phase-a/local-archive-sha256.txt
+evidence/phase-a/package-file-list.txt
+evidence/phase-a/package-findings.md
+evidence/phase-a/proposed-commands.sh
+evidence/phase-a/repository-access.txt
+evidence/phase-a/rollback-plan.md
+evidence/phase-a/SHA256SUMS
+evidence/phase-a/unresolved-findings.md
+scripts/provision-secrets.sh
+
+## 2. EVIDENCE CHECKSUM VERIFICATION
+deployment-plan.md: OK
+infrastructure-inventory.txt: OK
+local-archive-sha256.txt: OK
+package-file-list.txt: OK
+package-findings.md: OK
+proposed-commands.sh: OK
+repository-access.txt: OK
+rollback-plan.md: OK
+unresolved-findings.md: OK
+
+## 3. PRODUCTION ARTIFACT CHECKSUMS
+6260cf42ca9dfe121ede801133057af0597a25dce162bb3d36f5d98a9dbf888e  deploy/compose/compose.gcp.yaml
+4d84fa0e2f17db1e66943d0affcdd17259646928507b760ea7d31174a438ca5d  deploy/caddy/Caddyfile.gcp
+ff134520eb5c619e1757a70fc0ff1709599d53c244309c6b61a08bc2abd3f313  scripts/provision-secrets.sh
+
+## 4. SHELL SYNTAX CHECKS
+PASS: provision-secrets.sh syntax
+PASS: proposed-commands.sh syntax
+
+## 5. SECRET SCRIPT PERMISSIONS
+-rw------- 600 bobthabuilda:bobthabuilda scripts/provision-secrets.sh
+
+## 6. SECRET SCRIPT
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B — Atomic Secret Provisioning Script
+#
+# This script must be run on hada-control after the bootstrap script
+# has completed and /opt/hada exists. It is NOT executed during Phase A.
+#
+# Requirements met:
+#   - Each secret is generated exactly once.
+#   - URL-safe values via openssl rand -hex 32.
+#   - Each secret is reused in its PASSWORD and DSN/URL.
+#   - /opt/hada/.env is written atomically (temp file + mv).
+#   - root:hada ownership, mode 0640.
+#   - Secrets are never displayed (stdout is suppressed).
+#   - Fails if any CHANGE_ME placeholder remains.
+#
+set -Eeuo pipefail
+
+ENV_PATH="/opt/hada/.env"
+ENV_DIR="$(dirname "$ENV_PATH")"
+
+# Fail fast if openssl is unavailable
+command -v openssl >/dev/null 2>&1 || {
+  echo "ERROR: openssl is required but not found" >&2
+  exit 1
+}
+
+# Ensure /opt/hada exists (bootstrap should have created it)
+if [[ ! -d "$ENV_DIR" ]]; then
+  echo "ERROR: $ENV_DIR does not exist; run bootstrap-ubuntu.sh first" >&2
+  exit 1
+fi
+
+# Generate each secret exactly once, URL-safe hex (64 hex chars = 32 bytes)
+POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+VALKEY_PASSWORD="$(openssl rand -hex 32)"
+GRAFANA_ADMIN_PASSWORD="$(openssl rand -hex 32)"
+
+# Reuse each secret in its DSN / URL
+POSTGRES_USER="hada"
+POSTGRES_DB="hada"
+HADA_DATABASE_DSN="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+HADA_VALKEY_URL="redis://:${VALKEY_PASSWORD}@valkey:6379/0"
+
+# Write to a temporary file in the same directory (atomic via mv)
+TMP_FILE="$(mktemp "${ENV_PATH}.XXXXXX")"
+if [[ ! -f "$TMP_FILE" ]]; then
+  echo "ERROR: failed to create temporary file" >&2
+  exit 1
+fi
+
+# Ensure cleanup on error
+trap 'rm -f "$TMP_FILE"' EXIT
+
+cat > "$TMP_FILE" <<EOF
+HADA_ENV=production
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=${POSTGRES_DB}
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+VALKEY_PASSWORD=${VALKEY_PASSWORD}
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=${HADA_DATABASE_DSN}
+HADA_VALKEY_URL=${HADA_VALKEY_URL}
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+EOF
+
+# Fail if any CHANGE_ME placeholder remains
+if grep -q 'CHANGE_ME' "$TMP_FILE"; then
+  echo "ERROR: CHANGE_ME placeholder found in generated .env" >&2
+  rm -f "$TMP_FILE"
+  exit 1
+fi
+
+# Set ownership and permissions before atomic move
+chown root:hada "$TMP_FILE"
+chmod 0640 "$TMP_FILE"
+
+# Atomic move into place
+mv -f "$TMP_FILE" "$ENV_PATH"
+
+# Clear the trap since cleanup is no longer needed
+trap - EXIT
+
+echo "Secret provisioning complete: ${ENV_PATH} written (root:hada, mode 0640)"
+echo "No secrets displayed."
+
+## 7. GCP COMPOSE OVERRIDE
+# HADA M1 Production override for Google Cloud (hada-control VM)
+#
+# Applied on top of deploy/compose/compose.yaml:
+#   docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml ...
+#
+# This override MUST be used together with the base compose.yaml.
+# It is never used standalone.
+#
+# Human decisions applied (Phase A revision):
+#   1. F-002: Docker named volumes with driver_opts bind mounts beneath
+#      /var/lib/hada/docker-volumes/  (Docker global data-root is NOT relocated)
+#   2. Caddy bound to localhost only; port 443 is NOT published.
+#   3. ACME certificate issuance is disabled; localhost-only HTTP via IAP.
+#   4. Orchestrator monitoring listener stays on 0.0.0.0:9108 (unpublished).
+#
+# Container UID/GID requirements (verified via skopeo inspect):
+#   postgres  : UID 70,  GID 70   (postgres:17-alpine)
+#   valkey    : UID 999, GID 1000 (valkey/valkey:8-alpine)
+#   prometheus: UID 65534(nobody) (prom/prometheus:v3.2.1)
+#   loki      : UID 10001,GID 10001 (grafana/loki:3.4.2)
+#   alloy     : UID 473, GID 473 (grafana/alloy:v1.12.0)
+#   grafana   : UID 472, GID 0   (grafana/grafana:11.5.2)
+#   caddy     : UID 0,   GID 0   (caddy:2.10-alpine, runs as root)
+#   orchestrator: UID 10001, GID 10001 (hada, built from Dockerfile)
+#
+# Directory ownership per service (Phase B host preparation):
+#   /var/lib/hada/docker-volumes/postgres-data    -> 70:70   0750
+#   /var/lib/hada/docker-volumes/valkey-data      -> 999:1000 0770
+#   /var/lib/hada/docker-volumes/prometheus-data  -> 65534:65534 0755
+#   /var/lib/hada/docker-volumes/loki-data        -> 10001:10001 0750
+#   /var/lib/hada/docker-volumes/alloy-data       -> 473:473 0770
+#   /var/lib/hada/docker-volumes/grafana-data     -> 472:0   0750
+#   /var/lib/hada/docker-volumes/caddy-data       -> 0:0     0755
+#   /var/lib/hada/docker-volumes/caddy-config     -> 0:0     0755
+#   (Loki UID/GID 10001 matches hada; bootstrap creates hada 10001:10001)
+
+services:
+  caddy:
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ../caddy/Caddyfile.gcp:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/postgres-data
+  valkey-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/valkey-data
+  prometheus-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/prometheus-data
+  loki-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/loki-data
+  alloy-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/alloy-data
+  grafana-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/grafana-data
+  caddy-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/caddy-data
+  caddy-config:
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/hada/docker-volumes/caddy-config
+
+## 8. GCP CADDY CONFIGURATION
+# HADA M1 Production Caddyfile for Google Cloud (hada-control VM)
+#
+# Applied via compose.gcp.yaml override (mounts this file at /etc/caddy/Caddyfile).
+#
+# Design decisions:
+#   - HTTP only (no HTTPS / no TLS termination at Caddy).
+#   - ACME certificate issuance is DISABLED (no email directive).
+#   - Caddy is bound to 127.0.0.1:80 via the compose override.
+#   - Administrative access is via IAP SSH port forwarding:
+#       gcloud compute ssh hada-control --tunnel-through-iap -- -L 8080:localhost:80
+#     Then access http://localhost:8080/grafana/ in the local browser.
+#   - Port 443 is NOT published. No private TLS design is documented yet.
+
+{
+  admin off
+}
+
+:80 {
+  encode zstd gzip
+
+  header {
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+
+  handle_path /grafana/* {
+    reverse_proxy grafana:3000
+  }
+
+  respond /healthz 200
+
+  respond 404
+}
+
+## 9. EFFECTIVE COMPOSE RENDER
+bash: docker: command not found...
+Packages providing this file are:
+'docker-cli'
+'podman-docker'
+
+## 10. EFFECTIVE PORT AND VOLUME REFERENCES
+
+## 11. COMPOSE COMMAND REFERENCES
+deploy/caddy/Caddyfile.gcp:3:# Applied via compose.gcp.yaml override (mounts this file at /etc/caddy/Caddyfile).
+deploy/compose/compose.gcp.yaml:3:# Applied on top of deploy/compose/compose.yaml:
+deploy/compose/compose.gcp.yaml:4:#   docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml ...
+deploy/compose/compose.gcp.yaml:6:# This override MUST be used together with the base compose.yaml.
+evidence/phase-a/package-file-list.txt:17:Category: Docker Compose and deployment configs
+evidence/phase-a/package-file-list.txt:18:  deploy/compose/compose.yaml                         4866 bytes
+evidence/phase-a/package-findings.md:45:### 2.3 Docker images (compose.yaml)
+evidence/phase-a/package-findings.md:99:The compose.yaml uses **Docker named volumes** for all stateful services:
+evidence/phase-a/package-findings.md:123:`deploy/compose/compose.gcp.yaml` is created that defines each named volume
+evidence/phase-a/package-findings.md:125:This override is used together with the base `deploy/compose/compose.yaml`:
+evidence/phase-a/package-findings.md:128:docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml ...
+evidence/phase-a/package-findings.md:158:host mount in compose.yaml). This is Docker's default container log directory on
+evidence/phase-a/package-findings.md:173:  └── Caddy (bound to 127.0.0.1:80 via compose.gcp.yaml override)
+evidence/phase-a/package-findings.md:186:### 4.2 Published ports (after compose.gcp.yaml override)
+evidence/phase-a/package-findings.md:212:accessible. However, with the `compose.gcp.yaml` override binding Caddy to
+evidence/phase-a/package-findings.md:235:compose.yaml or compose.gcp.yaml — it is only accessible within the `control`
+evidence/phase-a/package-findings.md:272:- The compose.yaml reads secrets from environment variables, not from files
+evidence/phase-a/package-findings.md:302:  compose.yaml, which is visible in `docker inspect`. This is a known Docker
+evidence/phase-a/package-findings.md:410:| Docker Compose config | compose.yaml + compose.gcp.yaml + .env | Ready |
+evidence/phase-a/package-findings.md:430:| F-002 | Critical | Docker named volumes default to boot disk. Remediated via driver_opts bind mounts in compose.gcp.yaml. | Remediated |
+evidence/phase-a/deployment-plan.md:19:1. `deploy/compose/compose.yaml` — the base file shipped in the archive.
+evidence/phase-a/deployment-plan.md:20:2. `deploy/compose/compose.gcp.yaml` — the production override created in
+evidence/phase-a/deployment-plan.md:21:   Phase A at `/home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml`.
+evidence/phase-a/deployment-plan.md:23:The override (compose.gcp.yaml) applies:
+evidence/phase-a/deployment-plan.md:32:docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml --env-file .env ...
+evidence/phase-a/deployment-plan.md:143:### Step B4: Copy compose.gcp.yaml and Caddyfile.gcp to the VM
+evidence/phase-a/deployment-plan.md:150:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+evidence/phase-a/deployment-plan.md:151:  hada-control:/tmp/compose.gcp.yaml \
+evidence/phase-a/deployment-plan.md:167:  --command='sudo install -m 0644 -o root -g hada /tmp/compose.gcp.yaml /opt/hada/deploy/compose/compose.gcp.yaml && \
+evidence/phase-a/deployment-plan.md:214:    -e "s|compose_file: /opt/hada/deploy/compose/compose.yaml|compose_file: /opt/hada/deploy/compose/compose.yaml -f /opt/hada/deploy/compose/compose.gcp.yaml|" \
+evidence/phase-a/deployment-plan.md:221:validate-host.sh script currently references only compose.yaml; Phase B
+evidence/phase-a/deployment-plan.md:222:must ensure it also includes compose.gcp.yaml.
+evidence/phase-a/deployment-plan.md:229:  --command='sudo -u hada docker compose \
+evidence/phase-a/deployment-plan.md:230:    -f /opt/hada/deploy/compose/compose.yaml \
+evidence/phase-a/deployment-plan.md:231:    -f /opt/hada/deploy/compose/compose.gcp.yaml \
+evidence/phase-a/deployment-plan.md:253:    docker compose \
+evidence/phase-a/deployment-plan.md:254:      -f deploy/compose/compose.yaml \
+evidence/phase-a/deployment-plan.md:255:      -f deploy/compose/compose.gcp.yaml \
+evidence/phase-a/deployment-plan.md:276:supervisor.sh currently references only compose.yaml; Phase B must patch it
+evidence/phase-a/deployment-plan.md:277:to include compose.gcp.yaml.
+evidence/phase-a/deployment-plan.md:288:- Start docker compose (with both files) if not running.
+evidence/phase-a/deployment-plan.md:298:2. Verify docker compose config is valid (with both files)
+evidence/phase-a/deployment-plan.md:318:  /var/lib/hada/docker-volumes/ (via compose.gcp.yaml).
+evidence/phase-a/deployment-plan.md:327:- Caddy ports are bound to 127.0.0.1 only (via compose.gcp.yaml).
+evidence/phase-a/proposed-commands.sh:18:#       deploy/compose/compose.yaml
+evidence/phase-a/proposed-commands.sh:19:#       deploy/compose/compose.gcp.yaml
+evidence/phase-a/proposed-commands.sh:41:COMPOSE_FILES="-f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml"
+evidence/phase-a/proposed-commands.sh:42:COMPOSE_FILES_ABS="-f /opt/hada/deploy/compose/compose.yaml -f /opt/hada/deploy/compose/compose.gcp.yaml"
+evidence/phase-a/proposed-commands.sh:106:# Step B4: Copy compose.gcp.yaml and Caddyfile.gcp to the VM
+evidence/phase-a/proposed-commands.sh:110:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+evidence/phase-a/proposed-commands.sh:111:#   ${VM}:/tmp/compose.gcp.yaml
+evidence/phase-a/proposed-commands.sh:116:#   /tmp/compose.gcp.yaml /opt/hada/deploy/compose/compose.gcp.yaml && \
+evidence/phase-a/proposed-commands.sh:146:#   -e "s|compose_file: /opt/hada/deploy/compose/compose.yaml|compose_file: /opt/hada/deploy/compose/compose.yaml -f /opt/hada/deploy/compose/compose.gcp.yaml|" \
+evidence/phase-a/proposed-commands.sh:159:# ${SSH_CMD} --command='sudo -u hada docker compose '${COMPOSE_FILES_ABS}' \
+evidence/phase-a/proposed-commands.sh:164:# Step B8: Build and start Docker Compose services (with both files)
+evidence/phase-a/proposed-commands.sh:169:#   docker compose '${COMPOSE_FILES}' --env-file .env up -d'
+evidence/phase-a/proposed-commands.sh:188:# patch it to include compose.gcp.yaml:
+evidence/phase-a/proposed-commands.sh:191:#   "s|compose=(docker compose -f deploy/compose/compose.yaml --env-file .env)|compose=(docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml --env-file .env)|" \
+evidence/phase-a/proposed-commands.sh:204:# --- B11.2: Verify Docker Compose configuration (both files) ---
+evidence/phase-a/proposed-commands.sh:206:#   docker compose '${COMPOSE_FILES}' --env-file .env config'
+evidence/phase-a/rollback-plan.md:17:5. Do NOT run `docker compose down -v` — this would delete named volumes
+evidence/phase-a/rollback-plan.md:26:- `deploy/compose/compose.yaml`
+evidence/phase-a/rollback-plan.md:27:- `deploy/compose/compose.gcp.yaml`
+evidence/phase-a/rollback-plan.md:48:    docker compose \
+evidence/phase-a/rollback-plan.md:49:      -f deploy/compose/compose.yaml \
+evidence/phase-a/rollback-plan.md:50:      -f deploy/compose/compose.gcp.yaml \
+evidence/phase-a/rollback-plan.md:54:CRITICAL: `docker compose down` is used WITHOUT the `-v` flag. The `-v` flag
+evidence/phase-a/rollback-plan.md:193:- Do NOT run `docker compose down -v` (deletes volumes).
+evidence/phase-a/unresolved-findings.md:16:**Description**: The compose.yaml uses Docker named volumes for all stateful
+evidence/phase-a/unresolved-findings.md:23:`deploy/compose/compose.gcp.yaml` has been created defining each named
+evidence/phase-a/unresolved-findings.md:49:documented. The compose.gcp.yaml override binds Caddy to 127.0.0.1:80 only.
+evidence/phase-a/unresolved-findings.md:64:Port 9108 is not published in compose.yaml or compose.gcp.yaml.
+evidence/phase-a/unresolved-findings.md:84:**Description**: All Docker images in compose.yaml use version tags rather
+evidence/phase-a/unresolved-findings.md:95:compose.yaml, visible in docker inspect output.
+evidence/phase-a/unresolved-findings.md:149:   `deploy/compose/compose.yaml`. Must also include
+evidence/phase-a/unresolved-findings.md:150:   `deploy/compose/compose.gcp.yaml`.
+evidence/phase-a/unresolved-findings.md:153:   `deploy/compose/compose.yaml`. Must also include
+evidence/phase-a/unresolved-findings.md:154:   `deploy/compose/compose.gcp.yaml`.
+evidence/phase-a/unresolved-findings.md:157:   only `/opt/hada/deploy/compose/compose.yaml`. Must be updated to reference
+evidence/phase-a/unresolved-findings.md:167:| F-002 | Critical | RESOLVED (driver_opts bind mounts in compose.gcp.yaml) |
+
+## 12. SUPERVISOR AND SYSTEMD FILES
+./inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/scripts/hada-supervisor.service
+----- ./inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/scripts/hada-supervisor.service -----
+[Unit]
+Description=HADA Watchdog Supervisor
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=hada
+Group=hada
+SupplementaryGroups=docker
+WorkingDirectory=/opt/hada
+ExecStart=/opt/hada/scripts/supervisor.sh
+Restart=on-failure
+RestartSec=60
+RestartPreventExitStatus=70 78
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/hada /var/log/hada
+
+[Install]
+WantedBy=multi-user.target
+./inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/scripts/supervisor.sh
+----- ./inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/scripts/supervisor.sh -----
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+cd /opt/hada
+if [[ ! -r .env ]]; then
+  logger -p daemon.crit -t hada-supervisor "missing /opt/hada/.env"
+  exit 78
+fi
+
+compose=(docker compose -f deploy/compose/compose.yaml --env-file .env)
+max_attempts=$(/opt/hada/.venv/bin/python - <<'PY'
+import yaml
+with open('config/hada.yaml', encoding='utf-8') as handle:
+    print(yaml.safe_load(handle)['governance']['maximum_recovery_attempts'])
+PY
+)
+backoff=$(/opt/hada/.venv/bin/python - <<'PY'
+import yaml
+with open('config/hada.yaml', encoding='utf-8') as handle:
+    print(yaml.safe_load(handle)['infrastructure']['recovery_backoff_seconds'])
+PY
+)
+
+attempt=0
+while true; do
+  unhealthy=0
+  if ! "${compose[@]}" up -d --remove-orphans; then
+    unhealthy=1
+  elif "${compose[@]}" ps --all --format json \
+    | jq -e 'length == 0 or any(.[]; .State != "running" or (.Health != "" and .Health != "healthy"))' \
+      >/dev/null; then
+    unhealthy=1
+  fi
+
+  if (( unhealthy == 1 )); then
+    if (( attempt >= max_attempts )); then
+      logger -p daemon.crit -t hada-supervisor "recovery attempts exhausted"
+      exit 70
+    fi
+    attempt=$((attempt + 1))
+    logger -p daemon.warning -t hada-supervisor \
+      "control plane unhealthy; bounded recovery attempt ${attempt}/${max_attempts}"
+    "${compose[@]}" restart || true
+  else
+    attempt=0
+  fi
+
+  sleep "$backoff"
+done
+
+## 13. PLACEHOLDER AND SECRET-LEAK SCAN
+scripts/provision-secrets.sh:15:#   - Fails if any CHANGE_ME placeholder remains.
+scripts/provision-secrets.sh:79:# Fail if any CHANGE_ME placeholder remains
+scripts/provision-secrets.sh:80:if grep -q 'CHANGE_ME' "$TMP_FILE"; then
+scripts/provision-secrets.sh:81:  echo "ERROR: CHANGE_ME placeholder found in generated .env" >&2
+evidence/phase-a/proposed-commands.sh:136:#   - fails if any CHANGE_ME placeholder remains
+
+## 14. PUBLIC-EXPOSURE SCAN
+deploy/compose/compose.gcp.yaml:14:#   4. Orchestrator monitoring listener stays on 0.0.0.0:9108 (unpublished).
+deploy/compose/compose.gcp.yaml:39:    ports:
+deploy/compose/compose.gcp.yaml:40:      - "127.0.0.1:80:80"
+
+## 15. REVISED PROPOSED COMMANDS
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B — Proposed Commands (Revised)
+#
+# This script lists every proposed Phase B command. Each command is
+# commented out and preceded by its purpose. No Phase B commands are
+# executed during Phase A.
+#
+# Generated: 2026-07-25T03:42:00Z
+# Revised: 2026-07-25 (human correction pass)
+#
+# Governance: These commands must only be executed after explicit
+# human approval of Phase A. The operator must not begin Phase B
+# without that approval.
+#
+# Key revisions applied:
+#   - Both compose files are used everywhere:
+#       deploy/compose/compose.yaml
+#       deploy/compose/compose.gcp.yaml
+#   - Docker data-root is NOT relocated.
+#   - Volume directories use per-service UID/GID (not uniform hada:hada).
+#   - Secrets are provisioned atomically (no sed-based approach).
+#   - Remote archive SHA-256 verification before extraction.
+#   - Extraction into a clean staging directory.
+#   - Orchestrator listener stays on 0.0.0.0 (port 9108 unpublished).
+#   - Caddy bound to 127.0.0.1, port 443 not published, ACME disabled.
+#   - Hermesctl remote checks documented as mandatory Phase B gates.
+#
+
+set -Eeuo pipefail
+
+PROJECT="api-intergrations-501314"
+ZONE="australia-southeast1-b"
+VM="hada-control"
+ARCHIVE="HADA-M1-durable-orchestrator.zip"
+EXPECTED_SHA256="51cbf075ff1fd5da481b6bec400a760e722aa4d1131c568dd79f8c070c3f4647"
+SSH_CMD="gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+SCP_CMD="gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+
+# The two compose files — used together in every compose command
+COMPOSE_FILES="-f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml"
+COMPOSE_FILES_ABS="-f /opt/hada/deploy/compose/compose.yaml -f /opt/hada/deploy/compose/compose.gcp.yaml"
+
+# ============================================================================
+# Step B1: Transfer source archive to VM
+# Purpose: Copy the HADA archive to the VM for deployment.
+# ============================================================================
+
+# ${SCP_CMD} ${ARCHIVE} ${VM}:/tmp/
+
+# ============================================================================
+# Step B1.1: Verify remote archive SHA-256 before extraction
+# Purpose: Ensure the archive was not corrupted or modified in transit.
+#          The checksum must match the locally computed value.
+# ============================================================================
+
+# ${SSH_CMD} --command='cd /tmp && sha256sum '${ARCHIVE}' && \
+#   echo "Expected: '${EXPECTED_SHA256}'" && \
+#   echo "${EXPECTED_SHA256}  ${ARCHIVE}" | sha256sum -c -'
+
+# ============================================================================
+# Step B2: Extract into a clean staging directory and run bootstrap
+# Purpose: Install system packages, Docker, create service account,
+#          install HADA to /opt/hada, generate signing keys.
+#          Extraction is into a clean staging directory (human decision #11).
+# ============================================================================
+
+# ${SSH_CMD} --command='cd /tmp && \
+#   rm -rf /tmp/hada-staging && \
+#   mkdir -p /tmp/hada-staging && \
+#   cd /tmp/hada-staging && \
+#   unzip -o /tmp/'${ARCHIVE}' && \
+#   ls -la HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh && \
+#   sudo bash HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh'
+
+# Note: Docker's global data-root is NOT modified. No /etc/docker/daemon.json
+# is created. Docker images and container layers remain on the boot disk.
+# Stateful data is redirected via driver_opts bind mounts (Step B3).
+
+# ============================================================================
+# Step B3: Create Docker volume directories with per-service UID/GID
+# Purpose: Ensure each bind-mounted volume directory has correct ownership
+#          for the container that writes to it (human decisions #1 and #7).
+#          NOT all directories are owned by hada:hada.
+# ============================================================================
+
+# ${SSH_CMD} --command='sudo install -d -o 70   -g 70   -m 0750 /var/lib/hada/docker-volumes/postgres-data && \
+#   sudo install -d -o 999  -g 1000 -m 0770 /var/lib/hada/docker-volumes/valkey-data && \
+#   sudo install -d -o 65534 -g 65534 -m 0755 /var/lib/hada/docker-volumes/prometheus-data && \
+#   sudo install -d -o 10001 -g 10001 -m 0750 /var/lib/hada/docker-volumes/loki-data && \
+#   sudo install -d -o 473  -g 473  -m 0770 /var/lib/hada/docker-volumes/alloy-data && \
+#   sudo install -d -o 472  -g 0    -m 0750 /var/lib/hada/docker-volumes/grafana-data && \
+#   sudo install -d -o 0    -g 0    -m 0755 /var/lib/hada/docker-volumes/caddy-data && \
+#   sudo install -d -o 0    -g 0    -m 0755 /var/lib/hada/docker-volumes/caddy-config'
+
+# Container UID/GID (verified via skopeo inspect):
+#   postgres   : UID 70,   GID 70
+#   valkey     : UID 999,  GID 1000
+#   prometheus : UID 65534(nobody), GID 65534
+#   loki       : UID 10001, GID 10001  (matches hada)
+#   alloy      : UID 473,  GID 473
+#   grafana    : UID 472,  GID 0
+#   caddy      : UID 0,    GID 0  (runs as root)
+
+# ============================================================================
+# Step B4: Copy compose.gcp.yaml and Caddyfile.gcp to the VM
+# Purpose: Install the production override and Caddyfile alongside the base.
+# ============================================================================
+
+# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+#   ${VM}:/tmp/compose.gcp.yaml
+# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+#   ${VM}:/tmp/Caddyfile.gcp
+
+# ${SSH_CMD} --command='sudo install -m 0644 -o root -g hada \
+#   /tmp/compose.gcp.yaml /opt/hada/deploy/compose/compose.gcp.yaml && \
+#   sudo install -m 0644 -o root -g hada \
+#   /tmp/Caddyfile.gcp /opt/hada/deploy/caddy/Caddyfile.gcp'
+
+# ============================================================================
+# Step B5: Provision secrets atomically
+# Purpose: Generate each secret once, reuse in DSN/URL, write .env atomically.
+#          Replaces the incomplete sed-based approach (human decision #8).
+# ============================================================================
+
+# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh \
+#   ${VM}:/tmp/provision-secrets.sh
+# ${SSH_CMD} --command='sudo bash /tmp/provision-secrets.sh'
+
+# The script:
+#   - generates each secret exactly once (openssl rand -hex 32)
+#   - reuses each in its PASSWORD and DSN/URL
+#   - writes /opt/hada/.env atomically (temp file + mv)
+#   - assigns root:hada ownership, mode 0640
+#   - never displays secrets
+#   - fails if any CHANGE_ME placeholder remains
+
+# ============================================================================
+# Step B6: Configure hada.yaml
+# Purpose: Set target repository, update compose_file path to both files.
+#          monitoring.listen_host stays 0.0.0.0 (port 9108 unpublished).
+# ============================================================================
+
+# ${SSH_CMD} --command='sudo sed -i \
+#   -e "s|target_repository: \"\"|target_repository: \"https://github.com/mdyerapis-coder/hermesctl.git\"|" \
+#   -e "s|compose_file: /opt/hada/deploy/compose/compose.yaml|compose_file: /opt/hada/deploy/compose/compose.yaml -f /opt/hada/deploy/compose/compose.gcp.yaml|" \
+#   /opt/hada/config/hada.yaml'
+
+# ============================================================================
+# Step B7: Run host validation (with both compose files)
+# Purpose: Verify all prerequisites are met before starting services.
+#          The validator and all compose commands must use BOTH files
+#          (human decision #4).
+# ============================================================================
+
+# The shipped validate-host.sh hardcodes a single compose file. Phase B must
+# patch it to reference both files, or run the compose config check separately:
+
+# ${SSH_CMD} --command='sudo -u hada docker compose '${COMPOSE_FILES_ABS}' \
+#   --env-file /opt/hada/.env config && \
+#   sudo /opt/hada/scripts/validate-host.sh'
+
+# ============================================================================
+# Step B8: Build and start Docker Compose services (with both files)
+# Purpose: Pull images, build orchestrator, start all services.
+# ============================================================================
+
+# ${SSH_CMD} --command='cd /opt/hada && \
+#   docker compose '${COMPOSE_FILES}' --env-file .env up -d'
+
+# ============================================================================
+# Step B9: Verify database migrations
+# Purpose: Confirm PostgreSQL schema is applied correctly.
+# ============================================================================
+
+# ${SSH_CMD} --command='sudo -u hada /opt/hada/.venv/bin/hada db migrate \
+#   --config /opt/hada/config/hada.yaml'
+
+# Or verify via the orchestrator container's entrypoint which runs migrations.
+
+# ============================================================================
+# Step B10: Enable and start the systemd supervisor (with both compose files)
+# Purpose: Start the watchdog that monitors and recovers the control plane.
+#          The supervisor.sh must use BOTH compose files (human decision #4).
+# ============================================================================
+
+# The shipped supervisor.sh hardcodes a single compose file. Phase B must
+# patch it to include compose.gcp.yaml:
+
+# ${SSH_CMD} --command='sudo sed -i \
+#   "s|compose=(docker compose -f deploy/compose/compose.yaml --env-file .env)|compose=(docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.gcp.yaml --env-file .env)|" \
+#   /opt/hada/scripts/supervisor.sh && \
+#   sudo systemctl enable --now hada-supervisor.service'
+
+# ============================================================================
+# Step B11: Validation suite
+# Purpose: Run all Phase B validation checks.
+# All compose commands use BOTH files.
+# ============================================================================
+
+# --- B11.1: Verify persistent disk mounting ---
+# ${SSH_CMD} --command='findmnt /var/lib/hada && blkid /dev/sdb'
+
+# --- B11.2: Verify Docker Compose configuration (both files) ---
+# ${SSH_CMD} --command='cd /opt/hada && \
+#   docker compose '${COMPOSE_FILES}' --env-file .env config'
+
+# --- B11.3: Verify PostgreSQL health and migrations ---
+# ${SSH_CMD} --command='docker exec hada-postgres-1 pg_isready -U hada -d hada && \
+#   docker exec hada-postgres-1 psql -U hada -d hada -c "SELECT version, checksum FROM schema_migrations ORDER BY version"'
+
+# --- B11.4: Verify governance constraints ---
+# ${SSH_CMD} --command='docker exec hada-postgres-1 psql -U hada -d hada -c "
+#   INSERT INTO gate_decisions (decision_id, milestone_id, gate, status, reviewer_party, subject_party, evidence, findings, decision_digest)
+#   VALUES ('\''test'\'', '\''test'\'', '\''architecture'\'', '\''approved'\'', 1, 1, '\''[]'\''::jsonb, '\''[]'\''::jsonb, repeat('\''0'\'', 64));" 2>&1 | grep -q "violates" && echo "PASS: self-approval rejected" || echo "FAIL: self-approval not rejected"'
+
+# --- B11.5: Verify authenticated Valkey operation ---
+# ${SSH_CMD} --command='docker exec hada-valkey-1 valkey-cli -a $(grep VALKEY_PASSWORD /opt/hada/.env | cut -d= -f2) ping'
+
+# --- B11.6: Verify orchestrator liveness and readiness ---
+# Port 9108 is NOT published. Access via container exec:
+# ${SSH_CMD} --command='docker exec hada-orchestrator-1 curl -s http://127.0.0.1:9108/healthz'
+# ${SSH_CMD} --command='docker exec hada-orchestrator-1 curl -s http://127.0.0.1:9108/readyz'
+
+# --- B11.7: Verify immutable audit records ---
+# ${SSH_CMD} --command='docker exec hada-postgres-1 psql -U hada -d hada -c "
+#   UPDATE audit_events SET event_type='\''tampered'\'' WHERE sequence=1;\" 2>&1 | grep -q \"may not be updated\" && echo \"PASS: audit records immutable\" || echo \"FAIL\"'
+
+# --- B11.8: Verify audit signing and hash-chain ---
+# ${SSH_CMD} --command='sudo -u hada /opt/hada/.venv/bin/hada audit verify \
+#   --config /opt/hada/config/hada.yaml'
+
+# --- B11.9: Verify bounded workspace creation ---
+# ${SSH_CMD} --command='sudo -u hada /opt/hada/.venv/bin/hada workspace create M1 task-001 \
+#   --config /opt/hada/config/hada.yaml'
+
+# --- B11.10: Verify Hermesctl repo accessibility from orchestrator container ---
+# MANDATORY Phase B gate (human decision #9)
+# ${SSH_CMD} --command='docker exec hada-orchestrator-1 git ls-remote https://github.com/mdyerapis-coder/hermesctl.git refs/heads/main'
+
+# --- B11.11: Verify Hermesctl repo accessibility from hada-control as hada ---
+# MANDATORY Phase B gate (human decision #9)
+# The hada service account shell is /usr/sbin/nologin; use sudo -u hada.
+# If credentials are required for HTTPS to GitHub, report the exact
+# requirement without exposing credentials.
+# ${SSH_CMD} --command='sudo -u hada git ls-remote https://github.com/mdyerapis-coder/hermesctl.git refs/heads/main'
+
+# --- B11.12: Verify watchdog recovery behaviour ---
+# ${SSH_CMD} --command='sudo systemctl status hada-supervisor.service'
+
+# --- B11.13: Verify no unexpected public listeners ---
+# Caddy should be bound to 127.0.0.1:80 only. Port 443 must NOT be published.
+# ${SSH_CMD} --command='ss -tlnp | grep -E ":(80|443|5432|6379|9090|3100|9108|12345) " || echo "PASS: no public listeners"'
+# Also verify from outside:
+# curl -s --connect-timeout 5 http://34.151.78.183:80/ 2>&1 || echo "PASS: port 80 not accessible"
+
+# --- B11.14: Verify service recovery following reboot ---
+# ${SSH_CMD} --command='sudo reboot'
+# Wait for VM to come back, then verify:
+# ${SSH_CMD} --command='systemctl is-active hada-supervisor.service && docker ps'
+
+# --- B11.15: Verify persistence of state after reboot ---
+# ${SSH_CMD} --command='findmnt /var/lib/hada && \
+#   docker exec hada-postgres-1 psql -U hada -d hada -c "SELECT count(*) FROM schema_migrations"'
+
+# ============================================================================
+# End of proposed Phase B commands
+# ============================================================================
+#
+# These commands must NOT be executed until Phase A is explicitly approved.
+# The operator (Hermes) must not begin Phase B without human approval.
+# The only valid successful deployment status is:
+#   IMPLEMENTATION_CANDIDATE_AWAITING_PARTY_3
+#
+# Failure statuses are:
+#   FAILED_VALIDATION
+#   BLOCKED_REQUIRES_HUMAN_INPUT
+
+## 16. REVISED ROLLBACK PLAN
+# HADA M1 Phase A — Rollback Plan (Revised)
+
+Generated: 2026-07-25T03:42:00Z
+Revised: 2026-07-25 (human correction pass)
+
+## Overview
+
+If the HADA M1 deployment fails validation or produces unexpected results,
+the following rollback procedure restores the VM to its pre-deployment state.
+
+## Rollback principles
+
+1. Do NOT delete or recreate hada-control.
+2. Do NOT delete, detach, resize, or recreate its disks.
+3. Do NOT format /dev/sdb.
+4. Do NOT delete or replace the hada-iap-ssh firewall rule.
+5. Do NOT run `docker compose down -v` — this would delete named volumes
+   and destroy persistent data (human decision #13).
+6. Do NOT delete or reformat the persistent data disk.
+7. Do NOT delete existing GCP resources.
+8. Evidence files produced during Phase A are preserved.
+
+## Rollback steps
+
+All compose commands use BOTH files:
+- `deploy/compose/compose.yaml`
+- `deploy/compose/compose.gcp.yaml`
+
+### Step R1: Stop the supervisor
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo systemctl stop hada-supervisor.service && \
+    sudo systemctl disable hada-supervisor.service 2>/dev/null; true'
+```
+
+### Step R2: Stop and remove containers (WITHOUT removing volumes)
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='cd /opt/hada && \
+    docker compose \
+      -f deploy/compose/compose.yaml \
+      -f deploy/compose/compose.gcp.yaml \
+      --env-file .env down --remove-orphans 2>/dev/null; true'
+```
+
+CRITICAL: `docker compose down` is used WITHOUT the `-v` flag. The `-v` flag
+would delete named volumes (including the driver_opts bind-mounted directories)
+and is explicitly prohibited (HADA-TAKEOVER.md and human decision #13). The
+`down` command without `-v` stops and removes containers but preserves all
+volume data.
+
+### Step R3: Remove the systemd service file
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo rm -f /etc/systemd/system/hada-supervisor.service && \
+    sudo systemctl daemon-reload'
+```
+
+### Step R4: Remove /opt/hada directory
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo rm -rf /opt/hada'
+```
+
+### Step R5: Remove the hada service account (if needed)
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo userdel hada 2>/dev/null; sudo groupdel hada 2>/dev/null; true'
+```
+
+### Step R6: Docker data-root
+
+Docker's global data-root was NOT relocated during deployment (human decision
+#2). No /etc/docker/daemon.json was created. No Docker daemon restart is
+needed for rollback. This step is a no-op.
+
+### Step R7: Remove Docker container data (if any)
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='docker container prune -f 2>/dev/null; true'
+```
+
+### Step R8: Remove HADA Docker volume directories (OPTIONAL — with caution)
+
+The driver_opts bind-mounted directories under
+/var/lib/hada/docker-volumes/ contain persistent service data. These should
+ONLY be removed if the deployment is being completely abandoned and the
+operator has confirmed data loss is acceptable.
+
+Do NOT delete the /var/lib/hada mount point itself — it is the mount for
+/dev/sdb and must not be removed.
+
+```bash
+# ONLY if data loss is confirmed acceptable:
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo rm -rf /var/lib/hada/docker-volumes'
+```
+
+Note: This removes Docker volume data that was created on the data disk
+during deployment. The /var/lib/hada mount point itself is preserved.
+Do NOT reformat /dev/sdb. Do NOT run mkfs against any device.
+
+### Step R9: Remove signing keys (if generated)
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo rm -rf /var/lib/hada/keys /var/lib/hada/evidence /var/lib/hada/workspaces /var/lib/hada/repositories /var/lib/hada/workspace-metadata /var/lib/hada/git-home'
+```
+
+### Step R10: Remove uploaded archive and staging directory from VM
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='rm -f /tmp/HADA-M1-durable-orchestrator.zip && \
+    rm -rf /tmp/hada-staging /tmp/HADA-M1-durable-orchestrator'
+```
+
+### Step R11: Uninstall Docker packages (optional)
+
+Only if Docker was not present before the deployment and should be removed:
+
+```bash
+gcloud compute ssh hada-control \
+  --project=api-intergrations-501314 \
+  --zone=australia-southeast1-b \
+  --tunnel-through-iap \
+  --command='sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null; true'
+```
+
+This step is OPTIONAL. Docker itself is not harmful to leave installed.
+
+## Post-rollback verification
+
+After rollback, verify the VM is in a clean state:
+
+1. Confirm hada-control is still RUNNING:
+   `gcloud compute instances describe hada-control ...`
+
+2. Confirm /var/lib/hada is still mounted from /dev/sdb with correct UUID:
+   `findmnt /var/lib/hada` and `blkid /dev/sdb`
+
+3. Confirm /etc/fstab is unchanged (the data disk entry should remain).
+
+4. Confirm the hada-iap-ssh firewall rule exists.
+
+5. Confirm no HADA containers are running:
+   `docker ps` (should show no HADA containers).
+
+6. Confirm the systemd service is removed:
+   `systemctl status hada-supervisor.service` (should fail).
+
+7. Confirm /dev/sdb was NOT reformatted:
+   `blkid /dev/sdb` (UUID must remain
+   a1574097-cdf9-4d0a-ace0-adac63038e56).
+
+## Prohibited rollback operations
+
+Per HADA-TAKEOVER.md and human decision #13:
+
+- Do NOT run `docker compose down -v` (deletes volumes).
+- Do NOT delete or reformat the persistent data disk (/dev/sdb).
+- Do NOT run mkfs against any device.
+- Do NOT delete, detach, resize, or recreate disks.
+- Do NOT delete or recreate hada-control.
+
+## Rollback decision authority
+
+Per HADA-TAKEOVER.md governance:
+- Hermes (the operator) may perform rollback if validation fails.
+- The failure status is FAILED_VALIDATION or BLOCKED_REQUIRES_HUMAN_INPUT.
+- Hermes must report the failure and await human direction.
+- The only valid successful deployment status is
+  IMPLEMENTATION_CANDIDATE_AWAITING_PARTY_3.
+
+## 17. REVISED UNRESOLVED FINDINGS
+# HADA M1 Phase A — Unresolved Findings (Revised)
+
+Generated: 2026-07-25T03:42:00Z
+Revised: 2026-07-25 (human correction pass)
+
+## Status
+
+Phase A inspection is complete. All evidence files have been produced.
+The human correction pass has been applied. The following findings
+remain open and require Phase B action or human review.
+
+## Findings resolved by human decisions
+
+### F-002 (CRITICAL): Docker named volumes default to boot disk — RESOLVED
+
+**Description**: The compose.yaml uses Docker named volumes for all stateful
+services. By default, these are stored under /var/lib/docker/volumes/ on
+the 30 GB boot disk, not on the 100 GB data disk at /var/lib/hada/.
+
+**Human decision applied**: Use Docker named volumes with driver_opts bind
+mounts beneath /var/lib/hada/docker-volumes/. Docker's global data-root is
+NOT relocated. A production override file
+`deploy/compose/compose.gcp.yaml` has been created defining each named
+volume with `driver_opts: {type: none, o: bind,
+device: /var/lib/hada/docker-volumes/<name>}`.
+
+**Status**: RESOLVED. The override is ready for Phase B.
+
+### F-003 (MEDIUM): Alloy log path depends on Docker data-root — RESOLVED
+
+**Description**: The Alloy configuration reads Docker JSON logs from
+/var/lib/docker/containers/*/*-json.log. If Docker's data-root is
+relocated, this path changes.
+
+**Resolution**: Docker's data-root is NOT being relocated (human decision #2).
+The Alloy config path /var/lib/docker/containers is correct and needs no
+changes.
+
+**Status**: RESOLVED.
+
+### F-004 (CRITICAL): Existing public firewall rules expose ports 80/443 — RESOLVED
+
+**Description**: The GCP project has existing firewall rules that expose
+ports 80, 443, and 7000 to 0.0.0.0/0 on ALL instances.
+
+**Human decision applied**: Bind Caddy to localhost only. Use localhost-only
+HTTP through IAP port forwarding. Disable public ACME certificate issuance.
+Do NOT publish host port 443 unless a complete private TLS design is
+documented. The compose.gcp.yaml override binds Caddy to 127.0.0.1:80 only.
+Port 443 is not published. A production Caddyfile (Caddyfile.gcp) disables
+ACME and uses HTTP-only.
+
+**Status**: RESOLVED. No GCP firewall rules are modified.
+
+### F-005 (LOW): Orchestrator listens on 0.0.0.0 — RESOLVED
+
+**Description**: The orchestrator runtime listens on 0.0.0.0:9108.
+
+**Human decision applied**: Keep the orchestrator monitoring listener on
+0.0.0.0 inside the container. Port 9108 must remain unpublished and
+accessible only on the internal Docker network.
+
+**Status**: RESOLVED. No changes to hada.yaml monitoring.listen_host.
+Port 9108 is not published in compose.yaml or compose.gcp.yaml.
+
+### F-007 (MEDIUM): Volume directories need per-service UID/GID — RESOLVED
+
+**Description**: The original deployment plan proposed assigning all volume
+directories to hada:hada (UID 10001:10001). This is incorrect for
+PostgreSQL (70:70), Valkey (999:1000), Prometheus (65534:65534),
+Alloy (473:473), Grafana (472:0), and Caddy (0:0). Only Loki (10001:10001)
+and the orchestrator (10001:10001) match hada:hada.
+
+**Resolution**: The deployment plan has been corrected with explicit
+per-service `install -d -o <uid> -g <gid> -m <mode>` commands for each
+volume directory.
+
+**Status**: RESOLVED.
+
+## Findings accepted for M1 (no action required)
+
+### F-001 (LOW): Docker images use tags, not digests
+
+**Description**: All Docker images in compose.yaml use version tags rather
+than SHA-256 digests.
+
+**Resolution**: The M1 exclusions list in ARCHITECTURE.md explicitly excludes
+image digest pinning. No action needed for M1. Track for M2.
+
+**Status**: Accepted.
+
+### F-006 (LOW): Valkey password visible in docker inspect
+
+**Description**: The Valkey password is passed via command-line argument in
+compose.yaml, visible in docker inspect output.
+
+**Resolution**: Accepted for M1. M2 could use Docker secrets or a Valkey
+config file.
+
+**Status**: Accepted.
+
+## Mandatory Phase B gates (human decision #9)
+
+The following checks could not be completed during Phase A and are
+mandatory Phase B gates:
+
+### B-GATE-1: Hermesctl repository access from hada-control
+
+**Requirement**: Verify `git ls-remote` succeeds when run on hada-control
+as the hada service account (not just from the local Fedora workstation).
+
+**Command**:
+```
+gcloud compute ssh hada-control --tunnel-through-iap -- \
+  'sudo -u hada git ls-remote https://github.com/mdyerapis-coder/hermesctl.git refs/heads/main'
+```
+
+**Credential requirement**: If HTTPS authentication to GitHub is required,
+report the exact requirement without exposing credentials. The hada service
+account shell is /usr/sbin/nologin; Phase B must use `sudo -u hada` or a
+wrapper that does not require interactive login. If a GitHub personal access
+token or deploy key is required, document the exact type and scope needed
+without storing the secret in evidence files.
+
+**Status**: PENDING — mandatory Phase B gate.
+
+### B-GATE-2: Hermesctl repository access from the orchestrator container
+
+**Requirement**: Verify `git ls-remote` succeeds when run inside the
+orchestrator container.
+
+**Command**:
+```
+docker exec hada-orchestrator-1 git ls-remote https://github.com/mdyerapis-coder/hermesctl.git refs/heads/main
+```
+
+**Context**: The hada.yaml config lists allowed_egress_hosts: github.com,
+api.github.com, objects.githubusercontent.com. The RepositoryPolicy in
+workspaces/manager.py validates the repository URL host is in the allowlist.
+
+**Status**: PENDING — mandatory Phase B gate.
+
+## Phase B corrections to shipped scripts (human decision #4)
+
+The following shipped scripts hardcode a single compose file path and must
+be patched in Phase B to use both files:
+
+1. **validate-host.sh** (line 26): Currently references only
+   `deploy/compose/compose.yaml`. Must also include
+   `deploy/compose/compose.gcp.yaml`.
+
+2. **supervisor.sh** (line 10): Currently references only
+   `deploy/compose/compose.yaml`. Must also include
+   `deploy/compose/compose.gcp.yaml`.
+
+3. **hada.yaml** (line 39): `infrastructure.compose_file` currently references
+   only `/opt/hada/deploy/compose/compose.yaml`. Must be updated to reference
+   both files.
+
+**Status**: PENDING — must be corrected in Phase B before service start.
+
+## Summary
+
+| ID | Severity | Status |
+|---|---|---|
+| F-001 | Low | Accepted (M1 exclusion) |
+| F-002 | Critical | RESOLVED (driver_opts bind mounts in compose.gcp.yaml) |
+| F-003 | Medium | RESOLVED (data-root not relocated) |
+| F-004 | Critical | RESOLVED (Caddy bound to 127.0.0.1, port 443 unpublished) |
+| F-005 | Low | RESOLVED (listener kept on 0.0.0.0, port unpublished) |
+| F-006 | Low | Accepted for M1 |
+| F-007 | Medium | RESOLVED (per-service UID/GID in deployment plan) |
+| B-GATE-1 | — | PENDING (Hermesctl access from hada-control) |
+| B-GATE-2 | — | PENDING (Hermesctl access from orchestrator container) |
+| Script patches | — | PENDING (validate-host.sh, supervisor.sh, hada.yaml) |
+
+## Phase A stopping condition
+
+All Phase A inspection steps (1-21) are complete. All required evidence
+files have been produced and revised. No modifications were made to
+hada-control or any GCP resources. No sudo was used during Phase A.
+
+Awaiting explicit human approval to proceed to Phase B.
+
+============================================================
+END OF REVIEW BUNDLE
+============================================================

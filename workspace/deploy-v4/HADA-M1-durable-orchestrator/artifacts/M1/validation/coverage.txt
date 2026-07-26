@@ -1,0 +1,48 @@
+$ PYTHONPATH=src coverage erase
+$ PYTHONPATH=src coverage run -m pytest -q -m "not integration"
+................................................                         [100%]
+48 passed, 2 deselected in 0.90s
+$ coverage report -m
+Name                                       Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------
+src/hada/__init__.py                           0      0   100%
+src/hada/audit/__init__.py                     0      0   100%
+src/hada/audit/chain.py                       52      3    94%   89, 95-96
+src/hada/canonical.py                         27      4    85%   20, 24, 26, 29
+src/hada/cli.py                              129     64    50%   39-43, 47-56, 77-80, 85-92, 111-121, 132-144, 152-158, 163-167, 178-198, 203-229, 233
+src/hada/config.py                             7      0   100%
+src/hada/crypto/__init__.py                    0      0   100%
+src/hada/crypto/signing.py                    90      7    92%   70, 74, 80, 114, 117, 122, 124
+src/hada/db/__init__.py                        0      0   100%
+src/hada/db/migrate.py                        54     20    63%   23, 39, 52, 56-95
+src/hada/db/postgres.py                      170    128    25%   32-35, 38-43, 52-56, 67-103, 106-111, 114-131, 140-168, 177-189, 192-215, 225, 241-248, 257-279, 303-349, 360-381, 390-420, 433-445, 456-479, 482-503, 512-560, 582-631, 645-680, 690-691, 700-703
+src/hada/evidence/__init__.py                  0      0   100%
+src/hada/evidence/store.py                    95     18    81%   92-96, 116-120, 133-135, 143-146, 151, 160-161
+src/hada/governance/engine.py                 53      4    92%   50, 52, 72-73
+src/hada/models.py                           155      2    99%   212, 214
+src/hada/orchestrator/__init__.py              0      0   100%
+src/hada/orchestrator/lifecycle.py            41      1    98%   85
+src/hada/orchestrator/outbox.py               12      0   100%
+src/hada/orchestrator/publisher.py            25      3    88%   64-72
+src/hada/orchestrator/service.py              52      6    88%   56, 70, 72, 99, 116, 118
+src/hada/policy/__init__.py                    0      0   100%
+src/hada/policy/broker.py                    198     49    75%   137, 143, 148, 156, 168, 179-180, 186, 202, 205, 209, 215, 217, 236-246, 250, 254-316, 329, 355-358, 403
+src/hada/queue/__init__.py                     0      0   100%
+src/hada/queue/broker.py                     190     53    72%   69-73, 82-85, 88-92, 95-97, 101-106, 117-140, 151-173, 176, 179, 199, 249, 252, 258, 299, 315-316, 378
+src/hada/queue/leases.py                      92     13    86%   45-49, 58, 61, 64, 75, 90, 120, 129, 144
+src/hada/runtime.py                          116     44    62%   31-32, 73, 109-137, 140-141, 144-172
+src/hada/workspaces/__init__.py                0      0   100%
+src/hada/workspaces/manager.py               149     29    81%   48, 52, 54, 61, 67-70, 102-103, 128, 137-140, 151, 175, 177, 191, 218-221, 239-247
+tests/integration/test_control_plane.py       71     53    25%   22-26, 30-73, 77, 87-140
+tests/test_governance.py                      55      0   100%
+tests/unit/test_cli_config_runtime.py         50      1    98%   80
+tests/unit/test_crypto_evidence_audit.py      61      0   100%
+tests/unit/test_lifecycle.py                  19      0   100%
+tests/unit/test_migrations.py                 29      0   100%
+tests/unit/test_orchestrator.py               68      0   100%
+tests/unit/test_outbox.py                     29      2    93%   48-49
+tests/unit/test_policy.py                     69      0   100%
+tests/unit/test_queue_and_leases.py           40      0   100%
+tests/unit/test_workspace.py                  38      0   100%
+------------------------------------------------------------------------
+TOTAL                                       2236    504    77%

@@ -1,0 +1,207 @@
+HADA M1 Phase A — Infrastructure Inventory
+Generated: 2026-07-25T03:48:46Z
+
+=== Local working directory ===
+Path: /home/bobthabuilda/hada-deployment
+Contents:
+  HADA-TAKEOVER.md (5725 bytes)
+  HADA-M1-durable-orchestrator.zip (141540 bytes)
+  evidence/ (Phase A evidence directory)
+  inspection/ (extracted archive for read-only inspection)
+
+=== gcloud identity ===
+Active account: m.dyer.apis@gmail.com
+Project: api-intergrations-501314
+Config check: version 33, no required errors
+
+=== Google Cloud project ===
+Project ID: api-intergrations-501314
+
+=== Compute instances (all zones) ===
+1. hada-control
+   - Zone: australia-southeast1-b
+   - Status: RUNNING
+   - Machine type: (see VM details below)
+   - Internal IP: 10.152.0.5
+   - External IP: 34.151.78.183
+   - Network: default
+   - Subnetwork: default (australia-southeast1)
+   - Tags: hada-control
+   - Service account: 182773386348-compute@developer.gserviceaccount.com
+   - Scopes: devstorage.read_only, logging.write, monitoring.write, pubsub,
+     service.management.readonly, servicecontrol, trace.append
+   - Scheduling: automaticRestart=true, onHostMaintenance=MIGRATE,
+     provisioningModel=STANDARD, preemptible=false
+
+2. hermes-agent
+   - Zone: us-central1-a
+   - Status: TERMINATED
+
+3. home-hub
+   - Zone: australia-southeast1-b
+   - Status: RUNNING
+   - Internal IP: 10.152.0.3
+   - External IP: 34.87.239.165
+
+4. hermes-clean
+   - Zone: australia-southeast2-a
+   - Status: RUNNING
+   - Internal IP: 10.192.0.2
+   - External IP: 34.129.250.242
+
+5. hermes-t5-rollback-validator-20260723
+   - Zone: australia-southeast2-a
+   - Status: TERMINATED
+
+=== hada-control VM details ===
+Disks:
+  1. hada-boot (index 0)
+     - Boot: true
+     - Device name: hada-boot (instance hada-control)
+     - Disk name: hada-control
+     - Size: 30 GB
+     - Type: pd-standard (default)
+     - Mode: READ_WRITE
+     - Auto-delete: true
+     - Source image: ubuntu-2404-noble-amd64-v20260723
+     - License: ubuntu-2404-lts
+     - Guest OS features: VIRTIO_SCSI_MULTIQUEUE, SEV_CAPABLE, SEV_SNP_CAPABLE,
+       SEV_LIVE_MIGRATABLE, SEV_LIVE_MIGRATABLE_V2, SNP_SVSM_CAPABLE, IDPF,
+       TDX_CAPABLE, UEFI_COMPATIBLE, GVNIC
+
+  2. hada-data (index 1)
+     - Boot: false
+     - Device name: hada-data
+     - Disk name: hada-data
+     - Size: 100 GB
+     - Type: pd-standard (default)
+     - Mode: READ_WRITE
+     - Auto-delete: false
+     - Labels: app=hada, role=data
+     - Status: READY
+
+Network interfaces:
+  - nic0
+    - Network: default
+    - Subnetwork: default (australia-southeast1)
+    - Network IP: 10.152.0.5
+    - Stack type: IPV4_ONLY
+    - Access config: external-nat (ONE_TO_ONE_NAT)
+      - NAT IP: 34.151.78.183
+      - Network tier: PREMIUM
+
+=== Disks (all zones) ===
+1. hada-control     — australia-southeast1-b — 30 GB  — READY
+2. hada-data        — australia-southeast1-b — 100 GB — READY (labels: app=hada, role=data)
+3. home-hub         — australia-southeast1-b — 30 GB  — READY
+4. hermes-agent     — us-central1-a          — 60 GB  — READY
+5. hermes-clean     — australia-southeast2-a — 100 GB — READY
+6. hermes-t5-rollback-disk-20260723       — australia-southeast2-a — 100 GB — READY
+7. hermes-t5-rollback-validator-20260723  — australia-southeast2-a — 10 GB  — READY
+
+=== Firewall rules ===
+Active (not disabled):
+  1. hada-iap-ssh
+     - Direction: INGRESS
+     - Priority: 1000
+     - Source: 35.235.240.0/20 (IAP TCP forwarding range)
+     - Allowed: TCP 22
+     - Target tags: hada-control
+     - Network: default
+     - Purpose: IAP-tunneled SSH access to hada-control
+
+  2. allow-iap-ssh-admin
+     - Direction: INGRESS, Priority: 1000
+     - Source: 35.235.240.0/20, Allowed: TCP 22
+     - (no target tags — applies to all instances)
+
+  3. allow-iap-ssh-hermes-clean
+     - Direction: INGRESS, Priority: 1000
+     - Source: 35.235.240.0/20, Allowed: TCP 22
+     - (no target tags — applies to all instances)
+
+  4. allow-odysseus-7000
+     - Direction: INGRESS, Priority: 1000
+     - Source: 0.0.0.0/0 (PUBLIC)
+     - Allowed: TCP 7000
+     - (no target tags — applies to all instances)
+     - FINDING: Publicly exposes TCP 7000
+
+  5. allow-odysseus-http
+     - Direction: INGRESS, Priority: 1000
+     - Source: 0.0.0.0/0 (PUBLIC)
+     - Allowed: TCP 80, TCP 443
+     - (no target tags — applies to all instances)
+     - FINDING: Publicly exposes TCP 80 and 443
+
+  6. default-allow-http
+     - Direction: INGRESS, Priority: 1000
+     - Source: 0.0.0.0/0 (PUBLIC)
+     - Allowed: TCP 80
+     - (no target tags — applies to all instances)
+     - FINDING: Publicly exposes TCP 80
+
+  7. default-allow-https
+     - Direction: INGRESS, Priority: 1000
+     - Source: 0.0.0.0/0 (PUBLIC)
+     - Allowed: TCP 443
+     - (no target tags — applies to all instances)
+     - FINDING: Publicly exposes TCP 443
+
+  8. default-allow-icmp
+     - Direction: INGRESS, Priority: 65534
+     - Source: 0.0.0.0/0
+     - Allowed: ICMP
+
+  9. default-allow-internal
+     - Direction: INGRESS, Priority: 65534
+     - Source: 10.128.0.0/9
+     - Allowed: TCP all, UDP all, ICMP
+
+Disabled:
+  - allow-all-temp (all TCP from 0.0.0.0/0 — disabled)
+  - default-allow-rdp (TCP 3389 from 0.0.0.0/0 — disabled)
+  - default-allow-ssh (TCP 22 from 0.0.0.0/0 — disabled)
+
+=== Remote host state (via IAP SSH) ===
+Host: hada-control
+OS: Linux hada-control 6.17.0-1021-gcp (Ubuntu 24.04.4 LTS)
+Hostname: hada-control
+
+Block devices:
+  sda  30G  — boot disk (GCE persistent disk)
+    sda1   29G  part  /          ext4  UUID=021e2048-b2f3-4e27-b5ab-e5738b77ce11
+    sda14   4M  part  (BIOS boot)
+    sda15 106M  part  /boot/efi  vfat  UUID=1317-5D1D
+    sda16 913M  part  /boot       ext4  UUID=61339ac8-7cb3-42bd-a5a7-a90a637bece5
+
+  sdb  100G — data disk (GCE persistent disk, /dev/disk/by-id/google-hada-data)
+    Mount: /var/lib/hada
+    FSTYPE: ext4
+    UUID: a1574097-cdf9-4d0a-ace0-adac63038e56
+    Options: rw,noatime
+
+/etc/fstab:
+  LABEL=cloudimg-rootfs  /              ext4  discard,commit=30,errors=remount-ro  0 1
+  LABEL=BOOT             /boot          ext4  defaults                              0 2
+  LABEL=UEFI             /boot/efi      vfat  umask=0077                            0 1
+  /dev/disk/by-id/google-hada-data  /var/lib/hada  ext4  defaults,noatime  0 2
+
+Disk usage:
+  /dev/root  29G  3.1G used  25G avail  11%  (boot disk /)
+  /dev/sdb   98G  76K  used  98G avail   1%  (data disk /var/lib/hada)
+  tmpfs      7.9G (/dev/shm)
+  tmpfs      3.2G (/run)
+
+Docker: installed on host but SSH user lacks docker group access.
+  (docker.sock permission denied — expected for non-root, non-docker-group user)
+
+/var/lib/hada: exists but not readable by SSH user (permission denied).
+  This is expected — the hada service account (UID 10001) owns the directory.
+
+Snaps:
+  core24/1643, google-cloud-cli/481, snapd/27406
+
+=== IAP SSH access ===
+Verified: gcloud compute ssh hada-control --tunnel-through-iap succeeded.
+SSH connection established, remote commands executed successfully.

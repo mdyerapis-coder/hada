@@ -1,0 +1,1205 @@
+============================================================
+HADA FINAL EXECUTION GATE
+Generated: 2026-07-25T16:30:07+10:00
+============================================================
+
+## 1. ARCHIVE SHA-256
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+HADA-M1-gcp-candidate.zip: OK
+
+## 2. EXPECTED SHA
+PASS: candidate SHA matches expected correction
+
+## 3. ARCHIVE INTEGRITY
+Archive:  HADA-M1-gcp-candidate.zip
+    testing: HADA-M1-durable-orchestrator/.env.example   OK
+    testing: HADA-M1-durable-orchestrator/.github/workflows/ci.yml   OK
+    testing: HADA-M1-durable-orchestrator/.gitignore   OK
+    testing: HADA-M1-durable-orchestrator/Dockerfile   OK
+    testing: HADA-M1-durable-orchestrator/README.md   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/SIGNED-EVIDENCE-INDEX.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-signing-public.pem   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/config-parsing.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/coverage.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/environment-limitations.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/evidence-verification.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/source-tree-sha256.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/syntax-and-config.txt   OK
+    testing: HADA-M1-durable-orchestrator/artifacts/M1/validation/tests.txt   OK
+    testing: HADA-M1-durable-orchestrator/config/hada.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/alloy/config.alloy   OK
+    testing: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile   OK
+    testing: HADA-M1-durable-orchestrator/deploy/caddy/Caddyfile.gcp   OK
+    testing: HADA-M1-durable-orchestrator/deploy/compose/compose.gcp.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/compose/compose.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/dashboards/hada-control-plane.json   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/dashboards/dashboards.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/grafana/provisioning/datasources/datasources.yaml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/loki/config.yml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/prometheus.yml   OK
+    testing: HADA-M1-durable-orchestrator/deploy/prometheus/rules/hada.yml   OK
+    testing: HADA-M1-durable-orchestrator/docs/ROADMAP.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0001-SEPARATE-HADA-AND-HERMESCTL.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0002-EXTERNAL-PARTY-3.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0003-POSTGRES-SOURCE-OF-TRUTH.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0004-SIGNED-HASH-CHAIN.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0005-TRANSACTIONAL-OUTBOX.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0006-FAIL-CLOSED-TOOL-BROKER.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/adr/ADR-0007-GRAFANA-ALLOY-LOG-COLLECTION.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/architecture/ARCHITECTURE.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M0-MILESTONE-REPORT.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/reports/M1-MILESTONE-REPORT.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/CONTROL_PLANE.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/RECOVERY.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/SIGNING_KEYS.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/runbooks/VAST_AI_PROVISIONING.md   OK
+    testing: HADA-M1-durable-orchestrator/docs/security/THREAT-MODEL.md   OK
+    testing: HADA-M1-durable-orchestrator/pyproject.toml   OK
+    testing: HADA-M1-durable-orchestrator/scripts/bootstrap-ubuntu.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/container-entrypoint.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/hada-supervisor.service   OK
+    testing: HADA-M1-durable-orchestrator/scripts/provision-secrets.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/supervisor.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/validate-host.sh   OK
+    testing: HADA-M1-durable-orchestrator/scripts/verify-m1-evidence.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/audit/chain.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/canonical.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/cli.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/config.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/crypto/signing.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrate.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0001_initial.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0002_immutable_records.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0003_transactional_outbox.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/migrations/0004_governance_enforcement.sql   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/db/postgres.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/evidence/store.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/governance/engine.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/models.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/lifecycle.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/outbox.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/publisher.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/orchestrator/service.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/policy/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/policy/broker.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/broker.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/queue/leases.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/runtime.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/supervisor/health.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/__init__.py   OK
+    testing: HADA-M1-durable-orchestrator/src/hada/workspaces/manager.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/test_governance.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_migrations.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_outbox.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_policy.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py   OK
+    testing: HADA-M1-durable-orchestrator/tests/unit/test_workspace.py   OK
+No errors detected in compressed data of HADA-M1-gcp-candidate.zip.
+
+## 4. REQUIRED ZIP CONTENT
+PASS: deploy/compose/compose.yaml
+PASS: deploy/compose/compose.gcp.yaml
+PASS: deploy/caddy/Caddyfile.gcp
+PASS: config/hada.yaml
+PASS: scripts/supervisor.sh
+PASS: scripts/validate-host.sh
+PASS: scripts/provision-secrets.sh
+PASS: src/hada/models.py
+PASS: src/hada/supervisor/health.py
+PASS: tests/unit/test_compose_files.py
+PASS: tests/unit/test_cli_config_runtime.py
+
+## 5. ARCHIVE DEBRIS
+PASS: no excluded build or temporary files
+
+## 6. FRESH EXTRACTION
+PASS: extracted candidate root found
+PASS: extracted deploy/compose/compose.yaml
+PASS: extracted deploy/compose/compose.gcp.yaml
+PASS: extracted deploy/caddy/Caddyfile.gcp
+PASS: extracted config/hada.yaml
+PASS: extracted scripts/supervisor.sh
+PASS: extracted scripts/validate-host.sh
+PASS: extracted scripts/provision-secrets.sh
+PASS: extracted src/hada/models.py
+PASS: extracted src/hada/supervisor/health.py
+PASS: extracted tests/unit/test_compose_files.py
+PASS: extracted tests/unit/test_cli_config_runtime.py
+
+## 7. MANIFEST VERIFICATION
+129 evidence/phase-b0/candidate-manifest.txt
+./.env.example: OK
+./.github/workflows/ci.yml: OK
+./.gitignore: OK
+./Dockerfile: OK
+./README.md: OK
+./artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt: OK
+./artifacts/M1/SIGNED-EVIDENCE-INDEX.json: OK
+./artifacts/M1/evidence-signing-public.pem: OK
+./artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e: OK
+./artifacts/M1/evidence-store/sha256/0e/0e5c2b65a889cd2511ce0de7cf718be396a3735f8c7ad605288669ceb9f69a7e.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b: OK
+./artifacts/M1/evidence-store/sha256/25/251faae11840c8e1438bac38693582dfdff1f3c01da64b333beb2df4414bab1b.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a: OK
+./artifacts/M1/evidence-store/sha256/2f/2fbfc4682894eec34030ecd6945c4741a487054313506a8c7f2874c553e7797a.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292: OK
+./artifacts/M1/evidence-store/sha256/43/432d9e18b887b9b1bb5b25f713d4fa0423270df9a3d78daf36e6aa365b614292.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220: OK
+./artifacts/M1/evidence-store/sha256/63/63e2ab4e83b4abcea9c6004da6daf4eba7c74c0d3283909292216d1311bb0220.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162: OK
+./artifacts/M1/evidence-store/sha256/8b/8b043983769231590c8b7b6f34e603f8ba02cb54d1e974316e22974582eef162.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83: OK
+./artifacts/M1/evidence-store/sha256/93/930d9df88bc20ba6ada9086d64d49090b627815976121162529364565c154b83.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497: OK
+./artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73: OK
+./artifacts/M1/evidence-store/sha256/9f/9fb9f958e1bd834f8814450d92f889edb991e9114a356d2ef9cd4d632b404d73.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83: OK
+./artifacts/M1/evidence-store/sha256/ac/acfe94b7a29f6eea1597ff6986538734f19a915690970aa123af20a990ab8e83.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5: OK
+./artifacts/M1/evidence-store/sha256/ad/ad2a1a372008895e9d99536c9a989c7571587dcace2791d3a725be41f58482f5.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7: OK
+./artifacts/M1/evidence-store/sha256/af/af7dafd60c62c4b35e29993910ebb82b081e6088ce0803ca3a7f9dc5b0f056d7.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487: OK
+./artifacts/M1/evidence-store/sha256/ea/ea48ed7ee32aca29385073097fdd821ebca4f35f1bbaa3c9d747d4d96a3d6487.manifest.json: OK
+./artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151: OK
+./artifacts/M1/evidence-store/sha256/f4/f41777a5ee043b4dec9068b0f99a478aae570e10d513b0f32187755b91fe4151.manifest.json: OK
+./artifacts/M1/validation/config-parsing.txt: OK
+./artifacts/M1/validation/coverage.txt: OK
+./artifacts/M1/validation/environment-limitations.txt: OK
+./artifacts/M1/validation/evidence-verification.txt: OK
+./artifacts/M1/validation/package-build.txt: OK
+./artifacts/M1/validation/source-tree-sha256.txt: OK
+./artifacts/M1/validation/syntax-and-config.txt: OK
+./artifacts/M1/validation/tests.txt: OK
+./config/hada.yaml: OK
+./deploy/alloy/config.alloy: OK
+./deploy/caddy/Caddyfile: OK
+./deploy/caddy/Caddyfile.gcp: OK
+./deploy/compose/compose.gcp.yaml: OK
+./deploy/compose/compose.yaml: OK
+./deploy/grafana/dashboards/hada-control-plane.json: OK
+./deploy/grafana/provisioning/dashboards/dashboards.yaml: OK
+./deploy/grafana/provisioning/datasources/datasources.yaml: OK
+./deploy/loki/config.yml: OK
+./deploy/prometheus/prometheus.yml: OK
+./deploy/prometheus/rules/hada.yml: OK
+./docs/ROADMAP.md: OK
+./docs/adr/ADR-0001-SEPARATE-HADA-AND-HERMESCTL.md: OK
+./docs/adr/ADR-0002-EXTERNAL-PARTY-3.md: OK
+./docs/adr/ADR-0003-POSTGRES-SOURCE-OF-TRUTH.md: OK
+./docs/adr/ADR-0004-SIGNED-HASH-CHAIN.md: OK
+./docs/adr/ADR-0005-TRANSACTIONAL-OUTBOX.md: OK
+./docs/adr/ADR-0006-FAIL-CLOSED-TOOL-BROKER.md: OK
+./docs/adr/ADR-0007-GRAFANA-ALLOY-LOG-COLLECTION.md: OK
+./docs/architecture/ARCHITECTURE.md: OK
+./docs/reports/M0-MILESTONE-REPORT.md: OK
+./docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md: OK
+./docs/reports/M1-MILESTONE-REPORT.md: OK
+./docs/rfc/RFC-0001-GOVERNED-AUTONOMY.md: OK
+./docs/rfc/RFC-0002-DURABLE-ORCHESTRATOR.md: OK
+./docs/runbooks/CONTROL_PLANE.md: OK
+./docs/runbooks/DATABASE_AND_AUDIT_RECOVERY.md: OK
+./docs/runbooks/RECOVERY.md: OK
+./docs/runbooks/SIGNING_KEYS.md: OK
+./docs/runbooks/VAST_AI_PROVISIONING.md: OK
+./docs/security/THREAT-MODEL.md: OK
+./pyproject.toml: OK
+./scripts/bootstrap-ubuntu.sh: OK
+./scripts/container-entrypoint.sh: OK
+./scripts/hada-supervisor.service: OK
+./scripts/provision-secrets.sh: OK
+./scripts/supervisor.sh: OK
+./scripts/validate-host.sh: OK
+./scripts/verify-m1-evidence.py: OK
+./src/hada/__init__.py: OK
+./src/hada/audit/__init__.py: OK
+./src/hada/audit/chain.py: OK
+./src/hada/canonical.py: OK
+./src/hada/cli.py: OK
+./src/hada/config.py: OK
+./src/hada/crypto/__init__.py: OK
+./src/hada/crypto/signing.py: OK
+./src/hada/db/__init__.py: OK
+./src/hada/db/migrate.py: OK
+./src/hada/db/migrations/0001_initial.sql: OK
+./src/hada/db/migrations/0002_immutable_records.sql: OK
+./src/hada/db/migrations/0003_transactional_outbox.sql: OK
+./src/hada/db/migrations/0004_governance_enforcement.sql: OK
+./src/hada/db/postgres.py: OK
+./src/hada/evidence/__init__.py: OK
+./src/hada/evidence/store.py: OK
+./src/hada/governance/engine.py: OK
+./src/hada/models.py: OK
+./src/hada/orchestrator/__init__.py: OK
+./src/hada/orchestrator/lifecycle.py: OK
+./src/hada/orchestrator/outbox.py: OK
+./src/hada/orchestrator/publisher.py: OK
+./src/hada/orchestrator/service.py: OK
+./src/hada/policy/__init__.py: OK
+./src/hada/policy/broker.py: OK
+./src/hada/queue/__init__.py: OK
+./src/hada/queue/broker.py: OK
+./src/hada/queue/leases.py: OK
+./src/hada/runtime.py: OK
+./src/hada/supervisor/health.py: OK
+./src/hada/workspaces/__init__.py: OK
+./src/hada/workspaces/manager.py: OK
+./tests/integration/test_control_plane.py: OK
+./tests/test_governance.py: OK
+./tests/unit/test_cli_config_runtime.py: OK
+./tests/unit/test_compose_files.py: OK
+./tests/unit/test_crypto_evidence_audit.py: OK
+./tests/unit/test_lifecycle.py: OK
+./tests/unit/test_migrations.py: OK
+./tests/unit/test_orchestrator.py: OK
+./tests/unit/test_outbox.py: OK
+./tests/unit/test_policy.py: OK
+./tests/unit/test_queue_and_leases.py: OK
+./tests/unit/test_workspace.py: OK
+
+## 8. TARGETED TESTS
+.........                                                                [100%]
+9 passed in 0.71s
+
+## 9. PREFLIGHT SCRIPT VALIDATION
+-rwxr-xr-x 755 bobthabuilda:bobthabuilda 25406 bytes scripts/run-phase-b0-preflight.sh
+PASS: bash syntax
+
+## 10. REMOTE CREATION GUARD
+19:#   - safely removes only its remote temporary directory via a guarded cleanup
+53:# Track whether the remote directory was created, so the cleanup trap only
+54:# attempts SSH cleanup when it was.  This prevents contacting hada-control
+56:# required-file validation (before any remote mkdir).
+57:REMOTE_DIR_CREATED=0
+67:# Track the original exit status so the cleanup trap preserves it
+75:cleanup() {
+86:    echo "[cleanup] removed local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+90:  # this run (REMOTE_DIR_CREATED=1) and it matches the strict pattern
+92:  if [[ "${REMOTE_DIR_CREATED}" == "1" && -n "${REMOTE_DIR}" ]]; then
+94:      echo "[cleanup] REFUSED: empty remote path"
+96:      echo "[cleanup] REFUSED: refusing to remove /tmp"
+98:      echo "[cleanup] REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : ${REMOTE_DIR}"
+114:fi" 2>>"${RUN_DIR}/cleanup-stderr.log" || true
+115:      echo "[cleanup] remote cleanup attempted: ${REMOTE_DIR}"
+122:trap cleanup EXIT
+123:trap 'EXIT_STATUS=$((130)); cleanup' INT
+124:trap 'EXIT_STATUS=$((143)); cleanup' TERM
+280:${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}" \
+284:# Mark that the remote directory was created so the cleanup trap knows
+285:# it is safe to attempt remote SSH cleanup.
+286:REMOTE_DIR_CREATED=1
+
+## 11. REQUIRED REMOTE GUARD CONDITIONS
+57:REMOTE_DIR_CREATED=0
+90:  # this run (REMOTE_DIR_CREATED=1) and it matches the strict pattern
+91:  # ^/tmp/hada-b0-preflight-[0-9]+$
+96:      echo "[cleanup] REFUSED: refusing to remove /tmp"
+97:    elif [[ ! "${REMOTE_DIR}" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+98:      echo "[cleanup] REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : ${REMOTE_DIR}"
+106:  echo 'REFUSED: refusing to remove /tmp'
+108:elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+\$ ]]; then
+109:  echo \"REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : \${DIR}\"
+286:REMOTE_DIR_CREATED=1
+
+## 12. OLD INSPECTION PATH
+PASS: no old inspection source
+
+## 13. PROHIBITED EXECUTION SCAN
+PASS: no prohibited deployment operation found
+
+## 14. READINESS REPORT
+HADA M1 Phase B0 — Final Preflight Readiness Report
+Generated: 2026-07-25T06:22:14Z
+
+======================================================================
+NEW CANDIDATE ARCHIVE SHA-256
+======================================================================
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+SHA-256 file: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256
+Preflight script SHA-256: 2429229b9bc0f9ec7eed5428a723290ea1a7daec5904df08afae6df8cd3f661b
+Preflight script: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+Archive entries: 129 files (clean, no caches/bytecode/temp)
+
+======================================================================
+VERIFICATION CHECK RESULTS
+======================================================================
+PASS: bash -n all production scripts
+PASS: shellcheck run-phase-b0-preflight.sh
+PASS: archive checksum verification (sha256sum -c)
+PASS: unzip -t archive integrity
+PASS: no excluded cache/bytecode/temp files
+PASS: candidate-package completeness (all required files)
+PASS (129 OK): candidate manifest verification (from extracted root)
+PASS (9 passed): targeted 9 pytest tests
+
+----------------------------------------------------------------------
+DETAILED CHECK RESULTS
+----------------------------------------------------------------------
+  PASS: bash -n run-phase-b0-preflight.sh
+  PASS: bash -n supervisor.gcp.sh
+  PASS: bash -n validate-host.gcp.sh
+  PASS: bash -n provision-secrets.sh
+  PASS: bash -n proposed-commands.sh
+  PASS: shellcheck run-phase-b0-preflight.sh
+  PASS: archive checksum verification (sha256sum -c)
+  PASS: unzip -t archive integrity
+  PASS: no excluded cache/bytecode/temp files
+
+  Candidate-package completeness (required production files):
+    PASS: src/hada/models.py (7225 bytes)
+    PASS: src/hada/supervisor/health.py (1075 bytes)
+    PASS: config/hada.yaml (3291 bytes)
+    PASS: tests/unit/test_compose_files.py (6490 bytes)
+    PASS: tests/unit/test_cli_config_runtime.py (2660 bytes)
+    PASS: deploy/compose/compose.yaml (4866 bytes)
+    PASS: deploy/compose/compose.gcp.yaml (3095 bytes)
+    PASS: deploy/caddy/Caddyfile.gcp (924 bytes)
+    PASS: deploy/caddy/Caddyfile (376 bytes)
+    PASS: scripts/bootstrap-ubuntu.sh (2418 bytes)
+    PASS: scripts/container-entrypoint.sh (462 bytes)
+    PASS: scripts/hada-supervisor.service (621 bytes)
+    PASS: scripts/supervisor.sh (1865 bytes)
+    PASS: scripts/validate-host.sh (1713 bytes)
+    PASS: scripts/provision-secrets.sh (2933 bytes)
+    PASS: scripts/verify-m1-evidence.py (2398 bytes)
+    PASS: Dockerfile (1425 bytes)
+    PASS: pyproject.toml (1189 bytes)
+    PASS: README.md (4394 bytes)
+    PASS: .env.example (756 bytes)
+    PASS: .gitignore (189 bytes)
+  PASS: candidate manifest verification (129 files OK)
+  PASS: targeted 9 pytest tests (9 passed)
+
+======================================================================
+CANDIDATE-PACKAGE COMPLETENESS
+======================================================================
+The candidate ZIP was rebuilt from a clean extraction of the original
+archive with all production overlays applied:
+  - src/hada/models.py
+  - src/hada/supervisor/health.py
+  - config/hada.yaml
+  - tests/unit/test_compose_files.py
+  - deploy/compose/compose.gcp.yaml
+  - deploy/caddy/Caddyfile.gcp
+  - scripts/provision-secrets.sh
+  - scripts/supervisor.gcp.sh as scripts/supervisor.sh
+  - scripts/validate-host.gcp.sh as scripts/validate-host.sh
+
+Required production files verified twice:
+  1. Before creating the ZIP (pre-ZIP check)
+  2. After extracting the completed ZIP into a new temp dir (post-extraction)
+
+RESULT: PASS — all 21 required production files exist and are non-empty
+
+======================================================================
+OVERALL RESULT
+======================================================================
+ALL CHECKS PASSED
+
+Checks performed:
+  1. bash -n on all production scripts (5 scripts)
+  2. shellcheck on run-phase-b0-preflight.sh
+  3. archive checksum verification (sha256sum -c HADA-M1-gcp-candidate.zip.sha256)
+  4. unzip -t archive integrity test
+  5. no excluded cache/bytecode/temp files in archive
+  6. candidate-package completeness (21 required production files)
+  7. candidate manifest verification from extracted candidate root
+     (cd <extracted-candidate-root>; sha256sum -c <manifest>)
+  8. targeted 9 pytest tests from extracted candidate root:
+     python3 -m pytest -q tests/unit/test_compose_files.py
+                       tests/unit/test_cli_config_runtime.py
+
+Preflight script safety features:
+  - REMOTE_DIR_CREATED=0 initialised; set to 1 only after remote mkdir succeeds
+  - cleanup trap contacts hada-control only when REMOTE_DIR_CREATED=1
+  - local failures (checksum, extraction, manifest, required-file validation)
+    do not contact hada-control
+  - strict remote path guard: ^/tmp/hada-b0-preflight-[0-9]+$
+  - cleanup preserves original exit status
+
+Remote preflight has NOT been executed.
+Awaiting human review to approve execution.
+
+## 15. COMPLETE PREFLIGHT SCRIPT
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Bounded Preflight Script (Final corrected version)
+#
+# This script runs a bounded preflight on hada-control that:
+#   - verifies the local candidate archive checksum (sha256sum -c);
+#   - extracts the candidate into a unique local mktemp directory;
+#   - obtains compose.yaml, compose.gcp.yaml and Caddyfile.gcp from that
+#     extracted candidate tree (never from the older inspection directory);
+#   - creates a uniquely named remote temporary directory;
+#   - uploads only the required preflight files;
+#   - uses a synthetic non-production .env;
+#   - renders effective-compose.json via docker compose config --format json;
+#   - enforces Docker Compose >= 2.24.4 (strips optional leading v, fails closed);
+#   - runs structured assertions on ports and volumes;
+#   - captures before/after container/image state and fails closed on any diff;
+#   - captures diagnostic SSH/SCP stderr without exposing secrets;
+#   - retrieves evidence into evidence/phase-b0/preflight-run-<timestamp>/;
+#   - safely removes only its remote temporary directory via a guarded cleanup
+#     function (trap on EXIT, INT, TERM);
+#   - never runs up, build, pull, create, start, restart or reboot.
+#
+# Usage:
+#   ./scripts/run-phase-b0-preflight.sh
+#
+# Prerequisites:
+#   - gcloud CLI authenticated with IAP tunneling access to hada-control
+#   - Docker Compose >= 2.24.4 on hada-control
+#   - The candidate archive and production files exist locally
+#
+set -Eeuo pipefail
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+PROJECT="api-intergrations-501314"
+ZONE="australia-southeast1-b"
+VM="hada-control"
+SSH_CMD="gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+SCP_CMD="gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
+
+DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+EVIDENCE_DIR="${DEPLOY_DIR}/evidence/phase-b0"
+TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+RUN_DIR="${EVIDENCE_DIR}/preflight-run-${TIMESTAMP}"
+PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+REMOTE_DIR="/tmp/${PREFLIGHT_PREFIX}"
+
+CANDIDATE_ARCHIVE="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip"
+CANDIDATE_SHA256="${DEPLOY_DIR}/HADA-M1-gcp-candidate.zip.sha256"
+
+# Track whether the remote directory was created, so the cleanup trap only
+# attempts SSH cleanup when it was.  This prevents contacting hada-control
+# if a failure occurs during local checksum, extraction, manifest, or
+# required-file validation (before any remote mkdir).
+REMOTE_DIR_CREATED=0
+
+# These will be set after extracting the candidate archive
+CANDIDATE_EXTRACT_DIR=""
+BASE_COMPOSE=""
+GCP_COMPOSE=""
+CADDYFILE_GCP=""
+
+mkdir -p "${RUN_DIR}"
+
+# Track the original exit status so the cleanup trap preserves it
+EXIT_STATUS=0
+
+# ---------------------------------------------------------------------------
+# Cleanup function
+# ---------------------------------------------------------------------------
+
+# shellcheck disable=SC2329  # invoked indirectly via trap below
+cleanup() {
+  local rc=$?
+  # If invoked by the trap (EXIT), use EXIT_STATUS; if invoked by signal
+  # handler, capture the signal context.
+  if (( EXIT_STATUS == 0 )); then
+    EXIT_STATUS=$rc
+  fi
+
+  # Remove the local mktemp directory (if created and non-empty)
+  if [[ -n "${CANDIDATE_EXTRACT_DIR}" && -d "${CANDIDATE_EXTRACT_DIR}" ]]; then
+    rm -rf "${CANDIDATE_EXTRACT_DIR}"
+    echo "[cleanup] removed local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+  fi
+
+  # Remove the remote directory ONLY if it was actually created during
+  # this run (REMOTE_DIR_CREATED=1) and it matches the strict pattern
+  # ^/tmp/hada-b0-preflight-[0-9]+$
+  if [[ "${REMOTE_DIR_CREATED}" == "1" && -n "${REMOTE_DIR}" ]]; then
+    if [[ -z "${REMOTE_DIR}" ]]; then
+      echo "[cleanup] REFUSED: empty remote path"
+    elif [[ "${REMOTE_DIR}" == "/tmp" || "${REMOTE_DIR}" == "/tmp/" ]]; then
+      echo "[cleanup] REFUSED: refusing to remove /tmp"
+    elif [[ ! "${REMOTE_DIR}" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+      echo "[cleanup] REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : ${REMOTE_DIR}"
+    else
+      ${SSH_CMD} --command="
+DIR='${REMOTE_DIR}'
+if [[ -z \"\${DIR}\" ]]; then
+  echo 'REFUSED: empty path'
+  exit 1
+elif [[ \"\${DIR}\" == \"/tmp\" || \"\${DIR}\" == \"/tmp/\" ]]; then
+  echo 'REFUSED: refusing to remove /tmp'
+  exit 1
+elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+\$ ]]; then
+  echo \"REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : \${DIR}\"
+  exit 1
+else
+  rm -rf \"\${DIR}\"
+  echo \"removed: \${DIR}\"
+fi" 2>>"${RUN_DIR}/cleanup-stderr.log" || true
+      echo "[cleanup] remote cleanup attempted: ${REMOTE_DIR}"
+    fi
+  fi
+
+  exit "${EXIT_STATUS}"
+}
+
+trap cleanup EXIT
+trap 'EXIT_STATUS=$((130)); cleanup' INT
+trap 'EXIT_STATUS=$((143)); cleanup' TERM
+
+echo "============================================"
+echo "HADA M1 Phase B0 — Bounded Preflight"
+echo "Timestamp: ${TIMESTAMP}"
+echo "Remote dir: ${REMOTE_DIR}"
+echo "Evidence dir: ${RUN_DIR}"
+echo "Candidate archive: ${CANDIDATE_ARCHIVE}"
+echo "============================================"
+
+# ---------------------------------------------------------------------------
+# Step 0: Verify the candidate archive checksum locally
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[0/8] Verifying candidate archive checksum locally..."
+
+if [[ ! -f "${CANDIDATE_ARCHIVE}" ]]; then
+  echo "FAIL: candidate archive not found: ${CANDIDATE_ARCHIVE}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+if [[ ! -f "${CANDIDATE_SHA256}" ]]; then
+  echo "FAIL: candidate SHA-256 file not found: ${CANDIDATE_SHA256}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# Run sha256sum -c on the archive's own .sha256 file
+# The .sha256 file contains: <hash>  HADA-M1-gcp-candidate.zip
+sha256sum -c "${CANDIDATE_SHA256}" 2>&1 | tee "${RUN_DIR}/archive-checksum-verify.txt"
+ARCHIVE_VERIFY_RC=${PIPESTATUS[0]}
+echo "  -> archive checksum rc=${ARCHIVE_VERIFY_RC}"
+
+if [[ "${ARCHIVE_VERIFY_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate archive checksum verification failed"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: candidate archive checksum verified"
+
+# ---------------------------------------------------------------------------
+# Step 0b: Extract the candidate into a unique local mktemp directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[0b/8] Extracting candidate archive into local mktemp directory..."
+
+CANDIDATE_EXTRACT_DIR="$(mktemp -d -t hada-b0-extract-XXXXXXXXXX)"
+echo "  -> local extract dir: ${CANDIDATE_EXTRACT_DIR}"
+
+# Extract the candidate archive
+( cd "${CANDIDATE_EXTRACT_DIR}" && unzip -q "${CANDIDATE_ARCHIVE}" )
+EXTRACT_RC=$?
+if [[ "${EXTRACT_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate archive extraction failed (rc=${EXTRACT_RC})"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# The archive extracts to HADA-M1-durable-orchestrator/
+CANDIDATE_ROOT="${CANDIDATE_EXTRACT_DIR}/HADA-M1-durable-orchestrator"
+if [[ ! -d "${CANDIDATE_ROOT}" ]]; then
+  echo "FAIL: extracted candidate root not found: ${CANDIDATE_ROOT}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+# Obtain compose.yaml, compose.gcp.yaml, and Caddyfile.gcp from the extracted
+# candidate tree.  NEVER use the older inspection directory as the Compose source.
+BASE_COMPOSE="${CANDIDATE_ROOT}/deploy/compose/compose.yaml"
+GCP_COMPOSE="${CANDIDATE_ROOT}/deploy/compose/compose.gcp.yaml"
+CADDYFILE_GCP="${CANDIDATE_ROOT}/deploy/caddy/Caddyfile.gcp"
+
+for f in "${BASE_COMPOSE}" "${GCP_COMPOSE}" "${CADDYFILE_GCP}"; do
+  if [[ ! -f "${f}" ]]; then
+    echo "FAIL: required file not found in extracted candidate: ${f}"
+    EXIT_STATUS=1
+    exit 1
+  fi
+done
+echo "PASS: compose.yaml, compose.gcp.yaml, Caddyfile.gcp obtained from extracted candidate"
+echo "  -> ${BASE_COMPOSE}"
+echo "  -> ${GCP_COMPOSE}"
+echo "  -> ${CADDYFILE_GCP}"
+
+# Verify the candidate manifest from the extracted candidate root
+echo ""
+echo "  Verifying candidate manifest from extracted root..."
+MANIFEST_FILE="${DEPLOY_DIR}/evidence/phase-b0/candidate-manifest.txt"
+if [[ ! -f "${MANIFEST_FILE}" ]]; then
+  echo "FAIL: candidate manifest not found: ${MANIFEST_FILE}"
+  EXIT_STATUS=1
+  exit 1
+fi
+
+( cd "${CANDIDATE_ROOT}" && sha256sum -c "${MANIFEST_FILE}" ) > "${RUN_DIR}/manifest-verify.txt" 2>&1
+MANIFEST_RC=$?
+cat "${RUN_DIR}/manifest-verify.txt" | tail -5
+if [[ "${MANIFEST_RC}" -ne 0 ]]; then
+  echo "FAIL: candidate manifest verification failed"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: candidate manifest verified from extracted root"
+
+# ---------------------------------------------------------------------------
+# Step 1: Capture Docker Compose version and enforce >= 2.24.4
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[1/8] Capturing and enforcing Docker Compose version..."
+
+${SSH_CMD} --command='docker compose version --short' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/compose-version.txt" > /dev/null
+COMPOSE_VERSION_RAW="$(cat "${RUN_DIR}/compose-version.txt")"
+echo "  -> raw version: ${COMPOSE_VERSION_RAW}"
+
+# Strip an optional leading v
+COMPOSE_VERSION="${COMPOSE_VERSION_RAW#v}"
+echo "  -> stripped version: ${COMPOSE_VERSION}"
+
+# Enforce >= 2.24.4 using sort -V
+REQUIRED_VERSION="2.24.4"
+if [[ "$(printf '%s\n%s\n' "${REQUIRED_VERSION}" "${COMPOSE_VERSION}" | sort -V | head -1)" != "${REQUIRED_VERSION}" ]]; then
+  echo "FAIL: Docker Compose version ${COMPOSE_VERSION} is older than required ${REQUIRED_VERSION}"
+  echo "FAIL: Compose version requirement: FAIL" | tee "${RUN_DIR}/compose-version-check.txt"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: Compose version ${COMPOSE_VERSION} >= ${REQUIRED_VERSION}"
+echo "PASS: Compose version requirement: PASS" | tee "${RUN_DIR}/compose-version-check.txt"
+
+# ---------------------------------------------------------------------------
+# Step 2: Capture BEFORE state (containers and images)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[2/8] Capturing BEFORE state..."
+
+${SSH_CMD} --command='docker ps -aq | sort' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-before.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+
+${SSH_CMD} --command='docker images -q | sort -u' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-before.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+
+# ---------------------------------------------------------------------------
+# Step 3: Create remote temporary directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[3/8] Creating remote temporary directory..."
+
+${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}" \
+  2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> ${REMOTE_DIR}"
+
+# Mark that the remote directory was created so the cleanup trap knows
+# it is safe to attempt remote SSH cleanup.
+REMOTE_DIR_CREATED=1
+
+# ---------------------------------------------------------------------------
+# Step 4: Upload preflight files (from the extracted candidate tree)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[4/8] Uploading preflight files from extracted candidate tree..."
+
+# Upload compose.yaml (base) from the extracted candidate
+${SCP_CMD} "${BASE_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.yaml (from candidate)"
+
+# Upload compose.gcp.yaml from the extracted candidate
+${SCP_CMD} "${GCP_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.gcp.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.gcp.yaml (from candidate)"
+
+# Upload Caddyfile.gcp from the extracted candidate
+${SCP_CMD} "${CADDYFILE_GCP}" "${VM}:${REMOTE_DIR}/deploy/caddy/Caddyfile.gcp" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> Caddyfile.gcp (from candidate)"
+
+# Upload the candidate SHA256 for reference
+${SCP_CMD} "${CANDIDATE_SHA256}" "${VM}:${REMOTE_DIR}/candidate.sha256" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> candidate.sha256"
+
+# ---------------------------------------------------------------------------
+# Step 5: Create synthetic non-production .env
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[5/8] Creating synthetic .env..."
+
+${SSH_CMD} --command="cat > ${REMOTE_DIR}/.env <<'ENVEOF'
+HADA_ENV=preflight
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=hada
+POSTGRES_USER=hada
+POSTGRES_PASSWORD=synthetic-not-a-real-secret
+VALKEY_PASSWORD=synthetic-not-a-real-secret
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=synthetic-not-a-real-secret
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=postgresql://hada:***@postgres:5432/hada
+HADA_VALKEY_URL=redis://:synthetic-not-a-real-secret@valkey:6379/0
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+ENVEOF
+echo 'synthetic .env created'" 2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> .env (synthetic, non-production)"
+
+# ---------------------------------------------------------------------------
+# Step 6: Render effective configuration as JSON and run structured assertions
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[6/8] Rendering effective-compose.json and running assertions..."
+
+COMPOSE_RENDER_RC=0
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/effective-compose.json" > /dev/null
+COMPOSE_RENDER_RC=${PIPESTATUS[0]}
+echo "  -> effective-compose.json saved (rc=${COMPOSE_RENDER_RC})"
+
+if [[ "${COMPOSE_RENDER_RC}" -ne 0 ]]; then
+  echo "FAIL: docker compose config --format json failed (rc=${COMPOSE_RENDER_RC})"
+  echo "FAIL: Compose JSON render: FAIL" | tee "${RUN_DIR}/compose-render-check.txt"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: Compose JSON render: PASS" | tee "${RUN_DIR}/compose-render-check.txt"
+
+# Validate published ports from structured JSON
+echo ""
+echo "  [6a] Validating published ports..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+services = cfg.get("services", {})
+
+# Collect all published ports from structured fields
+published_ports = []
+for svc_name, svc_def in services.items():
+    ports = svc_def.get("ports", [])
+    for p in ports:
+        entry = {
+            "service": svc_name,
+            "host_ip": str(p.get("host_ip", "0.0.0.0")),
+            "published": p.get("published"),
+            "target": p.get("target"),
+            "protocol": str(p.get("protocol", "tcp")),
+            "mode": str(p.get("mode", "host")),
+        }
+        published_ports.append(entry)
+
+print("Published ports found:")
+for pp in published_ports:
+    print(f"  service={pp[\"service\"]} host_ip={pp[\"host_ip\"]} "
+          f"published={pp[\"published\"]} target={pp[\"target\"]} "
+          f"protocol={pp[\"protocol\"]}")
+
+errors = []
+
+if len(published_ports) != 1:
+    errors.append(
+        f"FAIL: expected exactly 1 published port, found {len(published_ports)}"
+    )
+
+if published_ports:
+    pp = published_ports[0]
+
+    if pp["service"] != "caddy":
+        errors.append(f"FAIL: expected service=caddy, got {pp[\"service\"]}")
+
+    if pp["host_ip"] != "127.0.0.1":
+        errors.append(
+            f"FAIL: expected host_ip=127.0.0.1, got {pp[\"host_ip\"]}"
+        )
+
+    if pp["published"] != 80:
+        errors.append(
+            f"FAIL: expected published=80, got {pp[\"published\"]}"
+        )
+
+    if pp["target"] != 80:
+        errors.append(
+            f"FAIL: expected target=80, got {pp[\"target\"]}"
+        )
+
+    if pp["protocol"] != "tcp":
+        errors.append(
+            f"FAIL: expected protocol=tcp, got {pp[\"protocol\"]}"
+        )
+
+    for p2 in published_ports:
+        if p2["published"] == 443 or p2["target"] == 443:
+            errors.append(
+                f"FAIL: port 443 found: service={p2[\"service\"]} "
+                f"published={p2[\"published\"]} target={p2[\"target\"]}"
+            )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print("PASS: exactly one published port - caddy, 127.0.0.1:80:80/tcp, "
+          "no 443")
+' 2>&1 | tee "${RUN_DIR}/port-assertion.txt"
+PORT_RC=${PIPESTATUS[0]}
+echo "  -> port-assertion.txt (rc=${PORT_RC})"
+
+if [[ "${PORT_RC}" -ne 0 ]]; then
+  echo "FAIL: Port assertion: FAIL" | tee "${RUN_DIR}/port-assertion-check.txt"
+else
+  echo "PASS: Port assertion: PASS" | tee "${RUN_DIR}/port-assertion-check.txt"
+fi
+
+# Validate eight top-level volumes from structured JSON
+echo ""
+echo "  [6b] Validating stateful volumes..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+volumes = cfg.get("volumes", {})
+
+expected = {
+    "postgres-data":     "/var/lib/hada/docker-volumes/postgres-data",
+    "valkey-data":       "/var/lib/hada/docker-volumes/valkey-data",
+    "prometheus-data":   "/var/lib/hada/docker-volumes/prometheus-data",
+    "loki-data":         "/var/lib/hada/docker-volumes/loki-data",
+    "alloy-data":        "/var/lib/hada/docker-volumes/alloy-data",
+    "grafana-data":      "/var/lib/hada/docker-volumes/grafana-data",
+    "caddy-data":        "/var/lib/hada/docker-volumes/caddy-data",
+    "caddy-config":      "/var/lib/hada/docker-volumes/caddy-config",
+}
+
+errors = []
+print("Volumes found:")
+for name in sorted(volumes.keys()):
+    vol = volumes[name]
+    driver_opts = vol.get("driver_opts", {})
+    t = str(driver_opts.get("type", "NOT SET"))
+    o = str(driver_opts.get("o", "NOT SET"))
+    device = str(driver_opts.get("device", "NOT SET"))
+    print(f"  {name}: type={t} o={o} device={device}")
+
+    if name not in expected:
+        errors.append(f"FAIL: unexpected volume: {name}")
+        continue
+
+    if t != "none":
+        errors.append(f"FAIL: {name} type={t} expected=none")
+    if o != "bind":
+        errors.append(f"FAIL: {name} o={o} expected=bind")
+    if device != expected[name]:
+        errors.append(
+            f"FAIL: {name} device={device} expected={expected[name]}"
+        )
+    if not device.startswith("/var/lib/hada/docker-volumes/"):
+        errors.append(
+            f"FAIL: {name} device not beneath "
+            f"/var/lib/hada/docker-volumes/: {device}"
+        )
+
+for name in sorted(expected.keys()):
+    if name not in volumes:
+        errors.append(f"FAIL: missing volume: {name}")
+
+if len(volumes) != len(expected):
+    errors.append(
+        f"FAIL: expected {len(expected)} volumes, got {len(volumes)}"
+    )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print(f"PASS: all {len(expected)} volumes have type=none, o=bind, "
+          f"device beneath /var/lib/hada/docker-volumes/")
+' 2>&1 | tee "${RUN_DIR}/volume-assertion.txt"
+VOL_RC=${PIPESTATUS[0]}
+echo "  -> volume-assertion.txt (rc=${VOL_RC})"
+
+if [[ "${VOL_RC}" -ne 0 ]]; then
+  echo "FAIL: Volume assertion: FAIL" | tee "${RUN_DIR}/volume-assertion-check.txt"
+else
+  echo "PASS: Volume assertion: PASS" | tee "${RUN_DIR}/volume-assertion-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 7: Capture AFTER state (containers and images) — fail closed
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[7/8] Capturing AFTER state..."
+
+${SSH_CMD} --command='docker ps -aq | sort' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-after.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+
+${SSH_CMD} --command='docker images -q | sort -u' 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-after.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+
+# Compare before and after — fail closed (write diff into evidence)
+echo ""
+echo "  Comparing before/after state..."
+
+CONTAINER_DIFF_RC=0
+IMAGE_DIFF_RC=0
+
+if diff "${RUN_DIR}/docker-ps-before.txt" "${RUN_DIR}/docker-ps-after.txt" \
+    > "${RUN_DIR}/container-diff.txt" 2>&1; then
+  echo "PASS: container list unchanged (no containers started)"
+  echo "PASS: container list unchanged" >> "${RUN_DIR}/container-diff.txt"
+else
+  echo "FAIL: container list changed"
+  CONTAINER_DIFF_RC=1
+fi
+
+if diff "${RUN_DIR}/docker-images-before.txt" "${RUN_DIR}/docker-images-after.txt" \
+    > "${RUN_DIR}/image-diff.txt" 2>&1; then
+  echo "PASS: image list unchanged (no images pulled or created)"
+  echo "PASS: image list unchanged" >> "${RUN_DIR}/image-diff.txt"
+else
+  echo "FAIL: image list changed"
+  IMAGE_DIFF_RC=1
+fi
+
+# Write combined before/after diff report
+{
+  echo "=== Container diff ==="
+  cat "${RUN_DIR}/container-diff.txt"
+  echo ""
+  echo "=== Image diff ==="
+  cat "${RUN_DIR}/image-diff.txt"
+} > "${RUN_DIR}/before-after-diff.txt"
+
+if [[ "${CONTAINER_DIFF_RC}" -ne 0 || "${IMAGE_DIFF_RC}" -ne 0 ]]; then
+  echo "FAIL: Docker state changed during preflight" | tee "${RUN_DIR}/state-check.txt"
+  EXIT_STATUS=1
+else
+  echo "PASS: Docker state unchanged during preflight" | tee "${RUN_DIR}/state-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 8: Cleanup is handled by the trap
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[8/8] Cleanup handled by trap on EXIT/INT/TERM"
+
+# ---------------------------------------------------------------------------
+# Final preflight result — fail unless ALL checks pass
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Phase B0 Preflight Final Result"
+echo "============================================"
+
+FINAL_PASS=1
+
+# Check 1: Compose version requirement passed
+if [[ -f "${RUN_DIR}/compose-version-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/compose-version-check.txt"; then
+  echo "PASS: Compose version requirement"
+else
+  echo "FAIL: Compose version requirement"
+  FINAL_PASS=0
+fi
+
+# Check 2: effective Compose JSON rendered successfully
+if [[ -f "${RUN_DIR}/compose-render-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/compose-render-check.txt" && \
+   [[ -s "${RUN_DIR}/effective-compose.json" ]]; then
+  echo "PASS: Compose JSON rendered"
+else
+  echo "FAIL: Compose JSON rendered"
+  FINAL_PASS=0
+fi
+
+# Check 3: port assertion passed
+if [[ -f "${RUN_DIR}/port-assertion-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/port-assertion-check.txt"; then
+  echo "PASS: Port assertion"
+else
+  echo "FAIL: Port assertion"
+  FINAL_PASS=0
+fi
+
+# Check 4: volume assertion passed
+if [[ -f "${RUN_DIR}/volume-assertion-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/volume-assertion-check.txt"; then
+  echo "PASS: Volume assertion"
+else
+  echo "FAIL: Volume assertion"
+  FINAL_PASS=0
+fi
+
+# Check 5: container list remained identical
+if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+  echo "PASS: Container list identical"
+else
+  echo "FAIL: Container list changed"
+  FINAL_PASS=0
+fi
+
+# Check 6: image list remained identical
+# (covered by state-check.txt which requires both container and image unchanged)
+if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+  echo "PASS: Image list identical"
+else
+  echo "FAIL: Image list changed"
+  FINAL_PASS=0
+fi
+
+# Check 7: all expected evidence files exist and are non-empty
+EVIDENCE_FILES=(
+  "compose-version.txt"
+  "compose-version-check.txt"
+  "docker-ps-before.txt"
+  "docker-images-before.txt"
+  "effective-compose.json"
+  "port-assertion.txt"
+  "port-assertion-check.txt"
+  "volume-assertion.txt"
+  "volume-assertion-check.txt"
+  "docker-ps-after.txt"
+  "docker-images-after.txt"
+  "container-diff.txt"
+  "image-diff.txt"
+  "before-after-diff.txt"
+  "state-check.txt"
+  "archive-checksum-verify.txt"
+  "manifest-verify.txt"
+)
+
+EVIDENCE_PASS=1
+for ef in "${EVIDENCE_FILES[@]}"; do
+  fpath="${RUN_DIR}/${ef}"
+  if [[ ! -f "${fpath}" ]]; then
+    echo "FAIL: evidence file missing: ${ef}"
+    EVIDENCE_PASS=0
+  elif [[ ! -s "${fpath}" ]]; then
+    echo "FAIL: evidence file empty: ${ef}"
+    EVIDENCE_PASS=0
+  fi
+done
+
+if [[ "${EVIDENCE_PASS}" -eq 1 ]]; then
+  echo "PASS: All evidence files exist and non-empty"
+else
+  echo "FAIL: Some evidence files missing or empty"
+  FINAL_PASS=0
+fi
+
+echo ""
+echo "Evidence dir: ${RUN_DIR}"
+echo ""
+echo "Files in evidence dir:"
+ls -1 "${RUN_DIR}/"
+echo ""
+
+if [[ "${FINAL_PASS}" -ne 1 ]]; then
+  echo "PREFLIGHT RESULT: FAIL"
+  EXIT_STATUS=1
+  exit 1
+else
+  echo "PREFLIGHT RESULT: PASS"
+  EXIT_STATUS=0
+  exit 0
+fi
+
+============================================================
+END OF HADA FINAL EXECUTION GATE
+============================================================

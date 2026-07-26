@@ -1,0 +1,6 @@
+[2026-07-26T11:09:31Z] PASS: Phase B0 v4 evidence lock verified (locked at /tmp/hada-b0-ck-hQHZQT/b0-evidence-v4)
+[2026-07-26T11:09:31Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-hQHZQT/b0-evidence-v1/candidate-sha256.txt
+[2026-07-26T11:09:31Z] FAIL: B0 candidate-sha256.txt (b2f43880c22527284e9938b53f20e5035260db78cc55a46e458063c702011ffa) does not match locked v4 hash
+[2026-07-26T11:09:31Z] FAIL: B0 candidate-sha256.txt (7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204) does not match locked v4 hash
+[2026-07-26T11:09:31Z] FAIL: B0 compose-version-check.txt contains a FAIL line
+[2026-07-26T11:09:31Z] FAIL: B0 target-identity.txt has 2 'project=' lines (expected exactly 1)

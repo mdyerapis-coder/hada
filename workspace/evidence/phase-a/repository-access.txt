@@ -1,0 +1,30 @@
+HADA M1 Phase A — Hermesctl Repository Access Verification
+Generated: 2026-07-25T13:42:00Z
+
+Repository URL: https://github.com/mdyerapis-coder/hermesctl.git
+Target branch: main
+
+Command used (read-only, no clone):
+  git ls-remote https://github.com/mdyerapis-coder/hermesctl.git
+  git ls-remote https://github.com/mdyerapis-coder/hermesctl.git refs/heads/main
+
+=== Full output (git ls-remote) ===
+da6d80bd9217600b8b15b862605ba87376d66604	HEAD
+da6d80bd9217600b8b15b862605ba87376d66604	refs/heads/main
+98f1eec92d1f8452bd938ee75f59984d69d802e9	refs/tags/v0.7.0
+da6d80bd9217600b8b15b862605ba87376d66604	refs/tags/v0.7.0^{}
+
+=== refs/heads/main verification ===
+da6d80bd9217600b8b15b862605ba87376d66604	refs/heads/main
+
+=== Summary ===
+- Repository is reachable and accessible.
+- main branch exists and resolves to commit da6d80bd9217600b8b15b862605ba87376d66604.
+- Tag v0.7.0 exists (annotated, pointing to the same commit as main HEAD).
+- HEAD of main and v0.7.0 tag both resolve to the same commit.
+- No clone was performed. Only git ls-remote was used as specified.
+- The hada.yaml config file lists allowed_egress_hosts: github.com,
+  api.github.com, objects.githubusercontent.com — these are sufficient
+  for git clone/fetch operations from the Hermesctl repository.
+- The RepositoryPolicy in workspaces/manager.py validates that the
+  repository URL host is in the allowlist before any clone occurs.

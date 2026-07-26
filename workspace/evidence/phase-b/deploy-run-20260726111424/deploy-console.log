@@ -1,0 +1,52 @@
+[2026-07-26T01:14:24Z] ==============================================
+[2026-07-26T01:14:24Z] HADA M1 Phase B — Production Deployment Execution Gate (DEEP CORRECTED)
+[2026-07-26T01:14:24Z] Timestamp: 20260726111424
+[2026-07-26T01:14:24Z] Evidence:  /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260726111424
+[2026-07-26T01:14:24Z] DEPLOY_EXECUTE=0
+[2026-07-26T01:14:24Z] ==============================================
+[2026-07-26T01:14:24Z] ==============================================
+[2026-07-26T01:14:24Z] GATE 0: Local Static Validation
+[2026-07-26T01:14:24Z] ==============================================
+[2026-07-26T01:14:24Z] [0a] bash -n syntax check...
+[2026-07-26T01:14:24Z] PASS: bash -n OK: provision-secrets.sh
+[2026-07-26T01:14:24Z] PASS: bash -n OK: supervisor.gcp.sh
+[2026-07-26T01:14:24Z] PASS: bash -n OK: validate-host.gcp.sh
+[2026-07-26T01:14:24Z] PASS: bash -n OK: run-phase-b0-preflight.sh
+[2026-07-26T01:14:24Z] PASS: bash -n OK: run-phase-b-deploy.sh
+[2026-07-26T01:14:24Z] [0b] shellcheck...
+[2026-07-26T01:14:24Z] PASS: shellcheck OK: provision-secrets.sh
+[2026-07-26T01:14:24Z] PASS: shellcheck OK: supervisor.gcp.sh
+[2026-07-26T01:14:24Z] PASS: shellcheck OK: validate-host.gcp.sh
+[2026-07-26T01:14:24Z] PASS: shellcheck OK: run-phase-b0-preflight.sh
+[2026-07-26T01:14:24Z] PASS: shellcheck OK: run-phase-b-deploy.sh
+[2026-07-26T01:14:24Z] [0c] Prohibited-operation scan (fixture-tested scanner)...
+[2026-07-26T01:14:25Z] PASS: No prohibited operations in production scripts
+[2026-07-26T01:14:25Z] [0d] Target assertions...
+[2026-07-26T01:14:25Z] PASS: Target: project=api-intergrations-501314 zone=australia-southeast1-b vm=hada-control
+[2026-07-26T01:14:25Z] [0e] Candidate checksum assertion...
+[2026-07-26T01:14:25Z] PASS: Candidate SHA256 verified: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+[2026-07-26T01:14:25Z] [0f] Phase B0 evidence PASS verification...
+[2026-07-26T01:14:25Z] PASS: Phase B0 evidence reports PASS
+[2026-07-26T01:14:25Z] [0g] Secret-redaction self-check...
+[2026-07-26T01:14:25Z] PASS: No literal secrets in runner
+[2026-07-26T01:14:25Z] [0h] Cleanup-path guard self-tests...
+[2026-07-26T01:14:25Z] PASS: Cleanup-path guard self-tests passed
+[2026-07-26T01:14:25Z] [0i] Pipeline return-code capture checks...
+[2026-07-26T01:14:25Z] PASS: Pipeline return-code capture present
+[2026-07-26T01:14:25Z] [0j] DEPLOY_EXECUTE gate verification...
+[2026-07-26T01:14:25Z] DEPLOY_EXECUTE=0
+[2026-07-26T01:14:25Z] PASS: DEPLOY_EXECUTE gate verified (value=0)
+[2026-07-26T01:14:25Z] GATE 0: ALL LOCAL STATIC VALIDATIONS PASSED
+[2026-07-26T01:14:25Z] ==============================================
+[2026-07-26T01:14:25Z] GATE 1: Candidate Verification & Local Extraction
+[2026-07-26T01:14:25Z] ==============================================
+[2026-07-26T01:14:25Z] PASS: Candidate archive checksum re-verified
+[2026-07-26T01:14:25Z] PASS: All 11 manifest entries present in candidate
+[2026-07-26T01:14:25Z] PASS: Candidate app manifest computed (42 files)
+[2026-07-26T01:14:25Z] PASS: Candidate unit checksum computed (installed-path form)
+[2026-07-26T01:14:25Z] GATE 1: PASSED (local extraction complete)
+[2026-07-26T01:14:25Z] DEPLOY_EXECUTE is not '1' — execution-gate review only.
+[2026-07-26T01:14:25Z] No SSH/SCP/deploy actions were performed.
+[2026-07-26T01:14:25Z] Re-run with DEPLOY_EXECUTE=1 to perform the deployment.
+[2026-07-26T01:14:25Z] Execution-gate review written to: /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260726111424/execution-gate-review.md
+[2026-07-26T01:14:25Z] [cleanup] removed local extract dir: /tmp/hada-b-extract-lYwho7

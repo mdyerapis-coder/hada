@@ -1,0 +1,13 @@
+$ python -m pip wheel --no-deps --no-build-isolation --wheel-dir /tmp/hada-wheel-final .
+WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Looking in indexes: https://reader:****@packages.applied-caas-gateway1.internal.api.openai.org/artifactory/api/pypi/pypi-public/simple
+Processing /mnt/data/hada-m1-work/hada
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: hada
+  Building wheel for hada (pyproject.toml): started
+  Building wheel for hada (pyproject.toml): finished with status 'done'
+  Created wheel for hada: filename=hada-0.2.0-py3-none-any.whl size=42894 sha256=d4311066e072b998bd14129ae93c07bae8eba9dcb858a3c216ffd9ca157fbc67
+  Stored in directory: /tmp/pip-ephem-wheel-cache-q2zl_vhj/wheels/a2/c2/e8/484b9429bff3031310aaa133854e3fd630990f7354da3e2be8
+Successfully built hada
+d4311066e072b998bd14129ae93c07bae8eba9dcb858a3c216ffd9ca157fbc67  /tmp/hada-wheel-final/hada-0.2.0-py3-none-any.whl

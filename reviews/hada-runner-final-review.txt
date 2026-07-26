@@ -1,0 +1,861 @@
+============================================================
+HADA B0 RUNNER FINAL REVIEW
+Generated: 2026-07-25T17:04:12+10:00
+============================================================
+
+## 1. CANDIDATE UNCHANGED
+9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371  HADA-M1-gcp-candidate.zip
+HADA-M1-gcp-candidate.zip: OK
+
+## 2. RUNNER METADATA
+-rwxr-xr-x 755 bobthabuilda:bobthabuilda 26090 bytes scripts/run-phase-b0-preflight.sh
+462f80bea8d6e7993b380bb761ed6e4afc2ea3f943b11541c419a342475cc9c8  scripts/run-phase-b0-preflight.sh
+
+## 3. SYNTAX AND SHELLCHECK
+PASS: runner bash syntax
+Runner shellcheck status: 0
+PASS: static-test bash syntax
+Static-test shellcheck status: 0
+
+## 4. STATIC NONE-LOGIC TEST
+PASS: empty container output becomes NONE
+PASS: empty image output becomes NONE
+PASS: non-empty sorted container IDs preserved
+PASS: non-empty sorted unique image IDs preserved
+PASS: identical NONE files compare successfully
+PASS: differing states (NONE before vs IDs after) fail closed
+PASS: differing container IDs fail closed
+PASS: fresh Docker host (both NONE) compares as unchanged
+PASS: all NONE files are non-empty
+
+============================================
+Static NONE-logic assertion results
+============================================
+Passed: 9
+Failed: 0
+
+RESULT: PASS
+Static-test status: 0
+
+## 5. ALL DOCKER STATE CAPTURES
+266:${SSH_CMD} --command='output="$(docker ps -aq | sort)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+268:  | tee "${RUN_DIR}/docker-ps-before.txt" > /dev/null
+269:echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+272:${SSH_CMD} --command='output="$(docker images -q | sort -u)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+274:  | tee "${RUN_DIR}/docker-images-before.txt" > /dev/null
+275:echo "  -> docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+556:${SSH_CMD} --command='output="$(docker ps -aq | sort)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+558:  | tee "${RUN_DIR}/docker-ps-after.txt" > /dev/null
+559:echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+562:${SSH_CMD} --command='output="$(docker images -q | sort -u)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+564:  | tee "${RUN_DIR}/docker-images-after.txt" > /dev/null
+565:echo "  -> docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+574:if diff "${RUN_DIR}/docker-ps-before.txt" "${RUN_DIR}/docker-ps-after.txt" \
+583:if diff "${RUN_DIR}/docker-images-before.txt" "${RUN_DIR}/docker-images-after.txt" \
+686:  "docker-ps-before.txt"
+687:  "docker-images-before.txt"
+693:  "docker-ps-after.txt"
+694:  "docker-images-after.txt"
+
+## 6. COMPLETE STATE-CAPTURE SECTION
+# Step 2: Capture BEFORE state (containers and images)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[2/8] Capturing BEFORE state..."
+
+# shellcheck disable=SC2016  # $output expands on remote shell, not locally
+${SSH_CMD} --command='output="$(docker ps -aq | sort)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-before.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-before.txt"
+
+# shellcheck disable=SC2016  # $output expands on remote shell, not locally
+${SSH_CMD} --command='output="$(docker images -q | sort -u)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-before.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-before.txt"
+
+# ---------------------------------------------------------------------------
+# Step 3: Create remote temporary directory
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[3/8] Creating remote temporary directory..."
+
+${SSH_CMD} --command="mkdir -p ${REMOTE_DIR}/deploy/compose ${REMOTE_DIR}/deploy/caddy && echo ${REMOTE_DIR}" \
+  2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> ${REMOTE_DIR}"
+
+# Mark that the remote directory was created so the cleanup trap knows
+# it is safe to attempt remote SSH cleanup.
+REMOTE_DIR_CREATED=1
+
+# ---------------------------------------------------------------------------
+# Step 4: Upload preflight files (from the extracted candidate tree)
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[4/8] Uploading preflight files from extracted candidate tree..."
+
+# Upload compose.yaml (base) from the extracted candidate
+${SCP_CMD} "${BASE_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.yaml (from candidate)"
+
+# Upload compose.gcp.yaml from the extracted candidate
+${SCP_CMD} "${GCP_COMPOSE}" "${VM}:${REMOTE_DIR}/deploy/compose/compose.gcp.yaml" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> compose.gcp.yaml (from candidate)"
+
+# Upload Caddyfile.gcp from the extracted candidate
+${SCP_CMD} "${CADDYFILE_GCP}" "${VM}:${REMOTE_DIR}/deploy/caddy/Caddyfile.gcp" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> Caddyfile.gcp (from candidate)"
+
+# Upload the candidate SHA256 for reference
+${SCP_CMD} "${CANDIDATE_SHA256}" "${VM}:${REMOTE_DIR}/candidate.sha256" \
+  2>>"${RUN_DIR}/scp-stderr.log"
+echo "  -> candidate.sha256"
+
+# ---------------------------------------------------------------------------
+# Step 5: Create synthetic non-production .env
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[5/8] Creating synthetic .env..."
+
+${SSH_CMD} --command="cat > ${REMOTE_DIR}/.env <<'ENVEOF'
+HADA_ENV=preflight
+HADA_DOMAIN=localhost
+HADA_ACME_EMAIL=
+POSTGRES_DB=hada
+POSTGRES_USER=hada
+POSTGRES_PASSWORD=synthetic-not-a-real-secret
+VALKEY_PASSWORD=synthetic-not-a-real-secret
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=synthetic-not-a-real-secret
+HADA_CONFIG=/opt/hada/config/hada.yaml
+HADA_STATE_DIR=/var/lib/hada
+HADA_LOG_DIR=/var/log/hada
+HADA_DATABASE_DSN=postgresql://hada:***@postgres:5432/hada
+HADA_VALKEY_URL=redis://:synthetic-not-a-real-secret@valkey:6379/0
+HADA_TARGET_REPO_URL=https://github.com/mdyerapis-coder/hermesctl.git
+HADA_TARGET_REPO_REF=main
+HADA_EXTERNAL_REVIEW_MODE=manual
+HADA_IMPLEMENTATION_MODEL=
+HADA_ADVERSARIAL_MODEL=
+HADA_INFERENCE_BACKEND=vllm
+HADA_INFERENCE_MODEL_PATH=
+ENVEOF
+echo 'synthetic .env created'" 2>>"${RUN_DIR}/ssh-stderr.log"
+echo "  -> .env (synthetic, non-production)"
+
+# ---------------------------------------------------------------------------
+# Step 6: Render effective configuration as JSON and run structured assertions
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[6/8] Rendering effective-compose.json and running assertions..."
+
+COMPOSE_RENDER_RC=0
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/effective-compose.json" > /dev/null
+COMPOSE_RENDER_RC=${PIPESTATUS[0]}
+echo "  -> effective-compose.json saved (rc=${COMPOSE_RENDER_RC})"
+
+if [[ "${COMPOSE_RENDER_RC}" -ne 0 ]]; then
+  echo "FAIL: docker compose config --format json failed (rc=${COMPOSE_RENDER_RC})"
+  echo "FAIL: Compose JSON render: FAIL" | tee "${RUN_DIR}/compose-render-check.txt"
+  EXIT_STATUS=1
+  exit 1
+fi
+echo "PASS: Compose JSON render: PASS" | tee "${RUN_DIR}/compose-render-check.txt"
+
+# Validate published ports from structured JSON
+echo ""
+echo "  [6a] Validating published ports..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+services = cfg.get("services", {})
+
+# Collect all published ports from structured fields
+published_ports = []
+for svc_name, svc_def in services.items():
+    ports = svc_def.get("ports", [])
+    for p in ports:
+        entry = {
+            "service": svc_name,
+            "host_ip": str(p.get("host_ip", "0.0.0.0")),
+            "published": p.get("published"),
+            "target": p.get("target"),
+            "protocol": str(p.get("protocol", "tcp")),
+            "mode": str(p.get("mode", "host")),
+        }
+        published_ports.append(entry)
+
+print("Published ports found:")
+for pp in published_ports:
+    print(f"  service={pp[\"service\"]} host_ip={pp[\"host_ip\"]} "
+          f"published={pp[\"published\"]} target={pp[\"target\"]} "
+          f"protocol={pp[\"protocol\"]}")
+
+errors = []
+
+if len(published_ports) != 1:
+    errors.append(
+        f"FAIL: expected exactly 1 published port, found {len(published_ports)}"
+    )
+
+if published_ports:
+    pp = published_ports[0]
+
+    if pp["service"] != "caddy":
+        errors.append(f"FAIL: expected service=caddy, got {pp[\"service\"]}")
+
+    if pp["host_ip"] != "127.0.0.1":
+        errors.append(
+            f"FAIL: expected host_ip=127.0.0.1, got {pp[\"host_ip\"]}"
+        )
+
+    if pp["published"] != 80:
+        errors.append(
+            f"FAIL: expected published=80, got {pp[\"published\"]}"
+        )
+
+    if pp["target"] != 80:
+        errors.append(
+            f"FAIL: expected target=80, got {pp[\"target\"]}"
+        )
+
+    if pp["protocol"] != "tcp":
+        errors.append(
+            f"FAIL: expected protocol=tcp, got {pp[\"protocol\"]}"
+        )
+
+    for p2 in published_ports:
+        if p2["published"] == 443 or p2["target"] == 443:
+            errors.append(
+                f"FAIL: port 443 found: service={p2[\"service\"]} "
+                f"published={p2[\"published\"]} target={p2[\"target\"]}"
+            )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print("PASS: exactly one published port - caddy, 127.0.0.1:80:80/tcp, "
+          "no 443")
+' 2>&1 | tee "${RUN_DIR}/port-assertion.txt"
+PORT_RC=${PIPESTATUS[0]}
+echo "  -> port-assertion.txt (rc=${PORT_RC})"
+
+if [[ "${PORT_RC}" -ne 0 ]]; then
+  echo "FAIL: Port assertion: FAIL" | tee "${RUN_DIR}/port-assertion-check.txt"
+else
+  echo "PASS: Port assertion: PASS" | tee "${RUN_DIR}/port-assertion-check.txt"
+fi
+
+# Validate eight top-level volumes from structured JSON
+echo ""
+echo "  [6b] Validating stateful volumes..."
+${SSH_CMD} --command="cd ${REMOTE_DIR} && \
+  docker compose \
+    -f deploy/compose/compose.yaml \
+    -f deploy/compose/compose.gcp.yaml \
+    --env-file .env config --format json" 2>>"${RUN_DIR}/ssh-stderr.log" \
+  | python3 -c '
+import json, sys
+
+cfg = json.load(sys.stdin)
+volumes = cfg.get("volumes", {})
+
+expected = {
+    "postgres-data":     "/var/lib/hada/docker-volumes/postgres-data",
+    "valkey-data":       "/var/lib/hada/docker-volumes/valkey-data",
+    "prometheus-data":   "/var/lib/hada/docker-volumes/prometheus-data",
+    "loki-data":         "/var/lib/hada/docker-volumes/loki-data",
+    "alloy-data":        "/var/lib/hada/docker-volumes/alloy-data",
+    "grafana-data":      "/var/lib/hada/docker-volumes/grafana-data",
+    "caddy-data":        "/var/lib/hada/docker-volumes/caddy-data",
+    "caddy-config":      "/var/lib/hada/docker-volumes/caddy-config",
+}
+
+errors = []
+print("Volumes found:")
+for name in sorted(volumes.keys()):
+    vol = volumes[name]
+    driver_opts = vol.get("driver_opts", {})
+    t = str(driver_opts.get("type", "NOT SET"))
+    o = str(driver_opts.get("o", "NOT SET"))
+    device = str(driver_opts.get("device", "NOT SET"))
+    print(f"  {name}: type={t} o={o} device={device}")
+
+    if name not in expected:
+        errors.append(f"FAIL: unexpected volume: {name}")
+        continue
+
+    if t != "none":
+        errors.append(f"FAIL: {name} type={t} expected=none")
+    if o != "bind":
+        errors.append(f"FAIL: {name} o={o} expected=bind")
+    if device != expected[name]:
+        errors.append(
+            f"FAIL: {name} device={device} expected={expected[name]}"
+        )
+    if not device.startswith("/var/lib/hada/docker-volumes/"):
+        errors.append(
+            f"FAIL: {name} device not beneath "
+            f"/var/lib/hada/docker-volumes/: {device}"
+        )
+
+for name in sorted(expected.keys()):
+    if name not in volumes:
+        errors.append(f"FAIL: missing volume: {name}")
+
+if len(volumes) != len(expected):
+    errors.append(
+        f"FAIL: expected {len(expected)} volumes, got {len(volumes)}"
+    )
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+else:
+    print(f"PASS: all {len(expected)} volumes have type=none, o=bind, "
+          f"device beneath /var/lib/hada/docker-volumes/")
+' 2>&1 | tee "${RUN_DIR}/volume-assertion.txt"
+VOL_RC=${PIPESTATUS[0]}
+echo "  -> volume-assertion.txt (rc=${VOL_RC})"
+
+if [[ "${VOL_RC}" -ne 0 ]]; then
+  echo "FAIL: Volume assertion: FAIL" | tee "${RUN_DIR}/volume-assertion-check.txt"
+else
+  echo "PASS: Volume assertion: PASS" | tee "${RUN_DIR}/volume-assertion-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 7: Capture AFTER state (containers and images) — fail closed
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "[7/8] Capturing AFTER state..."
+
+# shellcheck disable=SC2016  # $output expands on remote shell, not locally
+${SSH_CMD} --command='output="$(docker ps -aq | sort)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-ps-after.txt" > /dev/null
+echo "  -> docker ps -aq -> ${RUN_DIR}/docker-ps-after.txt"
+
+# shellcheck disable=SC2016  # $output expands on remote shell, not locally
+${SSH_CMD} --command='output="$(docker images -q | sort -u)"; if [[ -n "$output" ]]; then printf "%s\n" "$output"; else printf "NONE\n"; fi' \
+  2>>"${RUN_DIR}/ssh-stderr.log" \
+  | tee "${RUN_DIR}/docker-images-after.txt" > /dev/null
+echo "  -> docker images -q -> ${RUN_DIR}/docker-images-after.txt"
+
+# Compare before and after — fail closed (write diff into evidence)
+echo ""
+echo "  Comparing before/after state..."
+
+CONTAINER_DIFF_RC=0
+IMAGE_DIFF_RC=0
+
+if diff "${RUN_DIR}/docker-ps-before.txt" "${RUN_DIR}/docker-ps-after.txt" \
+    > "${RUN_DIR}/container-diff.txt" 2>&1; then
+  echo "PASS: container list unchanged (no containers started)"
+  echo "PASS: container list unchanged" >> "${RUN_DIR}/container-diff.txt"
+else
+  echo "FAIL: container list changed"
+  CONTAINER_DIFF_RC=1
+fi
+
+if diff "${RUN_DIR}/docker-images-before.txt" "${RUN_DIR}/docker-images-after.txt" \
+    > "${RUN_DIR}/image-diff.txt" 2>&1; then
+  echo "PASS: image list unchanged (no images pulled or created)"
+  echo "PASS: image list unchanged" >> "${RUN_DIR}/image-diff.txt"
+else
+  echo "FAIL: image list changed"
+  IMAGE_DIFF_RC=1
+fi
+
+# Write combined before/after diff report
+{
+  echo "=== Container diff ==="
+  cat "${RUN_DIR}/container-diff.txt"
+  echo ""
+  echo "=== Image diff ==="
+  cat "${RUN_DIR}/image-diff.txt"
+} > "${RUN_DIR}/before-after-diff.txt"
+
+if [[ "${CONTAINER_DIFF_RC}" -ne 0 || "${IMAGE_DIFF_RC}" -ne 0 ]]; then
+  echo "FAIL: Docker state changed during preflight" | tee "${RUN_DIR}/state-check.txt"
+  EXIT_STATUS=1
+else
+  echo "PASS: Docker state unchanged during preflight" | tee "${RUN_DIR}/state-check.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 8: Cleanup is handled by the trap
+
+## 7. EVIDENCE REQUIREMENTS
+678-  echo "FAIL: Image list changed"
+679-  FINAL_PASS=0
+680-fi
+681-
+682-# Check 7: all expected evidence files exist and are non-empty
+683:EVIDENCE_FILES=(
+684-  "compose-version.txt"
+685-  "compose-version-check.txt"
+686-  "docker-ps-before.txt"
+687-  "docker-images-before.txt"
+688-  "effective-compose.json"
+689-  "port-assertion.txt"
+690-  "port-assertion-check.txt"
+691-  "volume-assertion.txt"
+692-  "volume-assertion-check.txt"
+693-  "docker-ps-after.txt"
+694-  "docker-images-after.txt"
+695-  "container-diff.txt"
+696-  "image-diff.txt"
+697-  "before-after-diff.txt"
+698-  "state-check.txt"
+699-  "archive-checksum-verify.txt"
+700-  "manifest-verify.txt"
+701-)
+702-
+703-EVIDENCE_PASS=1
+704-for ef in "${EVIDENCE_FILES[@]}"; do
+705-  fpath="${RUN_DIR}/${ef}"
+706-  if [[ ! -f "${fpath}" ]]; then
+707-    echo "FAIL: evidence file missing: ${ef}"
+708-    EVIDENCE_PASS=0
+709-  elif [[ ! -s "${fpath}" ]]; then
+710-    echo "FAIL: evidence file empty: ${ef}"
+711-    EVIDENCE_PASS=0
+712-  fi
+713-done
+
+## 8. REMOTE CREATION AND CLEANUP GUARD
+20:#     function (trap on EXIT, INT, TERM);
+47:PREFLIGHT_PREFIX="hada-b0-preflight-${TIMESTAMP}"
+53:# Track whether the remote directory was created, so the cleanup trap only
+57:REMOTE_DIR_CREATED=0
+67:# Track the original exit status so the cleanup trap preserves it
+74:# shellcheck disable=SC2329  # invoked indirectly via trap below
+75:cleanup() {
+77:  # If invoked by the trap (EXIT), use EXIT_STATUS; if invoked by signal
+85:    rm -rf "${CANDIDATE_EXTRACT_DIR}"
+90:  # this run (REMOTE_DIR_CREATED=1) and it matches the strict pattern
+91:  # ^/tmp/hada-b0-preflight-[0-9]+$
+92:  if [[ "${REMOTE_DIR_CREATED}" == "1" && -n "${REMOTE_DIR}" ]]; then
+96:      echo "[cleanup] REFUSED: refusing to remove /tmp"
+97:    elif [[ ! "${REMOTE_DIR}" =~ ^/tmp/hada-b0-preflight-[0-9]+$ ]]; then
+98:      echo "[cleanup] REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : ${REMOTE_DIR}"
+106:  echo 'REFUSED: refusing to remove /tmp'
+108:elif [[ ! \"\${DIR}\" =~ ^/tmp/hada-b0-preflight-[0-9]+\$ ]]; then
+109:  echo \"REFUSED: path does not match ^/tmp/hada-b0-preflight-[0-9]+\$ : \${DIR}\"
+112:  rm -rf \"\${DIR}\"
+122:trap cleanup EXIT
+123:trap 'EXIT_STATUS=$((130)); cleanup' INT
+124:trap 'EXIT_STATUS=$((143)); cleanup' TERM
+288:# Mark that the remote directory was created so the cleanup trap knows
+290:REMOTE_DIR_CREATED=1
+613:echo "[8/8] Cleanup handled by trap on EXIT/INT/TERM"
+
+## 9. PROHIBITED OPERATION SCAN
+PASS: no prohibited deployment operation found
+
+## 10. STATIC TEST CONTENT
+#!/usr/bin/env bash
+#
+# HADA M1 Phase B0 — Static assertions for Docker state NONE logic
+#
+# This script proves that the remote capture commands used in
+# run-phase-b0-preflight.sh produce correct output for:
+#   - empty container output becomes NONE
+#   - empty image output becomes NONE
+#   - non-empty sorted IDs are preserved
+#   - identical NONE files compare successfully
+#   - differing states fail closed
+#
+# It does not contact hada-control. It simulates the remote shell logic
+# locally to verify correctness.
+#
+set -Eeuo pipefail
+
+PASS_COUNT=0
+FAIL_COUNT=0
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
+
+assert_pass() {
+  local desc="$1"
+  printf 'PASS: %s\n' "${desc}"
+  PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+assert_fail() {
+  local desc="$1"
+  printf 'FAIL: %s\n' "${desc}" >&2
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+# ---------------------------------------------------------------------------
+# Test 1: Empty container output becomes NONE
+# ---------------------------------------------------------------------------
+
+# Simulate: docker ps -aq returns nothing (empty Docker host)
+EMPTY_PS_OUTPUT=""
+RESULT_FILE="${TEMP_DIR}/empty-ps.txt"
+
+# Replicate the exact remote command logic locally
+output="${EMPTY_PS_OUTPUT}"
+if [[ -n "${output}" ]]; then
+  printf '%s\n' "${output}"
+else
+  printf 'NONE\n'
+fi > "${RESULT_FILE}"
+
+if [[ "$(cat "${RESULT_FILE}")" == "NONE" ]]; then
+  assert_pass "empty container output becomes NONE"
+else
+  assert_fail "empty container output should be NONE, got: $(cat "${RESULT_FILE}")"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: Empty image output becomes NONE
+# ---------------------------------------------------------------------------
+
+EMPTY_IMAGES_OUTPUT=""
+RESULT_FILE="${TEMP_DIR}/empty-images.txt"
+
+output="${EMPTY_IMAGES_OUTPUT}"
+if [[ -n "${output}" ]]; then
+  printf '%s\n' "${output}"
+else
+  printf 'NONE\n'
+fi > "${RESULT_FILE}"
+
+if [[ "$(cat "${RESULT_FILE}")" == "NONE" ]]; then
+  assert_pass "empty image output becomes NONE"
+else
+  assert_fail "empty image output should be NONE, got: $(cat "${RESULT_FILE}")"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 3: Non-empty sorted container IDs are preserved
+# ---------------------------------------------------------------------------
+
+# Simulate: docker ps -aq returns several IDs (unsorted)
+NONEMPTY_PS_OUTPUT=$'def456\nabc123\nghi789'
+RESULT_FILE="${TEMP_DIR}/nonempty-ps.txt"
+
+# Sort the output (matching the remote command pipeline)
+SORTED_OUTPUT=$(printf '%s\n' "${NONEMPTY_PS_OUTPUT}" | sort)
+
+output="${SORTED_OUTPUT}"
+if [[ -n "${output}" ]]; then
+  printf '%s\n' "${output}"
+else
+  printf 'NONE\n'
+fi > "${RESULT_FILE}"
+
+EXPECTED_SORTED=$'abc123\ndef456\nghi789'
+if [[ "$(cat "${RESULT_FILE}")" == "${EXPECTED_SORTED}" ]]; then
+  assert_pass "non-empty sorted container IDs preserved"
+else
+  assert_fail "non-empty sorted container IDs not preserved, got: $(cat "${RESULT_FILE}")"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 4: Non-empty sorted unique image IDs are preserved
+# ---------------------------------------------------------------------------
+
+# Simulate: docker images -q returns IDs with duplicates (unsorted)
+NONEMPTY_IMAGES_OUTPUT=$'img_bbb\nimg_aaa\nimg_bbb\nimg_ccc'
+RESULT_FILE="${TEMP_DIR}/nonempty-images.txt"
+
+# Sort -u the output (matching the remote command pipeline)
+SORTED_UNIQUE_OUTPUT=$(printf '%s\n' "${NONEMPTY_IMAGES_OUTPUT}" | sort -u)
+
+output="${SORTED_UNIQUE_OUTPUT}"
+if [[ -n "${output}" ]]; then
+  printf '%s\n' "${output}"
+else
+  printf 'NONE\n'
+fi > "${RESULT_FILE}"
+
+EXPECTED_SORTED_UNIQUE=$'img_aaa\nimg_bbb\nimg_ccc'
+if [[ "$(cat "${RESULT_FILE}")" == "${EXPECTED_SORTED_UNIQUE}" ]]; then
+  assert_pass "non-empty sorted unique image IDs preserved"
+else
+  assert_fail "non-empty sorted unique image IDs not preserved, got: $(cat "${RESULT_FILE}")"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 5: Identical NONE files compare successfully (no diff)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/none-before.txt"
+AFTER_FILE="${TEMP_DIR}/none-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'NONE\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_pass "identical NONE files compare successfully"
+else
+  assert_fail "identical NONE files should compare as equal"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 6: Differing states fail closed (NONE before vs IDs after)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-after.txt"
+printf 'NONE\n' > "${BEFORE_FILE}"
+printf 'abc123\ndef456\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing states (NONE before vs IDs after) should fail closed"
+else
+  assert_pass "differing states (NONE before vs IDs after) fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 7: Differing container IDs fail closed (abc before vs xyz after)
+# ---------------------------------------------------------------------------
+
+BEFORE_FILE="${TEMP_DIR}/diff-ids-before.txt"
+AFTER_FILE="${TEMP_DIR}/diff-ids-after.txt"
+printf 'abc123\ndef456\n' > "${BEFORE_FILE}"
+printf 'abc123\nxyz999\n' > "${AFTER_FILE}"
+
+if diff "${BEFORE_FILE}" "${AFTER_FILE}" > /dev/null 2>&1; then
+  assert_fail "differing container IDs should fail closed"
+else
+  assert_pass "differing container IDs fail closed"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 8: Both empty -> both NONE -> compare equal (fresh Docker host)
+# ---------------------------------------------------------------------------
+
+BEFORE_PS="${TEMP_DIR}/fresh-ps-before.txt"
+AFTER_PS="${TEMP_DIR}/fresh-ps-after.txt"
+BEFORE_IMG="${TEMP_DIR}/fresh-img-before.txt"
+AFTER_IMG="${TEMP_DIR}/fresh-img-after.txt"
+
+# Simulate empty Docker host before and after
+for f in "${BEFORE_PS}" "${AFTER_PS}" "${BEFORE_IMG}" "${AFTER_IMG}"; do
+  output=""
+  if [[ -n "${output}" ]]; then
+    printf '%s\n' "${output}"
+  else
+    printf 'NONE\n'
+  fi > "${f}"
+done
+
+CONTAINER_OK=0
+IMAGE_OK=0
+
+if diff "${BEFORE_PS}" "${AFTER_PS}" > /dev/null 2>&1; then
+  CONTAINER_OK=1
+fi
+if diff "${BEFORE_IMG}" "${AFTER_IMG}" > /dev/null 2>&1; then
+  IMAGE_OK=1
+fi
+
+if [[ "${CONTAINER_OK}" -eq 1 && "${IMAGE_OK}" -eq 1 ]]; then
+  assert_pass "fresh Docker host (both NONE) compares as unchanged"
+else
+  assert_fail "fresh Docker host should compare as unchanged"
+fi
+
+# ---------------------------------------------------------------------------
+# Test 9: All files are non-empty (NONE is a valid non-empty value)
+# ---------------------------------------------------------------------------
+
+ALL_NONEMPTY=1
+for f in "${BEFORE_PS}" "${AFTER_PS}" "${BEFORE_IMG}" "${AFTER_IMG}"; do
+  if [[ ! -s "${f}" ]]; then
+    ALL_NONEMPTY=0
+  fi
+done
+
+if [[ "${ALL_NONEMPTY}" -eq 1 ]]; then
+  assert_pass "all NONE files are non-empty"
+else
+  assert_fail "some NONE files are empty"
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "============================================"
+echo "Static NONE-logic assertion results"
+echo "============================================"
+echo "Passed: ${PASS_COUNT}"
+echo "Failed: ${FAIL_COUNT}"
+echo ""
+
+if [[ "${FAIL_COUNT}" -gt 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+else
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+## 11. FINAL RUNNER RESULT LOGIC
+606-fi
+607-
+608-# ---------------------------------------------------------------------------
+609-# Step 8: Cleanup is handled by the trap
+610-# ---------------------------------------------------------------------------
+611-
+612-echo ""
+613-echo "[8/8] Cleanup handled by trap on EXIT/INT/TERM"
+614-
+615-# ---------------------------------------------------------------------------
+616:# Final preflight result — fail unless ALL checks pass
+617-# ---------------------------------------------------------------------------
+618-
+619-echo ""
+620-echo "============================================"
+621-echo "Phase B0 Preflight Final Result"
+622-echo "============================================"
+623-
+624-FINAL_PASS=1
+625-
+626-# Check 1: Compose version requirement passed
+627-if [[ -f "${RUN_DIR}/compose-version-check.txt" ]] && \
+628-   grep -q "PASS" "${RUN_DIR}/compose-version-check.txt"; then
+629-  echo "PASS: Compose version requirement"
+630-else
+631-  echo "FAIL: Compose version requirement"
+632-  FINAL_PASS=0
+633-fi
+634-
+635-# Check 2: effective Compose JSON rendered successfully
+636-if [[ -f "${RUN_DIR}/compose-render-check.txt" ]] && \
+637-   grep -q "PASS" "${RUN_DIR}/compose-render-check.txt" && \
+638-   [[ -s "${RUN_DIR}/effective-compose.json" ]]; then
+639-  echo "PASS: Compose JSON rendered"
+640-else
+641-  echo "FAIL: Compose JSON rendered"
+642-  FINAL_PASS=0
+643-fi
+644-
+645-# Check 3: port assertion passed
+646-if [[ -f "${RUN_DIR}/port-assertion-check.txt" ]] && \
+647-   grep -q "PASS" "${RUN_DIR}/port-assertion-check.txt"; then
+648-  echo "PASS: Port assertion"
+649-else
+650-  echo "FAIL: Port assertion"
+651-  FINAL_PASS=0
+652-fi
+653-
+654-# Check 4: volume assertion passed
+655-if [[ -f "${RUN_DIR}/volume-assertion-check.txt" ]] && \
+656-   grep -q "PASS" "${RUN_DIR}/volume-assertion-check.txt"; then
+657-  echo "PASS: Volume assertion"
+658-else
+659-  echo "FAIL: Volume assertion"
+660-  FINAL_PASS=0
+661-fi
+662-
+663-# Check 5: container list remained identical
+664-if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+665-   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+666-  echo "PASS: Container list identical"
+667-else
+668-  echo "FAIL: Container list changed"
+669-  FINAL_PASS=0
+670-fi
+671-
+672-# Check 6: image list remained identical
+673-# (covered by state-check.txt which requires both container and image unchanged)
+674-if [[ -f "${RUN_DIR}/state-check.txt" ]] && \
+675-   grep -q "PASS" "${RUN_DIR}/state-check.txt"; then
+676-  echo "PASS: Image list identical"
+677-else
+678-  echo "FAIL: Image list changed"
+679-  FINAL_PASS=0
+680-fi
+681-
+682-# Check 7: all expected evidence files exist and are non-empty
+683-EVIDENCE_FILES=(
+684-  "compose-version.txt"
+685-  "compose-version-check.txt"
+686-  "docker-ps-before.txt"
+687-  "docker-images-before.txt"
+688-  "effective-compose.json"
+689-  "port-assertion.txt"
+690-  "port-assertion-check.txt"
+691-  "volume-assertion.txt"
+692-  "volume-assertion-check.txt"
+693-  "docker-ps-after.txt"
+694-  "docker-images-after.txt"
+695-  "container-diff.txt"
+696-  "image-diff.txt"
+697-  "before-after-diff.txt"
+698-  "state-check.txt"
+699-  "archive-checksum-verify.txt"
+700-  "manifest-verify.txt"
+701-)
+702-
+703-EVIDENCE_PASS=1
+704-for ef in "${EVIDENCE_FILES[@]}"; do
+705-  fpath="${RUN_DIR}/${ef}"
+706-  if [[ ! -f "${fpath}" ]]; then
+707-    echo "FAIL: evidence file missing: ${ef}"
+708-    EVIDENCE_PASS=0
+709-  elif [[ ! -s "${fpath}" ]]; then
+710-    echo "FAIL: evidence file empty: ${ef}"
+711-    EVIDENCE_PASS=0
+712-  fi
+713-done
+714-
+715-if [[ "${EVIDENCE_PASS}" -eq 1 ]]; then
+716-  echo "PASS: All evidence files exist and non-empty"
+717-else
+718-  echo "FAIL: Some evidence files missing or empty"
+719-  FINAL_PASS=0
+720-fi
+721-
+722-echo ""
+723-echo "Evidence dir: ${RUN_DIR}"
+724-echo ""
+725-echo "Files in evidence dir:"
+726-ls -1 "${RUN_DIR}/"
+727-echo ""
+728-
+729-if [[ "${FINAL_PASS}" -ne 1 ]]; then
+730-  echo "PREFLIGHT RESULT: FAIL"
+731-  EXIT_STATUS=1
+732-  exit 1
+733-else
+734-  echo "PREFLIGHT RESULT: PASS"
+735-  EXIT_STATUS=0
+736-  exit 0
+737-fi
+
+============================================================
+END OF HADA B0 RUNNER FINAL REVIEW
+============================================================

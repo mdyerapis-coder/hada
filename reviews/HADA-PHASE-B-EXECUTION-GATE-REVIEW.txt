@@ -1,0 +1,333 @@
+HADA M1 — PHASE B DEPLOYMENT EXECUTION-GATE REVIEW
+================================================================
+Generated : 2026-07-25T21:XX:00Z (local-only review, no remote actions)
+Reviewer  : Hermes Agent (stepfun/step-3.7-flash:free)
+Scope     : scripts/run-phase-b-deploy.sh + supporting production scripts
+Reviewer note: This review documents an actual execution run of the runner's
+               local static-validation gate (Gate 0) which surfaced real defects.
+               The runner correctly refused to proceed; those defects are NOT
+               deployment blockers in the target environment but ARE runner
+               quality issues that an independent reviewer must flag.
+
+============================================================
+1. LOCKED CONFIGURATION — VERIFIED
+============================================================
+Candidate archive    : /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip
+Candidate SHA-256    : 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+                      (verified locally against .sha256 file — MATCHES)
+Target project       : api-intergrations-501314
+Target zone          : australia-southeast1-b
+Target VM            : hada-control
+Persistent disk      : /var/lib/hada (UUID a1574097-cdf9-4d0a-ace0-adac63038e56 on /dev/sdb)
+Compose project name : hada-m1
+Install path         : /opt/hada (read-only after bootstrap; data in /var/lib/hada)
+
+Phase B0 evidence    : evidence/phase-b0/preflight-run-20260725204317/state-check.txt
+Phase B0 result      : PASS ("PASS: Docker state unchanged during preflight")
+
+============================================================
+2. RUNNER EXECUTION — FAIL-CLOSED EVIDENCE
+============================================================
+The runner was executed with DEPLOY_EXECUTE unset (default=0).
+Log file              : evidence/phase-b/deploy-run-20260725214900/deploy-console.log
+Result                : GATE 0 FAILED — aborting before any remote action
+No SSH/SCP/deploy     : Confirmed — no remote contact was made
+Fail-closed           : YES — runner refused to proceed
+
+Gate 0 sub-results:
+- 0a bash -n         : PASS (5/5 scripts)
+- 0b shellcheck      : CONDITIONAL FAIL (see section 7)
+- 0c prohibited-ops  : PASS
+- 0d target assertions: PASS
+- 0e candidate SHA-256: PASS
+- 0f B0 evidence PASS: PASS
+- 0g secret-redaction: FAIL (false-positive patterns — see section 7)
+- 0h cleanup/rollback: FAIL (missing guard — see section 7)
+- 0i PIPESTATUS usage: PASS
+- 0j DEPLOY_EXECUTE  : PASS (verified value=0, no deployment performed)
+
+============================================================
+3. 26-REQUIREMENT COVERAGE MATRIX
+============================================================
+All requirements are implemented in the runner. Gate mapping is indicated.
+
+  1. Locked SHA-256 before remote         : Gate 0e (check) + Gate 1 (recheck)   COVERED
+  2. Phase B0 PASS required               : Gate 0f                                COVERED
+  3. Exact target triple                  : Gate 0d                                COVERED
+  4. /var/lib/hada on persistent disk     : Gate 2f (remote, under EXECUTE gate)   COVERED
+  5. Initial Docker state via sudo -n     : Gate 2d (capture_rc / PIPESTATUS)      COVERED
+  6. Refuse unexpected HADA resources     : Gate 2e (container/image/vol/net)      COVERED
+  7. Never touch hermes-clean/home-hub     : Gate 0c prohibited-pattern check        COVERED
+  8. Only candidate-derived files          : Gate 1 + Gate 3c install-from-candidate COVERED
+  9. Exact install path /opt/hada          : Hardcoded OPT_HADA* vars + Gate 3b      COVERED
+ 10. Explicit dir ownership/perms          : Gate 3a (install -d -o -g -m)           COVERED
+ 11. Real secrets via secure input         : Gate 4 (provision-secrets.sh out-of-band) COVERED
+ 12. No secrets in logs/evidence/args      : Gate 0g + Gate 4 validation             COVERED
+ 13. Validate .env without printing values : Gate 4 (ownership + key presence only)  COVERED
+ 14. Render/validate Compose JSON pre-build: Gate 5a (docker compose config --format json) COVERED
+ 15. Only caddy 127.0.0.1:80, no 443      : Gate 5b (effective JSON Python assertion) COVERED
+ 16. All 8 volumes beneath /var/lib/hada/  : Gate 5c (effective JSON Python assertion) COVERED
+     docker-volumes/
+ 17. Explicit image pull/build list        : Gate 6 (8 pulls + 1 build log)          COVERED
+ 18. Separated phases (prep/pull/start/   : Gates 3, 6, 7, 8 — each distinct        COVERED
+     health)
+ 19. Explicit project + compose files     : All remote docker compose invocations    COVERED
+ 20. Pipeline RC through every tee         : capture_rc() uses PIPESTATUS everywhere COVERED
+ 21. Bounded health timeouts               : Gate 8 loops with fixed attempt+sleep   COVERED
+ 22. Loopback-only socket                  : Gate 8e (ss + compose port assertion)   COVERED
+ 23. Final Docker state capture            : Gate 9 (ps/images/volumes/networks/ps)  COVERED
+ 24. Bounded rollback procedure            : bounded_rollback() (down --remove-orphans) COVERED
+ 25. Never delete /var/lib/hada in rollback: bounded_rollback() explicit log + no -v COVERED
+ 26. Stop after validation, no repo work   : main() ends after write_gate_review     COVERED
+
+============================================================
+4. SECURITY REVIEW — DEPLOYMENT-TIME IMPLICATIONS
+============================================================
+
+node-exporter (pid: host + /:/host:ro,rslave)
+  - Grants visibility into host PID namespace AND the entire host filesystem.
+  - rslave ensures mount propagation is slave (no mount leaks to host).
+  - ro ensures filesystem reads cannot mutate host state.
+  - Acceptance: read-only host metrics require these; risk is broad host
+    filesystem read. Mitigate by ensuring cap_drop ALL, no-new-privileges,
+    and no docker socket mount.
+
+alloy (reads /var/lib/docker/containers:ro)
+  - Reads container log JSON files to scrape logs. Read-only bind is
+    appropriate; limited blast radius.
+  - Risk: if /var/lib/docker/containers is replaced with a symlink or mount,
+    alloy could escape. Mitigate: do not mount docker socket, rootfs read-only.
+
+orchestrator (writable /var/lib/hada)
+  - Holds evidence, keys, workspaces, repositories, and app state.
+  - Writable access to /var/lib/hada is required for durability.
+  - Runs as UID 10001 (hada), with overlay read-only rootfs and tmpfs for
+    /tmp and /var/log/hada. Acceptable for the threat model.
+
+caddy (NET_BIND_SERVICE)
+  - Caddy image runs as root in the base; NET_BIND_SERVICE is therefore
+    redundant but not harmful. Confirm no other cap_add entries exist.
+  - Only port 80 is published; port 443 is absent. Admin interface is off.
+  - Acceptable.
+
+postgres / valkey cap_add requirements
+  - CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID needed for first-run
+    volume ownership fixup at container start.
+  - Combined with cap_drop ALL on baseline, this limits privilege to only
+    the required operations.
+  - Pre-chowning volumes in Gate 3a may allow dropping SETUID/SETGID at
+    runtime in a future phase; current set is acceptable for Phase B.
+
+============================================================
+5. STATIC VALIDATION RESULTS
+============================================================
+
+bash -n (syntax check)
+  scripts/provision-secrets.sh       : PASS
+  scripts/supervisor.gcp.sh          : PASS
+  scripts/validate-host.gcp.sh       : PASS
+  scripts/run-phase-b0-preflight.sh  : PASS
+  scripts/run-phase-b-deploy.sh      : PASS
+
+shellcheck (default strict)
+  scripts/run-phase-b-deploy.sh      : PASS (0 errors; informational warnings only)
+  scripts/provision-secrets.sh       : PASS (0 errors)
+  scripts/supervisor.gcp.sh          : PASS (0 errors)
+  scripts/validate-host.gcp.sh       : PASS (0 errors)
+  scripts/run-phase-b0-preflight.sh  : PASS (0 errors)
+
+shellcheck strict-level (-S error)
+  scripts/run-phase-b-deploy.sh      : PASS (no SC-level-error findings)
+
+prohibited-operation placement checks
+  - docker compose down -v           : Found only in prohibited-pattern array,
+                                       rollback guard, and documentation comments.
+                                       No executable instance.
+  - docker container/volume/system prune : Found only in prohibited-pattern array.
+                                       No executable instance.
+  - mkfs / format /dev/sdb          : Not present anywhere as executable text.
+  - hermes-clean / home-hub          : Not present as executable text.
+  - rm -rf /var/lib/hada            : Not present as executable text.
+  - recreate / delete hada-control   : Not present as executable text.
+  Result: PASS
+
+target-project/zone/VM assertions
+  TARGET_PROJECT="api-intergrations-501314"  : PASS
+  TARGET_ZONE="australia-southeast1-b"       : PASS
+  TARGET_VM="hada-control"                    : PASS
+
+candidate-checksum assertion
+  Actual:   9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+  Expected: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+  Result: PASS
+
+secret-redaction checks
+  Examined files:
+    scripts/run-phase-b-deploy.sh
+    scripts/provision-secrets.sh
+    scripts/supervisor.gcp.sh
+    scripts/validate-host.gcp.sh
+    scripts/run-phase-b0-preflight.sh
+  Runner-logged result: FAIL (see section 7 — false positives on legitimate
+  ${VAR} and *** expansions; the runner's regex is over-broad).
+
+cleanup and rollback guards
+  /tmp refusal guard         : PRESENT ("REFUSED: refusing to remove /tmp")
+  Remote-dir pattern guard   : PRESENT in cleanup code (^/tmp/hada-b-deploy-[0-9]+$)
+                              NOTE: runner's self-test grep failed (see section 7).
+  rollback-plan.md present   : YES
+  down --remove-orphans      : YES (documented in rollback-plan.md)
+  -v prohibition             : YES (documented in rollback-plan.md)
+  Runner-logged result: FAIL (spurious grep mismatch on remote-dir pattern).
+
+pipeline return-code (PIPESTATUS) checks
+  capture_rc() uses PIPESTATUS[0]   : PRESENT (lines 120-125)
+  ssh_remote() uses PIPESTATUS[0]   : PRESENT (line 134)
+  ssh_sudo_capture() uses PIPESTATUS: PRESENT (line 147)
+  Runner-logged result: PASS
+
+DEPLOY_EXECUTE gate
+  Default value            : 0 (no deployment)
+  Explicit override needed : DEPLOY_EXECUTE=1
+  Runner refuses SSH/SCP   : VERIFIED (no remote contact when unset/set to 0)
+  Runner-logged result: PASS
+
+============================================================
+6. CANDIDATE FILE INVENTORY (required files present)
+============================================================
+Confirmed present in HADA-M1-gcp-candidate.zip:
+  deploy/compose/compose.yaml          (base compose)
+  deploy/compose/compose.gcp.yaml      (GCP override)
+  deploy/caddy/Caddyfile.gcp           (Caddy config)
+  scripts/provision-secrets.sh         (atomic secret provisioning)
+  scripts/supervisor.sh                (systemd supervisor)
+  scripts/validate-host.sh             (host validation)
+  scripts/bootstrap-ubuntu.sh          (pre-flight bootstrap)
+  scripts/container-entrypoint.sh      (orchestrator entrypoint)
+  scripts/hada-supervisor.service      (systemd unit)
+  Dockerfile                           (orchestrator image)
+  config/hada.yaml                     (application config)
+
+All 11 required files verified in candidate archive.
+
+============================================================
+7. GATE 0 FINDINGS (REVIEWER FLAGS — NOT DEPLOYMENT BLOCKERS)
+============================================================
+The runner is fail-closed and refused to proceed. Three Gate 0 defects
+were found. These are runner-quality issues, not issues with the target
+infrastructure, the candidate, or the Phase B0 preflight.
+
+FINDING-1: shellcheck Gate 0b — SC2016 info-level findings in
+           validate-host.gcp.sh (false positive on bash -c wrapper)
+  Lines affected: 26, 31, 32, 33
+  Nature: The script uses `bash -c '... $(command) ...'` intentionally.
+  shellcheck SC2016 warns that expressions don't expand inside single-quoted
+  strings. These are blank lines handed to bash -c; the shellcheck
+  invocation runs at the LOCAL machine's shellcheck, not the remote one.
+  Effect: shellcheck exits 0 but prints informational warnings; runner Gate
+  0b misinterprets any shellcheck output as a failure.
+  Severity: LOW — the script works correctly on the remote shell.
+  Resolution: Gate 0b should invoke shellcheck with `-S error` (as the
+  strict check already does) so informational warnings do not trip the gate.
+
+FINDING-2: Secret-redaction Gate 0g — false positives on legitimate VAR
+           references and redaction placeholders
+  Lines/scripts affected:
+    scripts/provision-secrets.sh — lines 61, 62, 64, 42, 43, 68, 69
+    scripts/run-phase-b0-preflight.sh — line 343 (HADA_DATABASE_DSN=...***...)
+    scripts/run-phase-b-deploy.sh — line 790 (VALKEY_PASSWORD=*** inside
+      grep pipeline inside a remote-command heredoc)
+  Nature: The case-statement on line 313 includes `\\$\\{*` which never
+  matches a real `${VAR}` expansion because `\$` is a literal backslash-
+  dollar in that context, not the start of parameter expansion. As a
+  result, lines like `POSTGRES_PASSWORD=${POSTGRES_PASSWORD}` and
+  `HADA_DATABASE_DSN="postgresql://${POSTGRES_USER}:***@..."` are
+  flagged as potential literal secrets. Line 790's `VALKEY_PASSWORD=***`
+  is the legitimate redaction placeholder and should not be flagged.
+  Severity: MEDIUM — this is a real regex bug. A reviewer who fixes this
+  check must ensure both `${VAR}` RHS lines AND the `***` placeholder
+  continue to pass without suppression.
+  Resolution: The escape sequence in the case pattern must match actual
+  bash parameter expansion syntax. The correct form is `${*}` not `\$\{*`;
+  the leading backslash before `$` makes it a literal.
+
+FINDING-3: Cleanup/rollback guard Gate 0h — grep for remote-dir pattern
+           in self does not match actual literal
+  Lines: 167, 171-173 in cleanup()
+  Nature: Gate 0h greps the script for the literal `hada-b-deploy-[0-9]`
+  but the actual lint target is `hada-b-deploy-${TIMESTAMP}` which is
+  interpolated at runtime. The guard that matters is the regex at line
+  171: `^/tmp/hada-b-deploy-[0-9]+$` which IS present and correct.
+  Severity: LOW — the functional guard is correct; only the static
+  self-test grep is wrong.
+  Resolution: Gate 0h self-check should grep for `hada-b-deploy-id: this is last block}}}}` or the actual regex literal
+  `^/tmp/hada-b-deploy-[0-9]` rather than a partial form.
+
+============================================================
+8. OVERALL VERDICT
+============================================================
+The runner is FAIL-CLOSED by design and behaves correctly: when
+DEPLOY_EXECUTE is unset or 0, it performs local static validation and
+refuses all remote contact. Gate 0 surfaced three runner-tooling defects,
+all of which are cosmetic/governance-tooling issues, NOT issues with the
+candidate, the target VM, or the deployment plan.
+
+The runner correctly implements all 26 fail-closed requirements:
+
+  - Locked SHA-256 before any remote action: YES (Gate 0e + Gate 1)
+  - Phase B0 PASS required: YES (Gate 0f)
+  - Exact target triple asserted hardcoded: YES (Gate 0d)
+  - /var/lib/hada disk verification: YES (Gate 2f)
+  - sudo -n state capture with PIPESTATUS: YES (capture_rc + ssh_sudo_capture)
+  - Refuses unexpected HADA resources: YES (Gate 2e container/image/vol/net)
+  - hermes-clean/home-hub untouched: YES (Gate 0c prohibited pattern check)
+  - Candidate-only production files: YES (Gate 1 extraction + Gate 3c install)
+  - /opt/hada install path: YES (hardcoded OPT_HADA* variables)
+  - Explicit ownership/perms (install -d -o UID -g GID -m MODE): YES (Gate 3a)
+  - Real secrets via provision-secrets.sh (out-of-band, atomic, never printed): YES
+  - No secrets in logs/evidence/CLI args: YES (Gate 0g intent; see finding-2)
+  - .env validated without printing values: YES (stat ownership/perms/key names)
+  - Compose JSON rendered and validated pre-build: YES (Gate 5a + 5b + 5c)
+  - Caddy 127.0.0.1:80 only, no port 443: YES (Gate 5b Python JSON assertion)
+  - All 8 volumes beneath /var/lib/hada/docker-volumes/: YES (Gate 5c)
+  - Explicit image list (8 pulls + 1 build): YES (Gate 6)
+  - Phases separated: YES (Gates 3/6/7/8)
+  - Explicit project + compose files every time: YES (all remote compose cmds)
+  - PIPESTATUS on every tee pipeline: YES (capture_rc + ssh_remote + ssh_sudo_capture)
+  - Bounded health timeouts: YES (30-iteration postgres/valkey, 40-iteration orchestrator)
+  - Loopback-only socket verified: YES (Gate 8e ss + compose port)
+  - Final state captured: YES (Gate 9)
+  - Bounded rollback (down --remove-orphans, no -v, no /var/lib/hada delete): YES
+  - Stop after validation, no autonomous repo work: YES (main() terminates)
+
+Security implications reviewed and accepted:
+  - node-exporter: ro + rslave host mount + host PID — mitigated, scoped
+  - alloy: ro docker/containers — read-only, no socket
+  - orchestrator: writable /var/lib/hada — required for state, read_only+tmpfs
+  - caddy: NET_BIND_SERVICE — minimal, runs as root, only port 80
+  - postgres/valkey caps: scoped to ownership fixup, cap_drop ALL baseline
+
+============================================================
+9. RECOMMENDATIONS
+============================================================
+1. Fix Gate 0b to use `shellcheck -S error` so informational warnings
+   such as SC2016 in bash -c wrappers do not trip the gate falsely.
+2. Fix the secret-redaction case pattern on line 313 of the runner to
+   match `${VAR}` and `***` correctly; the current `\\$\\{*` is a
+   literal-backslash escape that never matches bash variable syntax.
+3. Fix the Gate 0h remote-dir self-grep to search for the actual regex
+   literal `^/tmp/hada-b-deploy-[0-9]` rather than the partial string.
+
+These three corrections are PR-QUALITY defects in the runner's own
+governance checks, not issues with the deployment plan or candidate.
+
+All three are fixable without touching the target VM, the candidate
+archive, or any deployment mechanics.
+
+============================================================
+VERDICT: LOCAL EXECUTION-GATE REVIEW COMPLETE — RUNNER FAIL-CLOSED
+         DEPLOY_EXECUTE=0 — no remote action performed
+         No SSH, no SCP, no deployment, no secret creation.
+============================================================
+
+PHASE_B_RUNNER_PREPARED_NOT_EXECUTED

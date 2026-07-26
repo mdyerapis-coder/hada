@@ -1,0 +1,132 @@
+HADA M1 — PHASE B V3 FINAL LOCAL REVIEW
+======================================
+Date: 2026-07-26
+Scope: LOCAL-ONLY. No SSH/SCP, no contact with hada-control, no deploys,
+no image pulls/builds, no containers started, no real secrets created.
+Phase B0 was NOT run. The VM was NOT contacted.
+
+AUDIT HISTORY PRESERVED (all three candidates unchanged)
+--------------------------------------------------------
+v1 (locked, original):
+  HADA-M1-gcp-candidate.zip
+  SHA-256: 9da95a53eac87d6b2f2860f2b3944d39d66f85882848f9a69b88f06909c14371
+v2 (prior correction):
+  HADA-M1-gcp-candidate-v2.zip
+  SHA-256: b2f43880c22527284e9938b53f20e5035260db78cc55a46e458063c702011ffa
+v3 (this deliverable):
+  deploy-v3/HADA-M1-gcp-candidate-v3.zip
+  SHA-256: 7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204
+  (recorded in deploy-v3/HADA-M1-gcp-candidate-v3.zip.sha256, sha256sum -c OK)
+
+CORRECTIONS DELIVERED (v3)
+--------------------------
+
+1. LOCK ALL RUNNERS TO V3
+   - run-phase-b-deploy.sh production defaults now reference
+     deploy-v3/HADA-M1-gcp-candidate-v3.zip, its .sha256 file, and the exact
+     v3 SHA-256 in CANDIDATE_ARCHIVE / CANDIDATE_SHA256_FILE /
+     EXPECTED_CANDIDATE_SHA256. No undocumented env override is required to
+     select v3.
+   - The Phase B runner REFUSES to execute until a successful v3 Phase B0
+     evidence directory is explicitly locked into B0_EVIDENCE_DIR
+     (export HADA_PHASE_B0_EVIDENCE_DIR). Gate 0f fails closed if it is unset
+     or its state-check.txt does not report PASS. No remote mutation occurs.
+   - New v3 Phase B0 runner (scripts/run-phase-b0-v3-preflight.sh) defaults to
+     the v3 archive + v3 SHA file and preserves all previously approved B0
+     fail-closed behaviour. Phase B0 was NOT run during this task.
+
+2. REPLACE THE INVALID VALKEY CONFIGURATION
+   - Removed every occurrence of --requirepass-file (Valkey 8 has no such
+     directive). The comment at compose.yaml:49 documents this explicitly.
+   - provision-secrets.sh now generates a PROTECTED COMPLETE Valkey
+     configuration file at /var/lib/hada/secrets/valkey/valkey.conf containing
+     requirepass <generated-secret>, appendonly yes, appendfsync everysec,
+     maxmemory-policy noeviction. It is created atomically (mktemp + mv),
+     owned by the numeric container UID/GID 999:1000 of valkey/valkey:8-alpine,
+     mode 0400, and is NOT included in evidence.
+   - Compose starts Valkey with the supported configuration-file form:
+       valkey-server /run/secrets/valkey.conf
+     and mounts the secret read-only into the container.
+   - No claim is made that /var/lib/hada is tmpfs; it is persistent disk.
+
+3. FIX VALKEY HEALTH VALIDATION
+   - The Valkey container environment does NOT contain VALKEY_PASSWORD.
+   - Both the Compose healthcheck and runner Gate 8 read the password from the
+     protected file INSIDE the container (VALKEYCLI_AUTH sourced from
+     /run/secrets/valkey.conf via awk). The host command template carries no
+     credential value and never uses valkey-cli -a.
+   - Tests prove: VALKEY_PASSWORD absent from container env; healthcheck
+     succeeds with the correct file password; an unreadable file fails; an
+     incorrect password fails; the secret never appears in command arrays,
+     healthcheck definitions, logs, evidence or transmitted host commands.
+
+4. MAKE STARTUP FAILURE AND RETRY SAFE (unchanged from v2, preserved)
+   - COMPOSE_UP_ATTEMPTED tracked; bounded rollback removes only this run's
+     hada-m1 resources + volume metadata (never bind dirs); orchestrator image
+     only if built this run; /var/lib/hada always survives.
+
+5. REMOVE THE INCORRECT DSN REMEDIATION (preserved from v2)
+   - provision-secrets.sh builds HADA_DATABASE_DSN from POSTGRES_PASSWORD;
+     the ':***@' remediation path is gone; consistency validated without
+     printing secrets.
+
+6. GRAFANA GCP ROOT URL / CADDY PROXY
+   - compose.gcp.yaml sets GF_SERVER_ROOT_URL: http://localhost:8080/grafana/
+     to match the documented IAP tunnel (gcloud compute ssh ... -L 8080:localhost:80),
+     so Grafana generates URLs on that HTTP origin/port (no redirect to
+     unavailable HTTPS :443).
+   - Caddyfile.gcp reverse-proxies /grafana/* to grafana:3000.
+   - test_grafana_proxy.sh simulates the post-start proxy request and proves it
+     returns 200 with NO redirect to https://...:443.
+
+7. CORRECT THE SECRET-ABSENCE ASSERTION (truthful scope)
+   - The sentinel test (test_valkey_secret_absence.sh) and Gate 5e now assert
+     only that the Valkey command + healthcheck contain NO credential value.
+     The orchestrator environment legitimately carries HADA_DATABASE_DSN /
+     HADA_VALKEY_URL; this is documented and no claim of absence there is made.
+
+8. FULL GATES 1-10 MOCKED ACCEPTANCE (repaired)
+   - test_full_gates_1_10.sh is fully offline and mocked. Host-side and
+     container-side git ls-remote are independently asserted on BOTH return
+     code and success marker (LS_REMOTE_HOST_OK / LS_REMOTE_CONTAINER_OK); a
+     wrong-repo failure fixture confirms fail-closed behaviour (no marker).
+   - test_supervisor_invocation.sh assertion text no longer executes `up`
+     through backtick command substitution.
+   - The extracted self-contained bundle produces 15/15 test scripts PASS,
+     zero stderr shell errors, and zero unexpected network attempts (all
+     remote I/O is mocked).
+
+9. VERIFY THE TARGET REPOSITORY HANDOFF
+   - The Hermesctl URL https://github.com/mdyerapis-coder/hermesctl.git was
+     verified reachable via `git ls-remote --exit-code <url> HEAD` (rc=0) before
+     being embedded. It appears consistently in config/hada.yaml
+     (project.target_repository), the provisioned configuration, Gate 10 host
+     check, and Gate 10 container check. No HADA_TARGET_REPO_URL env dependency;
+     the application reads target_repository from config/hada.yaml. The repo is
+     public, so no deploy-key/token is placed in .env, args, or evidence.
+
+VERIFICATION (this session, local-only)
+---------------------------------------
+  shellcheck -S error scripts/run-phase-b-deploy.sh scripts/run-phase-b0-v3-preflight.sh tests/phase-b/*.sh : CLEAN
+  bash tests/phase-b/run_all.sh : SUITE RESULT: PASS
+    15 test scripts, 201 assertions, 0 failures, 0 stderr lines.
+    TOTAL: 15/15 test scripts PASS, zero unexpected network attempts.
+  Original v1 SHA-256 re-verified UNCHANGED.
+  v2 SHA-256 re-verified UNCHANGED.
+  v3 zip sha256sum -c: OK.
+
+DELIVERABLES
+------------
+  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip
+  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip.sha256
+  /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-v3-preflight.sh
+  /home/bobthabuilda/hada-deployment/scripts/run-phase-b-deploy.sh
+  /home/bobthabuilda/Downloads/HADA-V3-FINAL-LOCAL-REVIEW.txt   (this file)
+  /home/bobthabuilda/Downloads/HADA-V3-FINAL-LOCAL-BUNDLE.tar.gz
+    (self-contained: v3 candidate + SHA file + v3 B0 runner + v3 deploy
+     runner + every supporting script + complete tests; run_all.sh passes
+     after extraction into an unrelated temporary directory)
+
+STATUS
+------
+HADA_V3_LOCAL_GATE_PASS_AWAITING_PHASE_B0
