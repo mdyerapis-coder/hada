@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p .ci-evidence
-mapfile -t manifests < <(find releases -type f \( -name 'manifest.sha256' -o -name 'SHA256SUMS' \) 2>/dev/null | sort)
+# Match per-release checksum files (e.g. HADA-M1-*-candidate.zip.sha256),
+# not a single repo-wide manifest name.
+mapfile -t manifests < <(find releases -type f -name '*.sha256' 2>/dev/null | sort)
 if ((${#manifests[@]} == 0)); then
   echo 'FAIL: no checksum manifests found under releases/.' >&2
   exit 1
