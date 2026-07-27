@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2317,SC2002  # cleanup functions invoked indirectly via trap; SC2002: cat | cmd is intentional for readability
 #
 # HADA M1 Phase B0 — Bounded Preflight Script (Final corrected version)
 #

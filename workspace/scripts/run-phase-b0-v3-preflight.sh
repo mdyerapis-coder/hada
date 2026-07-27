@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2002
 # (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B0 — Bounded Preflight Script (Final corrected version)

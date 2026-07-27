@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1091,SC2034,SC2329
+# shellcheck disable=SC1091,SC2034,SC2329,SC2317
 # (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B — Mocked stage-aware rollback tests (correction 3)
