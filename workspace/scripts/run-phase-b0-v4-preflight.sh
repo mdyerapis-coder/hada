@@ -46,7 +46,7 @@ VM="hada-control"
 SSH_CMD="${HADA_PHASE_B0_SSH_CMD:-gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap}"
 SCP_CMD="${HADA_PHASE_B0_SCP_CMD:-gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap}"
 
-DEPLOY_DIR="${HADA_PHASE_B0_DEPLOY_DIR:-/home/bobthabuilda/hada-deployment}"
+DEPLOY_DIR="${HADA_PHASE_B0_DEPLOY_DIR:-/opt/hada-deployment}"
 EVIDENCE_DIR="${HADA_PHASE_B0_EVIDENCE_DIR:-${DEPLOY_DIR}/evidence/phase-b0}"
 TIMESTAMP="${HADA_PHASE_B0_TIMESTAMP:-$(date +%Y%m%d%H%M%S)}"
 RUN_DIR="${EVIDENCE_DIR}/preflight-run-${TIMESTAMP}"

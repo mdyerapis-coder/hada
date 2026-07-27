@@ -80,6 +80,7 @@ mkdir -p "${EXTRACT}"
 CAND_ROOT="${EXTRACT}/HADA-M1-durable-orchestrator"
 
 # 2a. Untouched v4 extraction passes.
+HADA_PHASE_B0_DEPLOY_DIR="${DEPLOY_ROOT}" \
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
@@ -93,6 +94,7 @@ fi
 # 2b. One modified extracted file fails.
 MOD="${CAND_ROOT}/README.md"
 echo "tampered" >> "${MOD}"
+HADA_PHASE_B0_DEPLOY_DIR="${DEPLOY_ROOT}" \
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
