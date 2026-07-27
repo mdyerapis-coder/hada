@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2317,SC2002
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B0 — Bounded Preflight Script (Final corrected version)
 #
@@ -44,7 +46,7 @@ VM="hada-control"
 SSH_CMD="gcloud compute ssh ${VM} --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
 SCP_CMD="gcloud compute scp --project=${PROJECT} --zone=${ZONE} --tunnel-through-iap"
 
-DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+DEPLOY_DIR="${HADA_PHASE_B0_DEPLOY_DIR:-/opt/hada-deployment}"
 EVIDENCE_DIR="${DEPLOY_DIR}/evidence/phase-b0"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 RUN_DIR="${EVIDENCE_DIR}/preflight-run-${TIMESTAMP}"

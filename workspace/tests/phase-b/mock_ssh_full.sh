@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2124
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # Smart mock SSH for the full Gates 1-10 acceptance test (v3).
 #

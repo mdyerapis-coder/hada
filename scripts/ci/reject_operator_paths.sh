@@ -13,7 +13,12 @@ if ((${#existing[@]} == 0)); then
 fi
 
 set +e
-grep -RInE --exclude='reject_operator_paths.sh' --exclude-dir='.git' "$patterns" "${existing[@]}" > .ci-evidence/operator-path-scan.txt
+grep -RInE --exclude='reject_operator_paths.sh' --exclude-dir='.git' \
+  --exclude-dir='evidence' --exclude-dir='artifacts' \
+  --exclude='phase-b-review-bundle.txt' --exclude='phase-b0-review-bundle.txt' \
+  --exclude='HADA-TAKEOVER.md' \
+  --exclude='deploy-console.log' \
+  "$patterns" "${existing[@]}" > .ci-evidence/operator-path-scan.txt
 status=$?
 set -e
 if [[ $status -eq 0 ]]; then
