@@ -22,15 +22,20 @@ OUT=.ci-evidence/guardrail-scan.txt
 # also scanned. This does not stage content; the orchestrator stages later.
 git -C "$WT" add -A -N 2>/dev/null || true
 
+# Capture the diff once to a file. Grepping a file (not a pipe inside a
+# command substitution) avoids a shell quirk where the diff content was lost.
+DIFF=$(mktemp)
+git -C "$WT" diff "$BASE" > "$DIFF" 2>/dev/null || true
+trap 'rm -f "$DIFF"' EXIT
+
 echo "Guardrail scan of $WT vs $BASE" | tee -a "$OUT"
 
 # 1) No merge / deploy / branch-protection intent in any script we run.
 #    (Defence-in-depth: the orchestrator never calls gh pr merge, but we
 #     additionally refuse if a repair diff adds such calls.)
 # shellcheck disable=SC2015
-DANGEROUS_CALLS=$(cd "$WT" && git diff --unified=0 "$BASE" 2>/dev/null \
-  | grep -E '^\+' | grep -iE 'gh pr merge|gh api .*merge|enablePullRequestAutoMerge|branch protection|protected' \
-  | grep -v '^\+\+\+' || true)
+DANGEROUS_CALLS=$(grep -E '^\+' "$DIFF" \
+  | grep -iE 'gh pr merge|gh api .*merge|enablePullRequestAutoMerge|branch protection|protected' || true)
 if [[ -n "$DANGEROUS_CALLS" ]]; then
   echo "FAIL: prohibited merge/deploy/branch-protection operation detected:" | tee -a "$OUT"
   echo "$DANGEROUS_CALLS" | tee -a "$OUT"
@@ -64,9 +69,8 @@ done < <(cd "$WT" && git diff --name-only "$BASE" 2>/dev/null)
 
 # 3) Secret patterns added anywhere.
 # shellcheck disable=SC2015
-SECRET_HITS=$(cd "$WT" && git diff "$BASE" 2>/dev/null \
-  | grep -E '^\+' | grep -iE 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]+|Bearer [A-Za-z0-9._-]+|api[_-]?key\s*[:=]|password\s*[:=]\s*["'\''][^"'\'']+["'\'']|aws_secret_access_key|private_key' \
-  | grep -v '^\+\+\+' || true)
+SECRET_HITS=$(grep -E '^\+' "$DIFF" \
+  | grep -iE 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]+|Bearer [A-Za-z0-9._-]+|api[_-]?key\s*[:=]|password\s*[:=]|aws_secret_access_key|private_key' || true)
 if [[ -n "$SECRET_HITS" ]]; then
   violations+="  SECRET pattern added:"$'\n'"$SECRET_HITS"$'\n'
 fi

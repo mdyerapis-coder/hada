@@ -17,3 +17,8 @@ fi
 
 bash -n scripts/ci/*.sh
 echo 'PASS: pipeline bootstrap scripts.'
+
+# Repair pipeline tests (ADR 0002) — guardrails + orchestrator contract.
+if [[ -x tests/ci/test_repair_pipeline.sh ]]; then
+  tests/ci/test_repair_pipeline.sh
+fi
