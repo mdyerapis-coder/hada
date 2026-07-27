@@ -22,3 +22,8 @@ echo 'PASS: pipeline bootstrap scripts.'
 if [[ -x tests/ci/test_release_manifests.sh ]]; then
   tests/ci/test_release_manifests.sh
 fi
+
+# Orchestrator --continue stage: hermetic (stubbed gh + local bare remote).
+if [[ -x tests/ci/test_continue_stage.sh ]]; then
+  tests/ci/test_continue_stage.sh
+fi
