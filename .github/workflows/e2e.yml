@@ -27,5 +27,5 @@ jobs:
         with:
           name: hada-e2e-evidence-${{ github.sha }}
           path: .ci-evidence/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
