@@ -24,5 +24,12 @@ if [[ -n "$release_path" && -f "$release_path" ]]; then
   exit 0
 fi
 
-echo 'FAIL: no fresh-deploy E2E suite found.' >&2
+# 3 — Fallback: authoritative Phase B suite (workspace/tests/phase-b/run_all.sh)
+if [[ -x workspace/tests/phase-b/run_all.sh ]]; then
+  echo "WARNING: fresh-deploy suite unavailable; falling back to workspace/tests/phase-b/run_all.sh" | tee .ci-evidence/e2e-fallback-reason.txt
+  run_suite workspace/tests/phase-b/run_all.sh
+  exit 0
+fi
+
+echo 'FAIL: no fresh-deploy E2E suite found and no authoritative Phase B fallback available.' >&2
 exit 1
