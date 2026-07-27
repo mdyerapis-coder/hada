@@ -33,3 +33,11 @@ deploy, secret/infra change, or governance bypass occurs.
   + two negative cases (corrupt checksum, missing-file reference both rejected).
 - Wired into `run_fast_tests.sh`. 3/3 pass; ShellCheck clean.
 - Guards the `*.sha256` pattern fix so the gate cannot silently regress.
+
+## Cycle 4 — Hermetic test for --continue stage
+- Branch: `agent/test-continue-stage` (PR #8)
+- `tests/ci/test_continue_stage.sh` exercises `autonomous_repair.sh --continue`
+  with a stubbed `gh` + local bare mirror (no network). Proves: happy path
+  opens a DRAFT PR and never calls `gh pr merge`; guardrail abort opens no PR.
+- Wired into `run_fast_tests.sh`. 5/5 pass; ShellCheck clean.
+- Closes the verification gap on the only previously-untested stage (Stage B).
