@@ -125,7 +125,7 @@ else
 fi
 
 # Specific checks on the valkey service (v4 config-file design).
-python3 - "${TEMP_DIR}/rendered.json" <<'PY'
+if python3 - "${TEMP_DIR}/rendered.json" <<'PY'
 import sys, json
 cfg = json.load(open(sys.argv[1]))
 valkey = cfg['services']['valkey']
@@ -151,9 +151,8 @@ if errs:
     print('FAIL')
     for e in errs: print(e)
     sys.exit(1)
-print('PASS')
 PY
-if (( $? == 0 )); then
+then
     assert_pass "valkey uses valkey-server /run/secrets/valkey.conf (no --requirepass-file, no inline password); healthcheck uses VALKEYCLI_AUTH (no valkey-cli -a)"
 else
     assert_fail "valkey command/healthcheck still embeds or misuses the password"

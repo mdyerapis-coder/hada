@@ -89,7 +89,8 @@ SECRET_FILE="${TEMP_DIR}/valkey.conf"
 echo "requirepass correct-password" > "${SECRET_FILE}"
 
 # 3) Correct password -> healthcheck succeeds.
-OUT="$(VP="$(awk '/^requirepass /{print $2}' "${SECRET_FILE}")" VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
+VP="$(awk '/^requirepass /{print $2}' "${SECRET_FILE}")"
+OUT="$(VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
 if [[ "${OUT}" == "OK" ]]; then
     assert_pass "healthcheck succeeds with the correct protected-file password"
 else
@@ -97,7 +98,8 @@ else
 fi
 
 # 4) Incorrect password -> healthcheck fails.
-OUT="$(VP="wrong-password" VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
+VP="wrong-password"
+OUT="$(VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
 if [[ "${OUT}" == "FAIL" ]]; then
     assert_pass "healthcheck fails with an incorrect password"
 else
@@ -106,7 +108,8 @@ fi
 
 # 5) Unreadable config file -> healthcheck fails.
 chmod 000 "${SECRET_FILE}"
-OUT="$(VP="$(awk '/^requirepass /{print $2}' "${SECRET_FILE}" 2>/dev/null)"; VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
+VP="$(awk '/^requirepass /{print $2}' "${SECRET_FILE}" 2>/dev/null || true)"
+OUT="$(VALKEYCLI_AUTH="${VP}" VALKEYCLI_AUTH_CONF="${SECRET_FILE}" "${VALKEY_CLI_STANDIN}" ping 2>/dev/null | grep -q PONG && echo OK || echo FAIL)"
 chmod 600 "${SECRET_FILE}"
 if [[ "${OUT}" == "FAIL" ]]; then
     assert_pass "healthcheck fails when the protected config file is unreadable"
