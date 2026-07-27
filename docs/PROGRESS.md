@@ -26,3 +26,10 @@ deploy, secret/infra change, or governance bypass occurs.
 - Phase B0 deployment: human authorization required (not automated).
 - PR #4 "merged" anomaly on `main`: PR #5 carries the full pipeline.
 - v3 B0 checksum-gate path-independence: deferred (edits deploy preflight script).
+
+## Cycle 3 — Release-manifest gate regression test
+- Branch: `agent/test-release-manifest-gate` (PR #7)
+- Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)
+  + two negative cases (corrupt checksum, missing-file reference both rejected).
+- Wired into `run_fast_tests.sh`. 3/3 pass; ShellCheck clean.
+- Guards the `*.sha256` pattern fix so the gate cannot silently regress.
