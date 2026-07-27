@@ -1,0 +1,5 @@
+Branch: agent/fix-phase-b0-clean-room-e2e
+Commit: 5b2100374cb38708ba85cf6f3fb3edf100adb8ef
+Date: 2026-07-27T12:25:16Z
+Candidate v4 SHA256: d5582879cba20d92881ba013c68c4b9df3f9e36a3d0ce22aaad0a53bd33856ac
+Phase B0 inventory SHA256: 2fff3266ee4117497cb1cd933328e243a9a36bd6157f2fcc30ceea005cd78e74

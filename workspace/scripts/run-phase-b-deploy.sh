@@ -72,7 +72,7 @@ set -Eeuo pipefail
 # Configuration — LOCKED VALUES (must match Phase A / B0 exactly)
 # ----------------------------------------------------------------------------
 
-DEPLOY_DIR="${HADA_PHASE_B_DEPLOY_DIR:-/home/bobthabuilda/hada-deployment}"
+DEPLOY_DIR="${HADA_PHASE_B_DEPLOY_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 CANDIDATE_ARCHIVE="${HADA_PHASE_B_CANDIDATE_ARCHIVE:-${DEPLOY_DIR}/deploy-v4/HADA-M1-gcp-candidate-v4.zip}"
 CANDIDATE_SHA256_FILE="${HADA_PHASE_B_CANDIDATE_SHA256_FILE:-${DEPLOY_DIR}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256}"

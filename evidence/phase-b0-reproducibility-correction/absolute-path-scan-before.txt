@@ -1,0 +1,101 @@
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:5:Evidence dir: /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:6:Candidate archive: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:36:  -> sudo -n docker ps -aq -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317/docker-ps-before.txt
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:37:  -> sudo -n docker images -q -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317/docker-images-before.txt
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:79:  -> sudo -n docker ps -aq -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317/docker-ps-after.txt
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:80:  -> sudo -n docker images -q -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317/docker-images-after.txt
+./reviews/HADA-B0-PREFLIGHT-CURRENT.txt:100:Evidence dir: /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317
+./reviews/HADA-CODEX-HANDOFF.md:18:/home/bobthabuilda/hada-deployment
+./reviews/HADA-CODEX-HANDOFF.md:188:/home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-REVIEW.txt
+./reviews/HADA-CODEX-HANDOFF.md:189:/home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-BUNDLE.tar.gz
+./reviews/HADA-CURRENT-RUNNER-AND-TESTS.txt:4:Working directory: /home/bobthabuilda/hada-deployment
+./reviews/HADA-CURRENT-RUNNER-AND-TESTS.txt:83:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./reviews/HADA-PHASE-B-DEEP-CORRECTED-REVIEW.txt:5:Working directory:    /home/bobthabuilda/hada-deployment
+./reviews/HADA-PHASE-B-EXECUTION-GATE-REVIEW.txt:15:Candidate archive    : /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:46:[2026-07-25T13:52:19Z] Evidence:  /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:53:[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:54:[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:55:[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:56:[2026-07-25T13:52:19Z] PASS: bash -n OK: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:59:[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:60:[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:61:[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:62:[2026-07-25T13:52:19Z] PASS: shellcheck OK (exit=0): /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:64:[2026-07-25T13:52:19Z] PASS: shellcheck all scripts passed (warnings/info logged to /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219/shellcheck.log)
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:110:[2026-07-25T13:52:20Z] Execution-gate review written to: /home/bobthabuilda/hada-deployment/evidence/phase-b/deploy-run-20260725235219/execution-gate-review.md
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:194:CANDIDATE_ARCHIVE="/home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip"
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:195:CANDIDATE_SHA256_FILE="/home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256"
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:199:B0_EVIDENCE_DIR="/home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725204317"
+./reviews/HADA-PHASE-B-GATE0-CORRECTED-REVIEW.txt:227:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./reviews/HADA-PHASE-B-INTEGRATED-REVIEW.txt:5:Working directory:    /home/bobthabuilda/hada-deployment
+./reviews/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt:135:  /home/bobthabuilda/hada-deployment/deploy-v2/HADA-M1-gcp-candidate-v2.zip
+./reviews/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt:136:  /home/bobthabuilda/hada-deployment/deploy-v2/HADA-M1-gcp-candidate-v2.zip.sha256
+./reviews/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt:137:  /home/bobthabuilda/Downloads/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt   (this file)
+./reviews/HADA-PHASE-B-RUNTIME-COMPLETE-REVIEW.txt:138:  /home/bobthabuilda/Downloads/HADA-PHASE-B-RUNTIME-COMPLETE-BUNDLE.tar.gz
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:114:  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:115:  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip.sha256
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:116:  /home/bobthabuilda/hada-deployment/deploy-v3/candidate-manifest-v3.txt
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:117:  /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-v3-preflight.sh
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:118:  /home/bobthabuilda/hada-deployment/scripts/run-phase-b-deploy.sh
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:119:  /home/bobthabuilda/hada-deployment/tests/phase-b/test_b0_checksum_manifest_evidence.sh
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:120:  /home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-REVIEW.txt   (this file)
+./reviews/HADA-V3-B0-FINAL-GATE-REVIEW.txt:121:  /home/bobthabuilda/Downloads/HADA-V3-B0-FINAL-GATE-BUNDLE.tar.gz
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:120:  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:121:  /home/bobthabuilda/hada-deployment/deploy-v3/HADA-M1-gcp-candidate-v3.zip.sha256
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:122:  /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-v3-preflight.sh
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:123:  /home/bobthabuilda/hada-deployment/scripts/run-phase-b-deploy.sh
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:124:  /home/bobthabuilda/Downloads/HADA-V3-FINAL-LOCAL-REVIEW.txt   (this file)
+./reviews/HADA-V3-FINAL-LOCAL-REVIEW.txt:125:  /home/bobthabuilda/Downloads/HADA-V3-FINAL-LOCAL-BUNDLE.tar.gz
+./reviews/hada-final-execution-gate.txt:367:SHA-256 file: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256
+./reviews/hada-final-execution-gate.txt:369:Preflight script: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+./reviews/hada-final-execution-gate.txt:515:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./reviews/hada-phase-b0-preflight-console.txt:5:Evidence dir: /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700
+./reviews/hada-phase-b0-preflight-console.txt:6:Candidate archive: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip
+./reviews/hada-phase-b0-preflight-console.txt:36:  -> docker ps -aq -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700/docker-ps-before.txt
+./reviews/hada-phase-b0-preflight-console.txt:37:  -> docker images -q -> /home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260725170700/docker-images-before.txt
+./reviews/hada-preflight-execution-review.txt:21:SHA-256 file: /home/bobthabuilda/hada-deployment/HADA-M1-gcp-candidate.zip.sha256
+./reviews/hada-preflight-execution-review.txt:23:Preflight script: /home/bobthabuilda/hada-deployment/scripts/run-phase-b0-preflight.sh
+./reviews/hada-preflight-execution-review.txt:525:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./workspace/HADA-TAKEOVER.md:56:/home/bobthabuilda/hada-deployment/HADA-M1-durable-orchestrator.zip
+./workspace/HADA-TAKEOVER.md:153:/home/bobthabuilda/hada-deployment/evidence/phase-a/
+./workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497:2:WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+./workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt:2:WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+./workspace/scripts/run-phase-b0-preflight.sh:43:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./workspace/scripts/run-phase-b0-v3-preflight.sh:47:DEPLOY_DIR="/home/bobthabuilda/hada-deployment"
+./workspace/scripts/run-phase-b-deploy.sh:75:DEPLOY_DIR="${HADA_PHASE_B_DEPLOY_DIR:-/home/bobthabuilda/hada-deployment}"
+./workspace/scripts/run-phase-b0-v4-preflight.sh:47:DEPLOY_DIR="${HADA_PHASE_B0_DEPLOY_DIR:-/home/bobthabuilda/hada-deployment}"
+./workspace/phase-b-review-bundle.txt:299:evidence/phase-a/deployment-plan.md:21:   Phase A at `/home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml`.
+./workspace/phase-b-review-bundle.txt:303:evidence/phase-a/deployment-plan.md:150:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b-review-bundle.txt:326:evidence/phase-a/proposed-commands.sh:110:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b-review-bundle.txt:564:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b-review-bundle.txt:566:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b-review-bundle.txt:580:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh \
+./workspace/phase-b0-review-bundle.txt:532:   Phase A at `/home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml`.
+./workspace/phase-b0-review-bundle.txt:663:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:670:  /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b0-review-bundle.txt:677:  /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:684:  /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:706:  /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh \
+./workspace/phase-b0-review-bundle.txt:993:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:995:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b0-review-bundle.txt:997:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:999:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:1017:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh \
+./workspace/phase-b0-review-bundle.txt:1661:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:1670:  /home/bobthabuilda/hada-deployment/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/deploy/compose/compose.yaml \
+./workspace/phase-b0-review-bundle.txt:1677:  /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b0-review-bundle.txt:2149:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:2158:  /home/bobthabuilda/hada-deployment/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/deploy/compose/compose.yaml \
+./workspace/phase-b0-review-bundle.txt:2165:  /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b0-review-bundle.txt:2530:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:2532:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/caddy/Caddyfile.gcp \
+./workspace/phase-b0-review-bundle.txt:2534:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/supervisor.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:2536:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/validate-host.gcp.sh \
+./workspace/phase-b0-review-bundle.txt:2554:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/scripts/provision-secrets.sh \
+./workspace/phase-b0-review-bundle.txt:3205:evidence/phase-a/proposed-commands.sh:125:# ${SCP_CMD} /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/phase-b0-review-bundle.txt:3240:evidence/phase-a/deployment-plan.md:21:   Phase A at `/home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml`.
+./workspace/phase-b0-review-bundle.txt:3244:evidence/phase-a/deployment-plan.md:152:  /home/bobthabuilda/hada-deployment/deploy/compose/compose.gcp.yaml \
+./workspace/deploy-v4/HADA-M1-durable-orchestrator/artifacts/M1/validation/package-build.txt:2:WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+./workspace/deploy-v4/HADA-M1-durable-orchestrator/artifacts/M1/evidence-store/sha256/97/97566842b6fb7436e9f34a9109e605225b291ac0434edcceef69b88df5d09497:2:WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+./docs/runbooks/CI_CD_BOOTSTRAP.md:39:/home/bobthabuilda/hada-deployment/evidence/phase-b0/preflight-run-20260726230557/evidence-sha256.txt
+./scripts/ci/reject_operator_paths.sh:5:patterns='(/home/[^/]+/|/Users/[^/]+/|C:\\Users\\)'

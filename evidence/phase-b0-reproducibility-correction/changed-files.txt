@@ -1,0 +1,4 @@
+workspace/scripts/run-phase-b-deploy.sh
+workspace/scripts/run-phase-b0-preflight.sh
+workspace/scripts/run-phase-b0-v3-preflight.sh
+workspace/scripts/run-phase-b0-v4-preflight.sh

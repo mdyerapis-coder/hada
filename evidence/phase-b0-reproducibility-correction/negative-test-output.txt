@@ -1,0 +1,2 @@
+--- Negative test output ---
+clean-room-e2e-output.txt: E2E suite unavailable (fresh-deploy not in repo)

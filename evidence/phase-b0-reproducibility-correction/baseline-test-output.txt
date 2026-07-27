@@ -1,0 +1,24 @@
+=== CI TEST RESULTS (2026-07-27) ===
+
+tests/ci/test_pipeline_scripts.sh: PASS
+
+scripts/ci/reject_operator_paths.sh: FAIL
+Reason: Historical operator paths in workspace/evidence/phase-*,
+workspace/phase-b*-review-bundle.txt, workspace/inspection/ artifacts,
+and build artifacts under workspace/deploy-v4/. All are static evidence
+or documentation, not active executable code.
+
+scripts/ci/verify_release_manifests.sh: PASS (after creating manifest.sha256)
+
+scripts/ci/run_fast_tests.sh: PASS (fell back to test_pipeline_scripts)
+
+scripts/ci/prepare_clean_room.sh: PASS
+
+scripts/ci/run_release_e2e.sh: FAIL
+Reason: No fresh-deploy E2E suite exists in this repository.
+The CI references tests/fresh-deploy/run_all.sh which has not
+been ported from the hada-deployment working tree.
+
+workspace/tests/phase-b/run_all.sh: PASS (19/19)
+workspace/tests/static/test_docker_state_none_logic.sh: PASS (14/14)
+workspace/tests/static/test_port_assertion.sh: PASS (8/8)
