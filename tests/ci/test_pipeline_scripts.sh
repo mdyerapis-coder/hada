@@ -17,3 +17,8 @@ fi
 
 bash -n scripts/ci/*.sh
 echo 'PASS: pipeline bootstrap scripts.'
+
+# Orchestrator --continue stage: hermetic (stubbed gh + local bare remote).
+if [[ -x tests/ci/test_continue_stage.sh ]]; then
+  tests/ci/test_continue_stage.sh
+fi
