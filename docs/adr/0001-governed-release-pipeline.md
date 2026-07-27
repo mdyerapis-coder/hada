@@ -1,6 +1,6 @@
 # ADR 0001: Governed release pipeline
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-27
 
 ## Context
