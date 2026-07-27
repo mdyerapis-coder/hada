@@ -41,3 +41,11 @@ deploy, secret/infra change, or governance bypass occurs.
   opens a DRAFT PR and never calls `gh pr merge`; guardrail abort opens no PR.
 - Wired into `run_fast_tests.sh`. 5/5 pass; ShellCheck clean.
 - Closes the verification gap on the only previously-untested stage (Stage B).
+
+## Cycle 5 — Wire Phase B local suite into CI
+- Branch: `agent/ci-phase-b-suite` (PR #9)
+- `verify.yml` now runs `workspace/tests/phase-b/run_all.sh` (B0 evidence gate,
+  Gate 0f, DEPLOY_EXECUTE=0 no-remote, all 10 phase gates) on every PR/push.
+  Previously only `run_fast_tests.sh` ran, so the most important deployment
+  gate tests were NOT exercised in CI.
+- run_all.sh is local-only (mocked SSH, no docker daemon); 19/19 pass locally.
