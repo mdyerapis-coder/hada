@@ -153,7 +153,8 @@ if errs:
     sys.exit(1)
 print('PASS')
 PY
-if (( $? == 0 )); then
+rc=$?
+if (( rc == 0 )); then
     assert_pass "valkey uses valkey-server /run/secrets/valkey.conf (no --requirepass-file, no inline password); healthcheck uses VALKEYCLI_AUTH (no valkey-cli -a)"
 else
     assert_fail "valkey command/healthcheck still embeds or misuses the password"
