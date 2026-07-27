@@ -27,3 +27,5 @@ jobs:
         run: scripts/ci/verify_release_manifests.sh
       - name: Run fast tests
         run: scripts/ci/run_fast_tests.sh
+      - name: Run Phase B local-only gate suite
+        run: workspace/tests/phase-b/run_all.sh
