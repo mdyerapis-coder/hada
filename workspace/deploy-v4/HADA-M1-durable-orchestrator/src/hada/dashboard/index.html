@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>HADA Command Centre</title>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">H</div>
+        <div><strong>HADA</strong><span>Command Centre</span></div>
+      </div>
+
+      <nav aria-label="Command Centre views">
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="tasks">Tasks</button>
+        <button class="nav-item" data-view="gates">Governance gates</button>
+        <button class="nav-item" data-view="evidence">Evidence</button>
+        <button class="nav-item" data-view="docs">Documentation</button>
+      </nav>
+
+      <div class="authority-card">
+        <span class="eyebrow">Authority boundary</span>
+        <strong>Human-approved deployment</strong>
+        <p>This interface reports state. It cannot approve, execute, or deploy.</p>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Governed autonomy</span>
+          <h1 id="view-title">Overview</h1>
+          <p id="view-subtitle">Read-only control-plane posture</p>
+        </div>
+        <div class="topbar-actions">
+          <span id="mode-state" class="pill mode">LOCAL ONLY</span>
+          <span id="execution-state" class="pill warn">READY — NOT EXECUTED</span>
+          <button id="refresh" class="secondary">Refresh</button>
+        </div>
+      </header>
+
+      <div id="source-banner" class="source-banner">
+        <span class="signal"></span>
+        <span id="source-message">Loading repository snapshot…</span>
+      </div>
+
+      <section id="overview-view" class="view active">
+        <div class="metric-grid">
+          <article class="metric-card"><span>Active tasks</span><strong id="metric-active">—</strong><small>Currently leased or running</small></article>
+          <article class="metric-card"><span>Awaiting review</span><strong id="metric-review">—</strong><small>Independent review required</small></article>
+          <article class="metric-card"><span>Human approvals</span><strong id="metric-approval">—</strong><small>Cannot be self-promoted</small></article>
+          <article class="metric-card"><span>Failed gates</span><strong id="metric-failed">—</strong><small>Rejected or blocked</small></article>
+        </div>
+
+        <div class="panel-grid">
+          <section class="panel hero-panel">
+            <div class="panel-header"><div><span class="eyebrow">Current milestone</span><h2 id="milestone-title">—</h2></div><span id="milestone-status" class="pill neutral">Loading</span></div>
+            <div class="milestone-body">
+              <p id="milestone-summary">Loading milestone status…</p>
+              <div class="progress-track" aria-label="Milestone governance progress"><span id="gate-progress"></span></div>
+              <div class="progress-label"><span>Governance gates</span><strong id="gate-count">—</strong></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header"><div><h2>Role separation</h2><p>Authority is intentionally divided</p></div></div>
+            <div id="agent-list" class="stack-list"></div>
+          </section>
+        </div>
+
+        <section class="panel timeline-panel">
+          <div class="panel-header"><div><h2>Governance path</h2><p>No agent can advance itself across the full chain</p></div></div>
+          <div class="governance-path">
+            <div><span>01</span><strong>Plan</strong><small>Bounded scope</small></div>
+            <i></i><div><span>02</span><strong>Implement</strong><small>Isolated workspace</small></div>
+            <i></i><div><span>03</span><strong>Review</strong><small>Independent evidence</small></div>
+            <i></i><div><span>04</span><strong>Approve</strong><small>Human authority</small></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tasks-view" class="view">
+        <section class="panel"><div class="panel-header"><div><h2>Task ledger</h2><p>Lifecycle state from proposed through completion</p></div><span class="pill neutral">Read only</span></div><div id="tasks-table" class="table-wrap"></div></section>
+      </section>
+
+      <section id="gates-view" class="view">
+        <section class="panel"><div class="panel-header"><div><h2>Governance gates</h2><p>Approval requires evidence and reviewer separation</p></div></div><div id="gates-list" class="gate-grid"></div></section>
+      </section>
+
+      <section id="evidence-view" class="view">
+        <section class="panel"><div class="panel-header"><div><h2>Evidence bundle</h2><p>Signed, content-addressed milestone evidence</p></div><span id="evidence-state" class="pill neutral">—</span></div><dl id="evidence-list" class="summary-list"></dl></section>
+      </section>
+
+      <section id="docs-view" class="view">
+        <div class="docs-grid">
+          <button class="doc-card" data-document="architecture"><span>Architecture</span><strong>Control-plane design</strong><small>Components, trust boundaries, and data flow</small></button>
+          <button class="doc-card" data-document="security"><span>Security</span><strong>Threat model</strong><small>Adversaries, mitigations, and residual risk</small></button>
+          <button class="doc-card" data-document="roadmap"><span>Roadmap</span><strong>Milestones M0–M6</strong><small>Entry gates and delivery sequence</small></button>
+          <button class="doc-card" data-document="governed-autonomy"><span>RFC</span><strong>Governed autonomy</strong><small>Roles, authority, and stopping conditions</small></button>
+          <button class="doc-card" data-document="durable-orchestrator"><span>RFC</span><strong>Durable orchestrator</strong><small>State, queues, workspaces, and recovery</small></button>
+          <button class="doc-card" data-document="external-review"><span>Review</span><strong>Party 3 checklist</strong><small>Independent milestone closure requirements</small></button>
+        </div>
+        <section id="document-reader" class="panel document-reader hidden" aria-live="polite">
+          <div class="panel-header">
+            <div><span id="document-kind" class="eyebrow">Document</span><h2 id="document-title">Select a document</h2></div>
+            <button id="close-document" class="secondary">Close</button>
+          </div>
+          <div class="document-body">
+            <p id="document-summary"></p>
+            <div id="document-topics" class="topic-grid"></div>
+            <div class="source-record"><span>Canonical source</span><code id="document-source"></code><small>Repository Markdown remains the source of truth. This panel is its dark-theme navigation summary.</small></div>
+          </div>
+        </section>
+      </section>
+
+      <div id="error-banner" class="error-banner hidden" role="alert"></div>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-07-27T00:00:00Z",
+  "operating_mode": "LOCAL_ONLY",
+  "execution_state": "READY_NOT_EXECUTED",
+  "milestone": {
+    "id": "M1",
+    "title": "Durable Orchestrator",
+    "status": "external_review_required",
+    "summary": "Implementation candidate complete; independent Party 3 review remains required."
+  },
+  "metrics": {
+    "active_tasks": 0,
+    "awaiting_review": 1,
+    "human_approvals": 1,
+    "failed_gates": 0
+  },
+  "tasks": [],
+  "gates": [
+    {"name": "Architecture", "status": "approved", "owner": "Party 2"},
+    {"name": "Security", "status": "approved", "owner": "Party 2"},
+    {"name": "Tests", "status": "approved", "owner": "Party 2"},
+    {"name": "Documentation", "status": "approved", "owner": "Party 2"},
+    {"name": "Milestone report", "status": "approved", "owner": "Party 2"},
+    {"name": "External review", "status": "pending", "owner": "Party 3"}
+  ],
+  "evidence": {
+    "bundle": "artifacts/M1/SIGNED-EVIDENCE-INDEX.json",
+    "public_key_fingerprint": "artifacts/M1/PUBLIC-KEY-FINGERPRINT.txt",
+    "verification": "artifacts/M1/validation/evidence-verification.txt",
+    "state": "available"
+  },
+  "agents": [
+    {"name": "Party 1", "role": "Implementation", "authority": "Cannot approve own work"},
+    {"name": "Party 2", "role": "Adversarial review", "authority": "Cannot mutate implementation"},
+    {"name": "Party 3", "role": "External approval", "authority": "Cannot mutate internal state"}
+  ]
+}

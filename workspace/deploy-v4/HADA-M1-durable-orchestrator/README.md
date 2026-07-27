@@ -89,3 +89,17 @@ See:
 - `docs/security/THREAT-MODEL.md`
 - `docs/reports/M1-MILESTONE-REPORT.md`
 - `docs/reports/M1-EXTERNAL-REVIEW-CHECKLIST.md`
+
+## Local Command Centre preview
+
+The bundled HADA Command Centre is a read-only view of the repository snapshot. It cannot approve,
+execute or deploy work. Preview it locally from the repository root:
+
+```bash
+python3 -m http.server 8080 --directory .
+```
+
+Then open `http://127.0.0.1:8080/src/hada/dashboard/`. Serving the repository root keeps the
+Command Centre's documentation links available. The initial snapshot deliberately reports
+`LOCAL_ONLY` and `READY_NOT_EXECUTED`; update `src/hada/dashboard/status.json` only from verified
+source state.
