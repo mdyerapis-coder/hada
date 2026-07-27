@@ -1,0 +1,31 @@
+name: Self-contained E2E
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-room-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq shellcheck
+      - name: Build isolated test workspace
+        run: scripts/ci/prepare_clean_room.sh
+      - name: Execute full release E2E
+        run: scripts/ci/run_release_e2e.sh
+      - name: Upload E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hada-e2e-evidence-${{ github.sha }}
+          path: .ci-evidence/
+          if-no-files-found: warn
+          retention-days: 30

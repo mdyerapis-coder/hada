@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": ".github/CODEOWNERS",
+      "sha256": "0ed42b5b3a2f37c490cf787126ad35ec8b49ecd5b93832047a50ae0eb59763d9",
+      "bytes": 222
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha256": "ce6b05248b074c7d1591af30b782a27da8ff936e88c77ae53e84a687e5df55dd",
+      "bytes": 537
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "sha256": "e8f636be27c1c9009fadbb60337f6741c062f55b08aca411ca8aa2b07db813ac",
+      "bytes": 1232
+    },
+    {
+      "path": ".github/workflows/e2e.yml",
+      "sha256": "6619855972457493e5e76e50aec62c60a5160c56ef5f749b95fad3891d44a183",
+      "bytes": 775
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256": "c28d2f26eeef23a1a5fb945e3f0022e1b7cac2a0429672fa15f9b4a07bf49f8e",
+      "bytes": 1076
+    },
+    {
+      "path": ".github/workflows/verify.yml",
+      "sha256": "a1c241f0eff2511f24912e18b2dbe971f376996c3877fc9aaa0af5d4365cfb1e",
+      "bytes": 820
+    },
+    {
+      "path": "PATCH_README.md",
+      "sha256": "85c076844606060afa19262a7015df70b77659fc96a6b5b9ef6dfac06cd4309c",
+      "bytes": 958
+    },
+    {
+      "path": "docs/adr/0001-governed-release-pipeline.md",
+      "sha256": "35616b5bf0445b9ca3b63f3c3803c87c5eef4b6606574287cdb49abfea9ee675",
+      "bytes": 827
+    },
+    {
+      "path": "docs/runbooks/CI_CD_BOOTSTRAP.md",
+      "sha256": "67829735b0db83bea2bc16bf2ce124379a42d953861fe719674d654489de665e",
+      "bytes": 1225
+    },
+    {
+      "path": "policies/DEPLOYMENT_POLICY.md",
+      "sha256": "d83fae1c6473c2fcfb4af809db130579496f0599747ff8d524549e8f6fdeb6e7",
+      "bytes": 962
+    },
+    {
+      "path": "policies/RELEASE_GOVERNANCE.md",
+      "sha256": "7265d795b36434dda30d941eae5381fc17fc97eb959d26bdad53957626a3b8fe",
+      "bytes": 1581
+    },
+    {
+      "path": "scripts/ci/package_evidence.sh",
+      "sha256": "6fa55c964d9e54a5635e3a76245fc5554de71f27d1241c5b19bc2a03aefb52c9",
+      "bytes": 216
+    },
+    {
+      "path": "scripts/ci/prepare_clean_room.sh",
+      "sha256": "116261c9047c4fe1c15b63e32eb8563bd6f8b502b5e3ff9f90d52302ed4e95ce",
+      "bytes": 217
+    },
+    {
+      "path": "scripts/ci/reject_operator_paths.sh",
+      "sha256": "39e258f7cdfcf3796296779ce7c30b31eac96dd7f274bef17fe870e62d775eea",
+      "bytes": 833
+    },
+    {
+      "path": "scripts/ci/run_fast_tests.sh",
+      "sha256": "6b14edd6b89ff8ea5edb93edd0841b7043049822523d32834a43562aa1a4a63a",
+      "bytes": 473
+    },
+    {
+      "path": "scripts/ci/run_release_e2e.sh",
+      "sha256": "97855b80dbafbac2966e61673e23a68c8419ab9ac1f924cade6178347a987418",
+      "bytes": 853
+    },
+    {
+      "path": "scripts/ci/validate_deployment_authority.sh",
+      "sha256": "b832bac0f636b4283186ac872895c28675349c840a6b01f66b122c6456f3dfe4",
+      "bytes": 489
+    },
+    {
+      "path": "scripts/ci/verify_release_manifests.sh",
+      "sha256": "974d78545221e10315a841bca3e5dbe7c916b9f431af6783be29438a8f8d7b67",
+      "bytes": 595
+    },
+    {
+      "path": "scripts/ci/verify_requested_release.sh",
+      "sha256": "2834779c5844b7a151cb2713ea8000ed0f1a56e8efeb954213cc69aa7e761a0e",
+      "bytes": 460
+    },
+    {
+      "path": "tests/ci/test_pipeline_scripts.sh",
+      "sha256": "a36092374e737b8d155259e45e19514691a9e4d306f25823ad7d1ffdadf7f1ad",
+      "bytes": 545
+    }
+  ]
+}

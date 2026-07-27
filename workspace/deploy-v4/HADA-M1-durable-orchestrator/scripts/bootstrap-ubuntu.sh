@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 set -Eeuo pipefail
 
 if [[ ${EUID} -ne 0 ]]; then

@@ -1,0 +1,37 @@
+name: Governed Deployment Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      evidence_sha256:
+        description: SHA-256 of the accepted release evidence archive
+        required: true
+      authorization_reference:
+        description: Immutable review or authorization reference
+        required: true
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-authority:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce deployment inputs
+        env:
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+          AUTHORIZATION_REFERENCE: ${{ inputs.authorization_reference }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+        run: scripts/ci/validate_deployment_authority.sh
+      - name: Deployment remains externally executed
+        run: |
+          echo 'Authority inputs validated.'
+          echo 'No production mutation is implemented in this bootstrap workflow.'
+          echo 'Add the approved executor only after staging rehearsal and environment protection are configured.'

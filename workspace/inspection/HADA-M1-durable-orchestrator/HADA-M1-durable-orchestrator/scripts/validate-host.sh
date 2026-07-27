@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 set -Eeuo pipefail
 
 failures=0

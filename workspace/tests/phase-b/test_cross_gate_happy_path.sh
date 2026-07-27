@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091,SC2015,SC2155
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B — Cross-gate happy-path integration test (cross-gate
 # corrections 2 and 4)

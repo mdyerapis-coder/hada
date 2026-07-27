@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B — v4 B0 checksum, versioned manifest, and evidence-binding tests
 #
@@ -33,7 +35,8 @@ HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   HADA_PHASE_B0_CANDIDATE_SHA256_FILE="${V4_SHA}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_checksum '${TMPX}'"
-if [[ $? -eq 0 ]]; then
+rc=$?
+if [[ ${rc} -eq 0 ]]; then
     assert_pass "checksum gate passes for the locked v4 archive (from deployment root)"
 else
     assert_fail "checksum gate unexpectedly failed for the locked v4 archive"
@@ -47,7 +50,8 @@ HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${BAD_ZIP}" \
   HADA_PHASE_B0_CANDIDATE_SHA256_FILE="${V4_SHA}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_checksum '${TMPX}'"
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "wrong archive hash fails the checksum gate (before SSH)"
 else
     assert_fail "wrong archive hash did NOT fail the checksum gate"
@@ -60,7 +64,8 @@ HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   HADA_PHASE_B0_CANDIDATE_SHA256_FILE="${BAD_SHA}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_checksum '${TMPX}'"
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "wrong SHA file fails the checksum gate (before SSH)"
 else
     assert_fail "wrong SHA file did NOT fail the checksum gate"
@@ -75,10 +80,12 @@ mkdir -p "${EXTRACT}"
 CAND_ROOT="${EXTRACT}/HADA-M1-durable-orchestrator"
 
 # 2a. Untouched v4 extraction passes.
+HADA_PHASE_B0_DEPLOY_DIR="${DEPLOY_ROOT}" \
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
-if [[ $? -eq 0 ]]; then
+rc=$?
+if [[ ${rc} -eq 0 ]]; then
     assert_pass "untouched v4 extraction passes the versioned manifest gate"
 else
     assert_fail "untouched v4 extraction FAILED the versioned manifest gate"
@@ -87,10 +94,12 @@ fi
 # 2b. One modified extracted file fails.
 MOD="${CAND_ROOT}/README.md"
 echo "tampered" >> "${MOD}"
+HADA_PHASE_B0_DEPLOY_DIR="${DEPLOY_ROOT}" \
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "one modified extracted file fails the versioned manifest gate"
 else
     assert_fail "modified extracted file did NOT fail the manifest gate"
@@ -114,7 +123,8 @@ V1_MANIFEST="${TMPX}/candidate-manifest-v1.txt"
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" MANIFEST_FILE="${V1_MANIFEST}" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "stale v1 manifest cannot satisfy the v4 manifest gate"
 else
     assert_fail "stale v1 manifest incorrectly satisfied the v4 manifest gate"
@@ -125,7 +135,8 @@ rm -rf "${V1_EXTRACT}"
 HADA_PHASE_B0_TEST_LIB=1 RUN_DIR="${TMPX}" MANIFEST_FILE="${TMPX}/does-not-exist.txt" \
   HADA_PHASE_B0_CANDIDATE_ARCHIVE="${V4_ZIP}" \
   bash -c "source '${B0_RUNNER}'; b0_verify_candidate_manifest '${CAND_ROOT}' '${TMPX}'"
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "missing v4 manifest fails the manifest gate (before SSH)"
 else
     assert_fail "missing v4 manifest did NOT fail the manifest gate"
@@ -221,7 +232,8 @@ source '${PHASEB_RUNNER}'
 verify_phase_b0_evidence; rc=\$?
 exit \$rc
 " 2>/dev/null
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "stale v1 Phase B0 evidence (no v4 files) is REJECTED by Gate 0f"
 else
     assert_fail "stale v1 Phase B0 evidence was incorrectly ACCEPTED by Gate 0f"
@@ -240,7 +252,8 @@ for stale_version in v2 v3; do
     HADA_PHASE_B_TEST_LIB=1 HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}" \
       HADA_PHASE_B0_EVIDENCE_DIR="${STALE_DIR}" DEPLOY_EXECUTE=0 \
       bash -c "source '${PHASEB_RUNNER}'; verify_phase_b0_evidence"
-    if [[ $? -ne 0 ]]; then
+    rc=$?
+    if [[ ${rc} -ne 0 ]]; then
         assert_pass "stale ${stale_version} Phase B0 evidence is REJECTED by Gate 0f"
     else
         assert_fail "stale ${stale_version} Phase B0 evidence was incorrectly ACCEPTED"
@@ -264,7 +277,8 @@ HADA_PHASE_B_TEST_LIB=1 HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}" \
   PATH="${FAKEBIN}:${PATH}" EXEC_LOG="${EXEC_LOG}" \
   DEPLOY_EXECUTE=0 \
   bash -c "source '${PHASEB_RUNNER}'; verify_phase_b0_evidence; rc=\$?; exit \$rc" 2>/dev/null
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "malformed evidence with a FAIL line is REJECTED by Gate 0f"
 else
     assert_fail "malformed evidence with a FAIL line was incorrectly ACCEPTED by Gate 0f"
@@ -286,7 +300,8 @@ HADA_PHASE_B_TEST_LIB=1 HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}" \
   PATH="${FAKEBIN}:${PATH}" EXEC_LOG="${EXEC_LOG}" \
   DEPLOY_EXECUTE=0 \
   bash -c "source '${PHASEB_RUNNER}'; verify_phase_b0_evidence; rc=\$?; exit \$rc" 2>/dev/null
-if [[ $? -ne 0 ]]; then
+rc=$?
+if [[ ${rc} -ne 0 ]]; then
     assert_pass "evidence with duplicate identity field is REJECTED by Gate 0f"
 else
     assert_fail "evidence with duplicate identity field was incorrectly ACCEPTED by Gate 0f"
