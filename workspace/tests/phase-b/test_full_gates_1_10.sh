@@ -53,7 +53,8 @@ export HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}"
 export HADA_PHASE_B_EVIDENCE_DIR="${TEMP_DIR}/evidence"
 export HADA_PHASE_B_TIMESTAMP="12345678901234"
 export HADA_PHASE_B_CANDIDATE_ARCHIVE="${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip"
-export HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+export HADA_PHASE_B_CANDIDATE_SHA256
 mkdir -p "${HADA_PHASE_B_EVIDENCE_DIR}"
 
 # shellcheck source=../../scripts/run-phase-b-deploy.sh

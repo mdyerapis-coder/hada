@@ -36,7 +36,8 @@ export HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}"
 export HADA_PHASE_B_EVIDENCE_DIR="${TEMP_DIR}/evidence"
 export HADA_PHASE_B_TIMESTAMP="55555555555555"
 export HADA_PHASE_B_CANDIDATE_ARCHIVE="${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip"
-export HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+export HADA_PHASE_B_CANDIDATE_SHA256
 mkdir -p "${HADA_PHASE_B_EVIDENCE_DIR}"
 # shellcheck source=../../scripts/run-phase-b-deploy.sh
 source "${RUNNER}"
@@ -130,7 +131,7 @@ fi
 # ---------------------------------------------------------------------------
 for missing in pyproject.toml README.md deploy/prometheus/prometheus.yml deploy/loki/config.yml deploy/alloy/config.alloy; do
     install_full_tree
-    rm -rf "${SB_OPT}/${missing}"
+    rm -rf "${SB_OPT:?}/${missing}"
     set +e
     if validate_build_context >/dev/null 2>&1; then
         assert_fail "validate_build_context should FAIL when ${missing} is omitted"

@@ -46,7 +46,8 @@ export HADA_PHASE_B_NO_CLEANUP_TRAP=1
 export HADA_PHASE_B_DEPLOY_DIR="${DEPLOY_ROOT}"
 # This happy-path test exercises the COMPLETE runtime payload (v2 candidate).
 export HADA_PHASE_B_CANDIDATE_ARCHIVE="${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip"
-export HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+HADA_PHASE_B_CANDIDATE_SHA256="$(awk '{print $1}' "${DEPLOY_ROOT}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256")"
+export HADA_PHASE_B_CANDIDATE_SHA256
 export HADA_PHASE_B_EVIDENCE_DIR="${TEMP_DIR}/evidence"
 export HADA_PHASE_B_TIMESTAMP="66666666666666"
 mkdir -p "${HADA_PHASE_B_EVIDENCE_DIR}"

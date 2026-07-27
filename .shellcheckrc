@@ -1,0 +1,28 @@
+# ShellCheck policy for the HADA repository.
+# Consumed automatically by the `shellcheck` invocations in
+# .github/workflows/verify.yml ("Check shell scripts") and local runs.
+#
+# Each disabled code below is a documented structural false positive for
+# this repository's layout, NOT a blanket relaxation. Genuine defect
+# classes (quoting, word-splitting, SC2124, SC2115, SC2155, etc.) remain
+# enforced at their default levels.
+#
+# SC2034 (unused variable): the Phase B test harness assigns configuration
+#   variables (SSH_CMD, CREATED_CONTAINERS, UNIT_INSTALLED, ...) and then
+#   `source`s workspace/scripts/run-phase-b-deploy.sh, which consumes them
+#   in the same shell. ShellCheck cannot see across `source` boundaries
+#   here, so it reports every such variable as unused.
+# SC1091 (not following sourced file): same `source` pattern; the sourced
+#   paths are computed at runtime (${RUNNER}, ${HERE}/lib_mock_remote.sh,
+#   /etc/os-release on target hosts) and cannot be resolved statically.
+# SC2317 (unreachable command): cleanup/summary functions are invoked only
+#   via `trap ... EXIT`, which ShellCheck flags as unreachable.
+# SC2016 (expressions don't expand in single quotes): single quotes are
+#   deliberate — remote commands passed to `bash -c` / ssh must expand on
+#   the remote side, and grep patterns intentionally match literal `${...}`.
+# SC2015 (A && B || C): the assert_pass/assert_fail chains use this form
+#   deliberately; assert_pass never fails, so the caveat does not apply.
+# SC2329 (function never invoked): helper functions are called indirectly
+#   (traps, sourced consumers).
+# SC2002 (useless cat): style-only.
+disable=SC2034,SC1091,SC2317,SC2016,SC2015,SC2329,SC2002

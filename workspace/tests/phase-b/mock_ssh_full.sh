@@ -24,7 +24,7 @@ log_cmd() { printf '%s\n' "$(printf '%s' "$1" | base64 -w0)" >> "${HADA_MOCK_SSH
 
 # ssh is invoked as: ssh [options] host "command" — the remote command is
 # always the LAST argument (same convention as lib_mock_remote's mock-ssh).
-cmd="${@: -1}"
+cmd="${*: -1}"
 
 # Rewrite absolute deployment paths into the sandbox so install/verify/copy
 # commands actually run inside the mock filesystem (same as lib_mock_remote).
