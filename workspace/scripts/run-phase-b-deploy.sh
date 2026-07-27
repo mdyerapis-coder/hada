@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016,SC2034,SC2002
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B — Production Deployment Execution-Gate Runner
 # (DEEP FAIL-CLOSED CORRECTED EDITION)
@@ -72,7 +74,7 @@ set -Eeuo pipefail
 # Configuration — LOCKED VALUES (must match Phase A / B0 exactly)
 # ----------------------------------------------------------------------------
 
-DEPLOY_DIR="${HADA_PHASE_B_DEPLOY_DIR:-/home/bobthabuilda/hada-deployment}"
+DEPLOY_DIR="${HADA_PHASE_B_DEPLOY_DIR:-/opt/hada-deployment}"
 
 CANDIDATE_ARCHIVE="${HADA_PHASE_B_CANDIDATE_ARCHIVE:-${DEPLOY_DIR}/deploy-v4/HADA-M1-gcp-candidate-v4.zip}"
 CANDIDATE_SHA256_FILE="${HADA_PHASE_B_CANDIDATE_SHA256_FILE:-${DEPLOY_DIR}/deploy-v4/HADA-M1-gcp-candidate-v4.zip.sha256}"

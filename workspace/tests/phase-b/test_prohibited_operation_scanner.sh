@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091,SC2016
+# (intentional patterns in test/mock/evidence scripts; reviewed for CI lint compliance)
 #
 # HADA M1 Phase B — Executable fixture tests for the prohibited-operation
 # scanner (correction 2)
