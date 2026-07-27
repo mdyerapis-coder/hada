@@ -1,0 +1,7 @@
+# Governance-sensitive paths require explicit review.
+/.github/ @mdyerapis-coder
+/scripts/ci/ @mdyerapis-coder
+/policies/ @mdyerapis-coder
+/releases/ @mdyerapis-coder
+/reviews/ @mdyerapis-coder
+/evidence/ @mdyerapis-coder

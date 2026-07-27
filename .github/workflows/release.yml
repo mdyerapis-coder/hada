@@ -1,0 +1,39 @@
+name: Build Release Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_path:
+        description: Repository-relative release directory or archive
+        required: true
+        default: releases/v4
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  release-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify requested release
+        env:
+          HADA_RELEASE_PATH: ${{ inputs.release_path }}
+        run: scripts/ci/verify_requested_release.sh
+      - name: Run clean-room E2E
+        env:
+          HADA_RELEASE_PATH: ${{ inputs.release_path }}
+        run: |
+          scripts/ci/prepare_clean_room.sh
+          scripts/ci/run_release_e2e.sh
+      - name: Package durable evidence
+        run: scripts/ci/package_evidence.sh
+      - name: Upload release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: hada-release-evidence-${{ github.run_id }}
+          path: .ci-evidence-package/
+          if-no-files-found: error
+          retention-days: 90
