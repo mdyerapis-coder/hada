@@ -27,6 +27,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from typing import Any
 from hermes_ctl.communications.channels import Message
 from hermes_ctl.communications.email_channel import EmailChannel
@@ -440,6 +441,63 @@ def _cmd_remind(args: argparse.Namespace) -> int:
     return 2  # pragma: no cover
 
 
+# ---------------------------------------------------------------------------
+# relationship
+# ---------------------------------------------------------------------------
+def _cmd_relationship(args: argparse.Namespace) -> int:
+    store = _store()
+    from hermes_ctl.intelligence.relationships import (
+        scan_relationships,
+        update_relationship,
+        record_interaction,
+    )
+
+    if args.rel_action == "list":
+        snap = scan_relationships(store=store)
+        print(f"Relationships ({snap.total_count} total, by type: {json.dumps(snap.by_type)}):")
+        for r in snap.relationships:
+            when = time.strftime("%Y-%m-%d", time.gmtime(r.last_contacted)) if r.last_contacted > 0 else "never"
+            print(f"  {r.person_id:20s} {r.strength:.2f}  {r.relationship_type:15s} contacted:{when}")
+        return 0
+
+    if args.rel_action == "show":
+        snap = scan_relationships(store=store)
+        matches = [r for r in snap.relationships if r.person_id == args.person or r.name == args.person]
+        if not matches:
+            print(f"(no relationship found for {args.person})")
+            return 1
+        for r in matches:
+            print(json.dumps(r.to_dict(), indent=2, ensure_ascii=False))
+        return 0
+
+    if args.rel_action == "update":
+        rel = update_relationship(
+            store,
+            args.person,
+            name=args.name or "",
+            relationship_type=args.rel_type,
+            strength=args.strength,
+            notes=args.notes,
+            tags=args.tag,
+            channels=args.channel,
+        )
+        print(f"updated relationship: {rel.person_id} ({rel.relationship_type}, strength={rel.strength:.2f})")
+        return 0
+
+    if args.rel_action == "interact":
+        rel = record_interaction(
+            store,
+            args.person,
+            name=args.name or "",
+            channel=args.channel or "",
+            relationship_type=args.rel_type,
+        )
+        print(f"recorded interaction: {rel.person_id} (count={rel.contact_count}, strength={rel.strength:.2f})")
+        return 0
+
+    return 2  # pragma: no cover
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -519,6 +577,29 @@ def build_parser() -> argparse.ArgumentParser:
     rmsub = prm.add_subparsers(dest="remind_action", required=True)
     rmr = rmsub.add_parser("run", help="check plan items due, send pending reminders to Telegram")
     rmr.set_defaults(func=_cmd_remind)
+
+    prel = sub.add_parser("relationship", help="relationship management (track contacts, strength, interactions)")
+    rsub = prel.add_subparsers(dest="rel_action", required=True)
+    rl = rsub.add_parser("list", help="list all tracked relationships with type and strength")
+    rl.set_defaults(func=_cmd_relationship)
+    rs = rsub.add_parser("show", help="show details for a specific person")
+    rs.add_argument("person", help="person id or name to look up")
+    rs.set_defaults(func=_cmd_relationship)
+    ru = rsub.add_parser("update", help="create or update a relationship record")
+    ru.add_argument("person", help="person identifier (handle or contact key)")
+    ru.add_argument("--name", help="display name")
+    ru.add_argument("--type", dest="rel_type", help="relationship type (family, partner, friend, colleague, acquaintance, service, other)")
+    ru.add_argument("--strength", type=float, help="relationship strength 0.0–1.0")
+    ru.add_argument("--notes", help="free-text notes")
+    ru.add_argument("--tag", action="append", help="grouping tags (repeatable)")
+    ru.add_argument("--channel", action="append", help="contact channels used (repeatable)")
+    ru.set_defaults(func=_cmd_relationship)
+    ri = rsub.add_parser("interact", help="record an interaction (increments contact count, updates recency)")
+    ri.add_argument("person", help="person identifier")
+    ri.add_argument("--name", help="display name (used on first contact)")
+    ri.add_argument("--channel", help="channel this interaction came on (telegram, sms, email)")
+    ri.add_argument("--type", dest="rel_type", help="relationship type")
+    ri.set_defaults(func=_cmd_relationship)
     return p
 
 
