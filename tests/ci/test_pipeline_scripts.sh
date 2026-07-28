@@ -17,3 +17,8 @@ fi
 
 bash -n scripts/ci/*.sh
 echo 'PASS: pipeline bootstrap scripts.'
+
+# Release-manifest gate regression test (validates verify_release_manifests.sh fix).
+if [[ -x tests/ci/test_release_manifests.sh ]]; then
+  tests/ci/test_release_manifests.sh
+fi
