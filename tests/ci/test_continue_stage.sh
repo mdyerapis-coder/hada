@@ -47,8 +47,9 @@ chmod +x "$STUB/gh"
 REMOTE=$(mktemp -d)/bare.git
 git clone --bare "$HADA_ROOT" "$REMOTE" >/dev/null 2>&1
 
-cleanup() { rm -rf "$STUB" "${REMOTE%/*}" "$WT" "$WT2" 2>/dev/null; }
+cleanup() { rm -rf "$STUB" "${REMOTE%/*}" "$WT" "${WT2:-}" 2>/dev/null; }
 trap cleanup EXIT
+WT2=""
 
 # ---------------------------------------------------------------------------
 # Scenario 1 — happy path (benign fix)

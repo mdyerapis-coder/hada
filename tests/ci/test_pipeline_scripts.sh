@@ -23,12 +23,20 @@ if [[ -x tests/ci/test_release_manifests.sh ]]; then
   tests/ci/test_release_manifests.sh
 fi
 
-# Orchestrator --continue stage: hermetic (stubbed gh + local bare remote).
-if [[ -x tests/ci/test_continue_stage.sh ]]; then
-  tests/ci/test_continue_stage.sh
-fi
+# The --continue/--scan self-tests re-invoke autonomous_repair.sh. Running them
+# *inside* a repair's own verification (verify_in_worktree) would recurse
+# infinitely. Skip them when HADA_REPAIR_VERIFY is set (set by the repair
+# script's verification step). CI runs the full suite (no guard).
+if [[ -z "${HADA_REPAIR_VERIFY:-}" ]]; then
+  # Orchestrator --continue stage: hermetic (stubbed gh + local bare remote).
+  if [[ -x tests/ci/test_continue_stage.sh ]]; then
+    tests/ci/test_continue_stage.sh
+  fi
 
-# Orchestrator --scan stage: hermetic (stubbed gh + git, no network).
-if [[ -x tests/ci/test_scan_stage.sh ]]; then
-  tests/ci/test_scan_stage.sh
+  # Orchestrator --scan stage: hermetic (stubbed gh + git, no network).
+  if [[ -x tests/ci/test_scan_stage.sh ]]; then
+    tests/ci/test_scan_stage.sh
+  fi
+else
+  echo "SKIP: repair self-tests (--continue/--scan) during in-repair verification (recursion guard)."
 fi

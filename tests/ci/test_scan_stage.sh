@@ -58,13 +58,19 @@ exit 0
 EOF
 chmod +x "$STUB/gh"
 
-# Stub `git`: make clone/fetch/checkout no-ops so --scan never touches network.
+# Stub `git`: make clone/fetch/checkout/no-op reads against base refs no-ops so
+# --scan never touches network or requires a fetched origin/main in CI.
 cat > "$STUB/git" <<'EOF'
 #!/usr/bin/env bash
 if [[ "$1" == "clone" ]]; then
   tgt="${!#}"; mkdir -p "$tgt" 2>/dev/null || true; exit 0
 fi
 if [[ "$1" == "fetch" || "$1" == "checkout" ]]; then exit 0; fi
+# Base-ref reads (e.g. `git diff --quiet origin/main`) must not require a real
+# fetched remote in the hermetic test environment.
+if [[ "$1" == "diff" || "$1" == "rev-parse" || "$1" == "merge-base" || "$1" == "log" || "$1" == "show" ]]; then
+  if [[ " $* " == *" main"* || " $* " == *"origin/"* ]]; then exit 0; fi
+fi
 exec /usr/bin/git "$@"
 EOF
 chmod +x "$STUB/git"

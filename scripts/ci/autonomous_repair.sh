@@ -195,7 +195,9 @@ verify_in_worktree() {
     # Release manifests
     bash scripts/ci/verify_release_manifests.sh
     # Fast tests (falls back to pipeline-script tests)
-    bash scripts/ci/run_fast_tests.sh
+    # Guard against recursion: the pipeline self-tests re-invoke --continue/--scan,
+    # which would loop if run during a repair's own verification.
+    HADA_REPAIR_VERIFY=1 bash scripts/ci/run_fast_tests.sh
     # Any repo python tests present
     if [[ -f pytest.ini || -f pyproject.toml || -d tests ]] && command -v pytest >/dev/null 2>&1; then
       pytest -q 2>/dev/null || echo "pytest: no tests or skipped"
