@@ -1,3 +1,9 @@
+# secrets / runtime artifacts — never commit
+.certs/
+deploy/contact.env
+.comms/
 __pycache__/
 *.pyc
 .pytest_cache/
+venv/
+.venv/
