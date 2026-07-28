@@ -275,17 +275,46 @@ def _cmd_briefing(args: argparse.Namespace) -> int:
         from hermes_ctl.intelligence.briefing import run_briefing
         from hermes_ctl.intelligence.http_router import HttpRouter
         try:
+            dreams_dir = os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams"))
             path = run_briefing(
                 brains=HttpRouter(brains),
                 store=_store(),
-                dreams_dir=os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams")),
+                dreams_dir=dreams_dir,
             )
         except Exception as exc:  # noqa: BLE001 - surface inference/delivery failures cleanly
             print(f"briefing run failed: {exc}", file=sys.stderr)
             return 1
         print(f"briefing delivered: {path}")
+        # Telegram summary if requested
+        if getattr(args, "briefing_telegram", False):
+            _deliver_briefing_telegram(dreams_dir, path)
         return 0
     return 2  # pragma: no cover
+
+
+def _deliver_briefing_telegram(dreams_dir: str, path: str) -> None:
+    """Send a briefing summary to Telegram Home channel."""
+    import glob
+    try:
+        from hermes_ctl.communications.telegram import TelegramChannel
+        from hermes_ctl.communications.channels import Message
+        # Use the delivered path or find latest dream
+        fp = path
+        if not fp or fp == "memory":
+            files = sorted(glob.glob(os.path.join(dreams_dir, "dream-*.json")), reverse=True)
+            if not files:
+                return
+            fp = files[0]
+        if not os.path.isfile(fp):
+            return
+        data = json.load(open(fp))
+        chat = os.environ.get("HERMES_TELEGRAM_CHAT", "7620778176")
+        lines = [f"*Daily Briefing — {data.get('date', '?')}*"]
+        for p in data.get("prescriptions", []):
+            lines.append(f"\n*{p.get('cat', '?')}*: {p.get('headline', '')}")
+        TelegramChannel().send(Message(channel="briefing", sender="hada", recipient=chat, body="\n".join(lines)))
+    except Exception as exc:
+        print(f"telegram delivery skipped: {exc}", file=sys.stderr)
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
@@ -309,17 +338,45 @@ def _cmd_plan(args: argparse.Namespace) -> int:
         from hermes_ctl.intelligence.plan import run_plan
         from hermes_ctl.intelligence.http_router import HttpRouter
         try:
+            plans_dir = os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams"))
             path = run_plan(
                 brains=HttpRouter(brains),
                 store=_store(),
-                plans_dir=os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams")),
+                plans_dir=plans_dir,
             )
         except Exception as exc:  # noqa: BLE001
             print(f"plan run failed: {exc}", file=sys.stderr)
             return 1
         print(f"plan delivered: {path}")
+        if getattr(args, "plan_telegram", False):
+            _deliver_plan_telegram(plans_dir, path)
         return 0
     return 2  # pragma: no cover
+
+
+def _deliver_plan_telegram(plans_dir: str, path: str) -> None:
+    """Send a plan summary to Telegram Home channel."""
+    import glob
+    try:
+        from hermes_ctl.communications.telegram import TelegramChannel
+        from hermes_ctl.communications.channels import Message
+        fp = path
+        if not fp or fp == "memory":
+            files = sorted(glob.glob(os.path.join(plans_dir, "plan-*.json")), reverse=True)
+            if not files:
+                return
+            fp = files[0]
+        if not os.path.isfile(fp):
+            return
+        data = json.load(open(fp))
+        chat = os.environ.get("HERMES_TELEGRAM_CHAT", "7620778176")
+        lines = [f"*Daily Plan — {data.get('date', '?')}*\n{data.get('headline', '')}"]
+        for item in data.get("items", []):
+            icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(item.get("priority", ""), "⚪")
+            lines.append(f"\n{icon} {item.get('time', 'anytime')} — {item.get('task', '')}")
+        TelegramChannel().send(Message(channel="plan", sender="hada", recipient=chat, body="\n".join(lines)))
+    except Exception as exc:
+        print(f"telegram delivery skipped: {exc}", file=sys.stderr)
 
 
 def _cmd_remind(args: argparse.Namespace) -> int:
@@ -392,6 +449,7 @@ def build_parser() -> argparse.ArgumentParser:
     brv.add_argument("file", help="path to dream-{date}.json")
     brv.set_defaults(func=_cmd_briefing)
     brr = brsub.add_parser("run", help="generate + deliver today's briefing (gated: live inference)")
+    brr.add_argument("--telegram", action="store_true", dest="briefing_telegram", help="also send summary to Telegram")
     brr.set_defaults(func=_cmd_briefing)
 
     ppl = sub.add_parser("plan", help="daily plan from briefing + inbox (validate | run)")
@@ -400,6 +458,7 @@ def build_parser() -> argparse.ArgumentParser:
     plv.add_argument("file", help="path to plan-{date}.json")
     plv.set_defaults(func=_cmd_plan)
     plr = plsub.add_parser("run", help="generate + deliver today's plan (gated: live inference)")
+    plr.add_argument("--telegram", action="store_true", dest="plan_telegram", help="also send summary to Telegram")
     plr.set_defaults(func=_cmd_plan)
 
     prm = sub.add_parser("remind", help="smart reminders from daily plan (remind run)")
