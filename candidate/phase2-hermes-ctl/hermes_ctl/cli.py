@@ -288,6 +288,40 @@ def _cmd_briefing(args: argparse.Namespace) -> int:
     return 2  # pragma: no cover
 
 
+def _cmd_plan(args: argparse.Namespace) -> int:
+    if args.plan_action == "validate":
+        try:
+            data = json.load(open(args.file, encoding="utf-8"))
+            from hermes_ctl.intelligence.plan import Plan, validate_plan
+            validate_plan(Plan.from_dict(data))
+        except Exception as exc:  # noqa: BLE001
+            print(f"INVALID plan: {exc}", file=sys.stderr)
+            return 1
+        print("OK: plan schema valid")
+        return 0
+    if args.plan_action == "run":
+        # Gated: requires a live brain (Phase 3 inference).
+        try:
+            brains = load_brains()
+        except (ValueError, FileNotFoundError) as exc:
+            print(f"brains config error: {exc}", file=sys.stderr)
+            return 1
+        from hermes_ctl.intelligence.plan import run_plan
+        from hermes_ctl.intelligence.http_router import HttpRouter
+        try:
+            path = run_plan(
+                brains=HttpRouter(brains),
+                store=_store(),
+                plans_dir=os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams")),
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"plan run failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"plan delivered: {path}")
+        return 0
+    return 2  # pragma: no cover
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -344,6 +378,14 @@ def build_parser() -> argparse.ArgumentParser:
     brv.set_defaults(func=_cmd_briefing)
     brr = brsub.add_parser("run", help="generate + deliver today's briefing (gated: live inference)")
     brr.set_defaults(func=_cmd_briefing)
+
+    ppl = sub.add_parser("plan", help="daily plan from briefing + inbox (validate | run)")
+    plsub = ppl.add_subparsers(dest="plan_action", required=True)
+    plv = plsub.add_parser("validate", help="check a plan JSON against the strict schema (offline)")
+    plv.add_argument("file", help="path to plan-{date}.json")
+    plv.set_defaults(func=_cmd_plan)
+    plr = plsub.add_parser("run", help="generate + deliver today's plan (gated: live inference)")
+    plr.set_defaults(func=_cmd_plan)
     return p
 
 
