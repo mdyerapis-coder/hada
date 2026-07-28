@@ -287,3 +287,17 @@ deploy, secret/infra change, or governance bypass occurs.
 
 ### Open
 - Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
+
+## Cycle 26 — Shopping intelligence (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-shopping-intelligence-cycle26`
+- New module `hermes_ctl/intelligence/shopping.py` — manages shopping lists,
+  items, purchase tracking, and category grouping:
+  - `ShoppingItem` / `ShoppingSnapshot` dataclasses with to_dict/from_dict.
+  - `scan_shopping()` — reads all shopping items from MemoryStore (with list
+    filter and active-only modes, category/list breakdown).
+  - `add_item()` — creates items, merges duplicates (increments quantity).
+  - `remove_item()`, `mark_purchased()`, `clear_purchased()`.
+- New CLI commands: `hermesctl shopping list|add|remove|buy|clear`.
+- 22 new tests in `tests/test_shopping.py`.
+- Verified: `pytest tests/` → 152 passed.
+- Next: Travel planning (Phase 3: Personal Intelligence).
