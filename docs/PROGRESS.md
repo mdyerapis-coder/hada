@@ -41,6 +41,16 @@ deploy, secret/infra change, or governance bypass occurs.
 - Next bounded tasks (in order): Identity layer (user profile/prefs/context
   on MemoryStore), then Communications adapters, Productivity, Intelligence.
 
+## Cycle 7 — Phase 2: Identity layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/identity/profile.py`: `Identity` built on `MemoryStore` —
+  profile (merge fields), preferences (key/value + defaults), volatile context
+  (working memory). Stdlib-only.
+- Added `tests/test_identity.py` (5 tests: profile merge, prefs + default, key
+  validation, volatile context, persistence). All pass.
+- Verified: `pytest tests/` → 13 passed (8 memory + 5 identity).
+- Next: Communications adapters (Email / SMS / Telegram / Contacts).
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)
