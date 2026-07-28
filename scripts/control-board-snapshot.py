@@ -180,6 +180,59 @@ def collect_ci() -> dict:
     }
 
 
+def parse_roadmap_m1(path: Path) -> dict:
+    """Parse the M1 tactical roadmap (ROADMAP.md): phase table + release + guardrails.
+    Table rows: | v1 → v4 candidates | Build + checksum-lock | ✅ Done |
+    Status emojis: ✅ complete, 🟡 review/active, ⛔ blocked/planned."""
+    if not path.exists():
+        return {"available": False, "reason": "ROADMAP.md not found", "phases": []}
+    text = path.read_text(encoding="utf-8")
+    phases = []
+    in_table = False
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("|") and "Phase" in s and "Goal" in s and "State" in s:
+            in_table = True
+            continue
+        if in_table:
+            if not s.startswith("|"):
+                in_table = False
+                continue
+            if set(s) <= set("|-: "):  # separator row, skip but stay in table
+                continue
+            cells = [c.strip() for c in s.strip("|").split("|")]
+            if len(cells) < 3:
+                continue
+            phase, goal, state = cells[0], cells[1], cells[2]
+            if phase.lower().startswith("phase"):
+                status = "planned"
+                if "✅" in state or "done" in state.lower():
+                    status = "complete"
+                elif "⛔" in state or "blocked" in state.lower():
+                    status = "blocked"
+                elif "in progress" in state.lower():
+                    status = "active"
+                elif "in review" in state.lower() or "review" in state.lower():
+                    status = "review"
+                phases.append({"name": phase, "goal": goal, "state": state, "status": status})
+    cur = None
+    guardrails = []
+    for line in text.splitlines():
+        st = line.strip()
+        if st.startswith("- v4 candidate:") or st.startswith("- v3 preserved:"):
+            cur = st.lstrip("- ").strip()
+        if "never merges" in line or "Deployment remains" in line or "human authorization" in line:
+            guardrails.append(st.lstrip("- ").strip())
+    return {
+        "available": True,
+        "source": "ROADMAP.md",
+        "provenance": "parsed from canonical M1 tactical roadmap (phase table + release + guardrails)",
+        "phases": phases,
+        "current_release": cur,
+        "guardrails": guardrails[:3],
+    }
+
+
 def collect_governance(root: Path) -> dict:
     adr_dir = root / "docs" / "adr"
     adrs = []
@@ -227,7 +280,7 @@ def validate_snapshot(snap: dict) -> list[str]:
         problems.append("missing generated_at")
     if snap.get("is_fixture") is True:
         problems.append("snapshot flagged as fixture")
-    for key in ("repository", "ci", "roadmap", "governance"):
+    for key in ("repository", "ci", "roadmap", "roadmap_m1", "governance"):
         sec = snap.get(key)
         if not isinstance(sec, dict):
             problems.append(f"section {key} missing")
@@ -246,12 +299,14 @@ def main() -> int:
         "data_sources": {
             "github": "gh api (read-only)",
             "roadmap": "docs/MASTER_ROADMAP.md",
+            "roadmap_m1": "ROADMAP.md",
             "governance": "docs/adr",
             "live_infrastructure": "browser-side /hada-api/metrics (not in snapshot)",
         },
         "repository": collect_repository(),
         "ci": collect_ci(),
         "roadmap": parse_roadmap(roadmap_path),
+        "roadmap_m1": parse_roadmap_m1(root / "ROADMAP.md"),
         "governance": collect_governance(root),
     }
     out = HERE.parent / "deploy" / "control-board" / "snapshot.json"

@@ -94,9 +94,38 @@ def test_validate_snapshot_detects_fixture():
     assert any("fixture" in p for p in problems)
 
 
-def test_validate_snapshot_detects_missing_available():
+def test_parse_roadmap_m1_table(tmp_path):
+    p = tmp_path / "ROADMAP.md"
+    p.write_text(
+        "# HADA Roadmap\n\n## Phases\n\n"
+        "| Phase | Goal | State |\n|-------|------|-------|\n"
+        "| Phase v1-v4 | Build archives | ✅ Done (v4 current) |\n"
+        "| Phase B0 execution | Deploy candidate | ⛔ Blocked — human authorization |\n"
+        "| Phase autonomous repair | Monitor PRs | 🟡 In review (PR #5) |\n\n"
+        "## Current release\n\n- v4 candidate: `releases/v4/HADA-M1-gcp-candidate-v4.zip`\n\n"
+        "## Guardrails\n\n- The autonomous repair pipeline may open draft PRs but never merges.\n"
+        "- Deployment remains non-mutating until human authorization.\n",
+        encoding="utf-8",
+    )
+    out = snapshot_mod.parse_roadmap_m1(p)
+    assert out["available"] is True
+    by_name = {ph["name"]: ph["status"] for ph in out["phases"]}
+    assert by_name["Phase v1-v4"] == "complete"   # ✅ Done
+    assert by_name["Phase B0 execution"] == "blocked"      # ⛔ Blocked
+    assert by_name["Phase autonomous repair"] == "review"  # 🟡 In review
+    assert out["current_release"] is not None
+    assert any("never merges" in g for g in out["guardrails"])
+
+
+def test_parse_roadmap_m1_missing_file():
+    out = snapshot_mod.parse_roadmap_m1(Path("/nonexistent/ROADMAP.md"))
+    assert out["available"] is False
+    assert "reason" in out
+
+
+def test_validate_snapshot_includes_roadmap_m1():
     bad = {"generated_at": "2026-01-01T00:00:00+00:00", "is_fixture": False,
-           "repository": {}, "ci": {"available": True},
+           "repository": {"available": True}, "ci": {"available": True},
            "roadmap": {"available": True}, "governance": {"available": True}}
     problems = snapshot_mod.validate_snapshot(bad)
-    assert any("repository" in p and "available" in p for p in problems)
+    assert any("roadmap_m1" in p for p in problems)

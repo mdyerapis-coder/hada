@@ -98,14 +98,19 @@ function renderOverview(snap, live) {
   $("metric-approval").textContent = gov.human_approval_required ? "required" : "—";
   $("metric-failed").textContent = ciFailing;
 
-  // milestone
-  const m1 = phases.find((p) => p.name === "Phase 1") || phases[0];
-  $("milestone-title").textContent = m1 ? m1.title : "Roadmap";
-  const ms = m1 ? m1.status : "planned";
+  // milestone — combine BOTH roadmaps
+  const stratM1 = phases.find((p) => p.name === "Phase 1") || phases[0];
+  const m1tac = (snap.roadmap_m1 && snap.roadmap_m1.phases) ? snap.roadmap_m1.phases : [];
+  const b0 = m1tac.find((p) => /B0/i.test(p.name)) || m1tac.find((p) => /deploy/i.test(p.goal || ""));
+  const overallStatus = (b0 && b0.status === "blocked") ? "blocked"
+    : (stratM1 ? stratM1.status : "planned");
+  $("milestone-title").textContent = stratM1 ? stratM1.title : "Roadmap";
+  const ms = overallStatus;
   $("milestone-status").textContent = ms;
   $("milestone-status").className = tag(ms);
-  $("milestone-summary").textContent = m1 ? m1.summary.slice(0, 200) : "";
-  $("gate-count").textContent = `${complete}/${phases.length} phases complete · ${blocked} blocked`;
+  const b0note = b0 ? ` M1 tactical: Phase B0 (deploy) is ${b0.status}.` : "";
+  $("milestone-summary").textContent = (stratM1 ? stratM1.summary.slice(0, 160) : "") + b0note;
+  $("gate-count").textContent = `${complete}/${phases.length} strategic phases complete · ${blocked} blocked · M1 B0 ${b0 ? b0.status : "n/a"}`;
   $("gate-progress").style.width = Math.round((complete / Math.max(phases.length, 1)) * 100) + "%";
 
   // role separation (real design)
@@ -128,14 +133,33 @@ function renderOverview(snap, live) {
 // ===== ROADMAP =====
 function renderRoadmap(snap) {
   const road = snap.roadmap;
-  const body = availWrap(road, road.phases.map((p) => `
+  const m1 = snap.roadmap_m1;
+  const strat = availWrap(road, road.phases.map((p) => `
     <div class="gate-card">
       <span class="pill ${tag(p.status)}">${esc(p.status)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.summary.slice(0, 160))}${p.summary.length > 160 ? "…" : ""}</p>
       <small>evidence: ${p.evidence && p.evidence.length ? esc(p.evidence.join(", ")) : "not linked in this view"}</small>
     </div>`).join(""));
-  $("roadmap-list").innerHTML = body;
+  const m1body = availWrap(m1, `
+    <div class="table-wrap"><table>
+      <thead><tr><th>Phase</th><th>Goal</th><th>State</th></tr></thead>
+      <tbody>${(m1.phases || []).map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.goal)}</td><td><span class="pill ${tag(p.status)}">${esc(p.state)}</span></td></tr>`).join("")}</tbody>
+    </table></div>
+    ${m1.current_release ? `<p style="color:var(--muted);font-size:12px">Current release: <code>${esc(m1.current_release)}</code></p>` : ""}
+    ${(m1.guardrails || []).length ? `<p style="color:var(--muted);font-size:12px">Guardrails: ${m1.guardrails.map((g) => esc(g)).join(" ")}</p>` : ""}
+  `);
+  $("roadmap-list").innerHTML = `
+    <section class="panel" style="margin-bottom:14px">
+      <div class="panel-header"><div><h2>Strategic roadmap (M0–M8)</h2><p>docs/MASTER_ROADMAP.md</p></div>
+      <span class="pill neutral">${road.available ? road.phases.length + " phases" : "unavailable"}</span></div>
+      <div class="gate-grid">${strat}</div>
+    </section>
+    <section class="panel">
+      <div class="panel-header"><div><h2>M1 tactical roadmap</h2><p>ROADMAP.md — release appliance</p></div>
+      <span class="pill neutral">${m1.available ? m1.phases.length + " phases" : "unavailable"}</span></div>
+      ${m1body}
+    </section>`;
 }
 
 // ===== DEVELOPMENT =====
