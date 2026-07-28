@@ -1,0 +1,8 @@
+{
+  "pr": 8,
+  "head": "agent/test-continue-stage",
+  "base": "main",
+  "failure_type": "test",
+  "worktree": "/tmp/hada-repair-QkpRXv",
+  "instruction": "Implement the smallest safe fix in the worktree, then run: scripts/ci/autonomous_repair.sh --continue /tmp/hada-repair-QkpRXv 8 main"
+}

@@ -1,0 +1,18 @@
+PASS: no operator-local absolute paths detected.
+== releases/v1/HADA-M1-gcp-candidate.zip.sha256 ==
+HADA-M1-gcp-candidate.zip: OK
+== releases/v2/HADA-M1-gcp-candidate-v2.zip.sha256 ==
+HADA-M1-gcp-candidate-v2.zip: OK
+== releases/v3/HADA-M1-gcp-candidate-v3.zip.sha256 ==
+HADA-M1-gcp-candidate-v3.zip: OK
+== releases/v4/HADA-M1-gcp-candidate-v4.zip.sha256 ==
+HADA-M1-gcp-candidate-v4.zip: OK
+PASS: pipeline bootstrap scripts.
+PASS: happy path: --continue exits 0
+PASS: happy path opened a draft PR (gh pr create)
+PASS: happy path never called gh pr merge
+PASS: guardrail abort: --continue exits non-zero
+PASS: guardrail abort opened no PR (gh pr create not called)
+----
+continue-stage tests: 5 passed, 0 failed
+VERIFY OK
