@@ -95,7 +95,7 @@ deploy, secret/infra change, or governance bypass occurs.
   (hermes-7b) → both responded. No secrets required (brains open on localhost).
 - **Live verified (Telegram)**: `TelegramChannel.send()` delivered a test message to chat 7620778176 (message_id 3) using the valid @Hermesctlrbot token. Token read from env at runtime, never stored.
 - **Live verified (Email)**: `EmailChannel.send()` delivered a test email to dyer.mason1994@gmail.com via Gmail app password (smtp.gmail.com:465). Creds from env, never stored. 4 email tests; total 40.
-- **SMS**: not yet built — awaiting provider + credentials (Twilio / telnyx / carrier).
+- **SMS (handset gateway, Option B)**: `SmsChannel` built + 4 tests (44 total). Polls a phone-side SMS-gateway REST API (`received()` GET /messages, `send()` POST /send). Gateway URL + bearer token from env, never stored. **Live-verify deferred**: needs the open-source Android SMS-gateway app installed on the JB Hi-Fi handset + the hada box able to reach it (recommend joining phone to the same Tailscale tailnet, e.g. http://<phone-ts-ip>:8080). Carrier email-to-SMS ruled out (Telstra consumer gateway dead; JB Hi-Fi is Telstra MVNO).
 - **Design decision (user)**: route ALL contact via the Hermes CTL
   communications seam; HADA is invoked *behind* it as the governed engineering
   worker, not the contact receiver. Keeps personal chat responsive + independent
