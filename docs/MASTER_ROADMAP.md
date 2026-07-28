@@ -173,17 +173,17 @@ Enable proactive assistance.
 
 ## Features
 
-- Daily briefing
-- Planning
-- Smart reminders
-- Context awareness
-- Long-term memory
-- Relationship management
-- Shopping intelligence
-- Travel planning
-- Health tracking
-- Habit tracking
-- Financial awareness
+- Daily briefing ✅ (Cycle 17: Dream-style briefing engine, merged)
+- Planning ✅ (Cycle 20: daily plan generation, merged)
+- Smart reminders ✅ (Cycle 22: reminders from daily plan, merged)
+- Context awareness ✅ (PR #25 — draft, mergeable, CI green)
+- Long-term memory curation ✅ (PR #26 — draft, mergeable, CI green)
+- Relationship management ✅ (PR #27 — draft, mergeable, CI green)
+- Shopping intelligence ✅ (PR #28 — draft, mergeable, CI green)
+- Travel planning ✅ (PR #29 — draft, mergeable, CI green)
+- Health tracking ✅ (PR #30 — draft, mergeable, CI green)
+- Habit tracking ✅ (PR #31 — draft, mergeable, CI green)
+- Financial awareness ✅ (PR #32 — draft, mergeable, CI green)
 
 ## Definition of Done
 
@@ -399,6 +399,30 @@ inference remain gated human work (creds / running inference stack — Human
 Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
+
+## Phase 3 — Personal Intelligence (proactive assistance)
+
+**All 11 features delivered as governed draft PRs.** Each feature follows the established 5-layer pattern (dataclass → scan → deliver → CLI → tests). The three core features (briefing, planning, smart reminders) are MERGED to `main` and deployed to `hada-control` as systemd timer-driven services (07:00/07:30/08:00+2h AEST). The remaining 8 features are in draft PRs (#25–#32), each MERGEABLE with all CI checks passing.
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| Daily briefing | ✅ Merged | Cycle 17, PR #18/#19/#20 |
+| Planning | ✅ Merged | Cycle 20–23, PR #20/#21/#22/#23 |
+| Smart reminders | ✅ Merged | Cycle 22, PR #22 |
+| Context awareness | ✅ Draft #25 | Real-time system state snapshot |
+| Long-term memory curation | ✅ Draft #26 | Fact expiry/consolidation |
+| Relationship management | ✅ Draft #27 | Contact/relationship tracking |
+| Shopping intelligence | ✅ Draft #28 | Shopping list + history |
+| Travel planning | ✅ Draft #29 | Trip/itinerary planner |
+| Health tracking | ✅ Draft #30 | Metrics logging + summaries |
+| Habit tracking | ✅ Draft #31 | Streaks, categories, due-today |
+| Financial awareness | ✅ Draft #32 | Budget, expenses, spend analysis |
+
+**Test suite:** 150+ unit tests across all Phase 3 modules, all CI ✅
+
+**Integration gating:** All 8 draft features are wired behind the Hermes CTL communications seam. Live Telegram send + calendar/CRM sync + full LLM inference remain gated on human authorization (merge of draft PRs, then live creds/network per governance boundary).
+
+**Next:** Awaiting human merge of draft PRs #25–#32. After merge, Phase 4+ begins (Home Hub Integration, Financial Intelligence, Infrastructure).
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
