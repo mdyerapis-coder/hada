@@ -70,11 +70,46 @@ class ProbeServer:
                     else:
                         self._respond(HTTPStatus.SERVICE_UNAVAILABLE, b"not ready\n")
                     return
+                if self.path == "/api/v1/state":
+                    # Read-only aggregate state. Surfaces only what the v5
+                    # orchestrator actually tracks; subsystems it does not yet
+                    # model are reported available:false so clients fail closed.
+                    db_up, q_up = health.snapshot()
+                    state = {
+                        "schema_version": "1.0",
+                        "is_fixture": False,
+                        "health": "ready" if health.ready() else "degraded",
+                        "database_up": db_up,
+                        "queue_up": q_up,
+                        "outbox_published_total": registry.get_sample_value(
+                            "hada_outbox_published_total"
+                        )
+                        or 0,
+                        "outbox_publish_failures_total": registry.get_sample_value(
+                            "hada_outbox_publish_failures_total"
+                        )
+                        or 0,
+                        "tasks": {"available": False, "reason": "orchestrator v5 does not model task ledger"},
+                        "gates": {"available": False, "reason": "governance gate state not yet exposed over HTTP"},
+                        "evidence": {"available": False, "reason": "signed evidence bundles not yet exposed over HTTP"},
+                    }
+                    self._respond_json(state)
+                    return
                 self._respond(HTTPStatus.NOT_FOUND, b"not found\n")
 
             def _respond(self, status: HTTPStatus, body: bytes) -> None:
                 self.send_response(status)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def _respond_json(self, payload: object) -> None:
+                import json
+
+                body = json.dumps(payload).encode("utf-8")
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
