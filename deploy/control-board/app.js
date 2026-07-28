@@ -275,6 +275,8 @@ const DOCS = {
   "governed-autonomy": { title: "Governed autonomy", summary: "Roles, authority, and stopping conditions. Three parties with human approval as the final gate.", topics: ["Party separation", "Stopping conditions", "Human authority", "RFC"], source: "docs/adr/0002-autonomous-repair-pipeline.md" },
   "durable-orchestrator": { title: "Durable orchestrator", summary: "State, queues, workspaces, and recovery. Outbox ensures published events survive crashes.", topics: ["Durable queue", "Workspaces", "Recovery", "Outbox"], source: "docs/runbooks/AUTONOMOUS_REPAIR.md" },
   "external-review": { title: "External review", summary: "Party 3 independent milestone closure checklist. Automated mode for this deployment.", topics: ["Checklist", "Closure", "Automated mode", "Evidence"], source: "docs/runbooks/AUTONOMOUS_REPAIR.md" },
+  "access-guide": { title: "Access guide", summary: "How to reach the live board: Tailscale, IAP SSH tunnel, or direct :80. Live endpoints, browser support, freshness/provenance, troubleshooting.", topics: ["Tailscale 100.77.108.35", "IAP tunnel :8080", "Endpoints", "Troubleshooting"], source: "docs/COMMAND_CENTRE_ACCESS.md" },
+  "usage-guide": { title: "Usage guide", summary: "Operating the 8 views, refresh, status-signal reading, fail-closed behaviour, and the explicit read-only authority boundary.", topics: ["8 views", "Refresh", "Status pills", "Read-only boundary"], source: "docs/COMMAND_CENTRE_USAGE.md" },
 };
 document.querySelectorAll(".doc-card").forEach((c) => c.addEventListener("click", () => openDoc(c.dataset.document)));
 $("close-document").addEventListener("click", () => $("document-reader").classList.add("hidden"));
