@@ -505,6 +505,7 @@ def _cmd_remind(args: argparse.Namespace) -> int:
 
 # ---------------------------------------------------------------------------
 <<<<<<< HEAD
+<<<<<<< HEAD
 # relationship
 # ---------------------------------------------------------------------------
 def _cmd_relationship(args: argparse.Namespace) -> int:
@@ -622,6 +623,67 @@ def _cmd_shopping(args: argparse.Namespace) -> int:
 >>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
         return 0
 
+=======
+# travel
+# ---------------------------------------------------------------------------
+def _cmd_travel(args: argparse.Namespace) -> int:
+    store = _store()
+    from hermes_ctl.intelligence.travel import (
+        TravelTrip,
+        add_itinerary,
+        add_trip,
+        scan_trips,
+        update_trip_status,
+    )
+
+    if args.travel_action == "list":
+        snap = scan_trips(store=store, status=args.status)
+        print(f"Trips ({snap.total_count} total: {snap.planned_count} planned, {snap.active_count} active, {snap.completed_count} completed):")
+        for t in snap.trips:
+            dates = f"{t.start_date or '?'} → {t.end_date or '?'}"
+            icon = {"planned": "📋", "active": "✈️", "completed": "✅", "cancelled": "❌"}.get(t.status, "📋")
+            print(f"  {icon} {t.destination:30s} {t.status:12s} {dates}")
+        if snap.upcoming:
+            print(f"  Upcoming: {', '.join(t.destination for t in snap.upcoming)}")
+        return 0
+
+    if args.travel_action == "add":
+        trip = add_trip(
+            store,
+            args.destination,
+            start_date=args.start_date or "",
+            end_date=args.end_date or "",
+            trip_type=args.trip_type or "personal",
+            notes=args.notes or "",
+        )
+        print(f"added trip: {trip.destination} (id={trip.id})")
+        return 0
+
+    if args.travel_action == "status":
+        trip = update_trip_status(store, args.trip_id, args.status)
+        if trip:
+            print(f"updated {trip.destination} → {trip.status}")
+            return 0
+        print(f"(no trip with id {args.trip_id})", file=sys.stderr)
+        return 1
+
+    if args.travel_action == "itinerary":
+        trip = add_itinerary(
+            store,
+            args.trip_id,
+            args.activity,
+            day=args.day,
+            time_str=args.time or "",
+            location=args.location or "",
+            notes=args.notes or "",
+        )
+        if trip:
+            print(f"added itinerary item to {trip.destination} (day {args.day})")
+            return 0
+        print(f"(no trip with id {args.trip_id})", file=sys.stderr)
+        return 1
+
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
     return 2  # pragma: no cover
 
 
@@ -634,6 +696,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = msub.add_parser("search"); sp.add_argument("--tag"); sp.add_argument("--limit", type=int, default=20); sp.set_defaults(func=_cmd_memory)
     rp = msub.add_parser("remember"); rp.add_argument("key"); rp.add_argument("value"); rp.add_argument("--tag", action="append"); rp.set_defaults(func=_cmd_memory)
     fp = msub.add_parser("forget"); fp.add_argument("key"); fp.set_defaults(func=_cmd_memory)
+<<<<<<< HEAD
     cp = msub.add_parser("curate", help="scan facts and rank by importance")
     cp.add_argument("--keep-threshold", type=float, default=0.5, dest="curate_keep_threshold")
     cp.add_argument("--archive-threshold", type=float, default=0.2, dest="curate_archive_threshold")
@@ -642,6 +705,10 @@ def build_parser() -> argparse.ArgumentParser:
     csol.add_argument("--threshold", type=float, default=0.7, dest="consolidate_threshold")
     csol.add_argument("--max-groups", type=int, default=10, dest="consolidate_max_groups")
     csol.set_defaults(func=_cmd_memory)
+=======
+    cu = msub.add_parser("curate", help="scan and rank facts by importance"); cu.set_defaults(func=_cmd_memory)
+    cmem = msub.add_parser("consolidate", help="find similar/duplicate facts"); cmem.add_argument("--threshold", type=float, default=0.5); cmem.set_defaults(func=_cmd_memory)
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 
     pi = sub.add_parser("inbox", help="inbound SMS/Email/Telegram")
     isub = pi.add_subparsers(dest="inbox_action", required=True)
@@ -724,6 +791,7 @@ def build_parser() -> argparse.ArgumentParser:
     rmr.set_defaults(func=_cmd_remind)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     prel = sub.add_parser("relationship", help="relationship management (track contacts, strength, interactions)")
     rsub = prel.add_subparsers(dest="rel_action", required=True)
     rl = rsub.add_parser("list", help="list all tracked relationships with type and strength")
@@ -776,6 +844,32 @@ def build_parser() -> argparse.ArgumentParser:
     shc.add_argument("--list", dest="list", default=None, help="which list (default: all lists)")
     shc.set_defaults(func=_cmd_shopping)
 >>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
+=======
+    ptr = sub.add_parser("travel", help="travel planning (trips, destinations, itineraries)")
+    trsub = ptr.add_subparsers(dest="travel_action", required=True)
+    trl = trsub.add_parser("list", help="list all trips (optionally filter by status)")
+    trl.add_argument("--status", default=None, choices=["planned", "active", "completed", "cancelled"], help="filter by status")
+    trl.set_defaults(func=_cmd_travel)
+    tra = trsub.add_parser("add", help="add a new trip")
+    tra.add_argument("destination", help="trip destination (city, address, region)")
+    tra.add_argument("--start-date", dest="start_date", help="start date YYYY-MM-DD")
+    tra.add_argument("--end-date", dest="end_date", help="end date YYYY-MM-DD")
+    tra.add_argument("--type", dest="trip_type", default="personal", choices=["personal", "work", "holiday", "family", "medical", "other"], help="trip type")
+    tra.add_argument("--notes", help="free-text notes")
+    tra.set_defaults(func=_cmd_travel)
+    trs = trsub.add_parser("status", help="update trip status")
+    trs.add_argument("trip_id", help="trip identifier")
+    trs.add_argument("status", choices=["planned", "active", "completed", "cancelled"], help="new status")
+    trs.set_defaults(func=_cmd_travel)
+    tri = trsub.add_parser("itinerary", help="add an itinerary item to a trip")
+    tri.add_argument("trip_id", help="trip identifier")
+    tri.add_argument("activity", help="activity description")
+    tri.add_argument("--day", type=int, default=1, help="day of trip (1-indexed)")
+    tri.add_argument("--time", dest="time", help="time (e.g. '09:00', 'afternoon')")
+    tri.add_argument("--location", help="where the activity takes place")
+    tri.add_argument("--notes", help="notes for this activity")
+    tri.set_defaults(func=_cmd_travel)
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
     return p
 
 
