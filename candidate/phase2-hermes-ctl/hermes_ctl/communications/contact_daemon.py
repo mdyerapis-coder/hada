@@ -34,6 +34,7 @@ from hermes_ctl.communications.email_channel import EmailChannel
 from hermes_ctl.communications.telegram import TelegramChannel
 from hermes_ctl.communications.webhook_receiver import serve as serve_sms
 from hermes_ctl.memory.store import MemoryStore
+from hermes_ctl.secrets import EnvSecretStore, SecretError, NetworkDenied, default_contact_policy
 
 
 def _store_inbox(store: MemoryStore, msg: Message, ref: str) -> None:
@@ -76,6 +77,10 @@ def main() -> None:
     interval = int(os.environ.get("CONTACT_POLL_SECONDS", "30"))
     stop = threading.Event()
 
+    # Governed seams: secrets via a fail-closed store, egress via default-deny policy.
+    secrets = EnvSecretStore()
+    net_policy = default_contact_policy()
+
     threads: list[threading.Thread] = []
 
     # SMS: push webhook receiver (HTTP server in a background thread)
@@ -92,29 +97,37 @@ def main() -> None:
     threads.append(sms_t)
     print(f"[contact] SMS webhook receiver on :{port} (TLS={'on' if tls else 'off'})")
 
-    # Email: periodic IMAP poll (only if creds present)
-    if os.environ.get("GMAIL_SMTP_USER") and os.environ.get("GMAIL_APP_PASSWORD"):
-        email_ch = EmailChannel()
-        t = threading.Thread(
-            target=_poll_loop,
-            args=(store, "email", email_ch.received, interval, stop),
-            name="email-poll", daemon=True,
-        )
-        t.start(); threads.append(t)
-        print("[contact] Email inbound poll enabled")
+    # Email: periodic IMAP poll (only if creds present + egress permitted)
+    if secrets.get("GMAIL_SMTP_USER") and secrets.get("GMAIL_APP_PASSWORD"):
+        try:
+            net_policy.require("imaps://imap.gmail.com:993")
+            email_ch = EmailChannel()
+            t = threading.Thread(
+                target=_poll_loop,
+                args=(store, "email", email_ch.received, interval, stop),
+                name="email-poll", daemon=True,
+            )
+            t.start(); threads.append(t)
+            print("[contact] Email inbound poll enabled")
+        except (SecretError, NetworkDenied) as exc:
+            print(f"[contact] Email disabled: {exc}")
     else:
         print("[contact] Email disabled (no GMAIL_SMTP_USER / GMAIL_APP_PASSWORD)")
 
-    # Telegram: periodic getUpdates poll (only if token present)
-    if os.environ.get("TELEGRAM_BOT_TOKEN"):
-        tg_ch = TelegramChannel()
-        t = threading.Thread(
-            target=_poll_loop,
-            args=(store, "telegram", tg_ch.received, interval, stop),
-            name="telegram-poll", daemon=True,
-        )
-        t.start(); threads.append(t)
-        print("[contact] Telegram inbound poll enabled")
+    # Telegram: periodic getUpdates poll (only if token present + egress permitted)
+    if secrets.get("TELEGRAM_BOT_TOKEN"):
+        try:
+            net_policy.require("https://api.telegram.org:443")
+            tg_ch = TelegramChannel()
+            t = threading.Thread(
+                target=_poll_loop,
+                args=(store, "telegram", tg_ch.received, interval, stop),
+                name="telegram-poll", daemon=True,
+            )
+            t.start(); threads.append(t)
+            print("[contact] Telegram inbound poll enabled")
+        except (SecretError, NetworkDenied) as exc:
+            print(f"[contact] Telegram disabled: {exc}")
     else:
         print("[contact] Telegram disabled (no TELEGRAM_BOT_TOKEN)")
 

@@ -22,10 +22,48 @@ deploy, secret/infra change, or governance bypass occurs.
 - Promoted `docs/adr/0001-governed-release-pipeline.md` Proposed → Accepted.
 - Recorded progress (this file).
 
+- **Cycle 15 — outbound send (`hermesctl send`).** Added `send`
+  subcommand: `hermesctl send <email|telegram> --to X --body Y [--subject Z]`.
+  Reads creds from `SecretStore`, checks egress via `NetworkPolicy`
+  (fail-closed) before sending. `EmailChannel.send` (Gmail SMTP) + `TelegramChannel.send`
+  (getUpdates) wired. **Live-verified both directions**: Telegram -> chat
+  7620778176 (ref 17), Email self-send OK. 2 new CLI tests (blocked-without-creds,
+  routes-to-channel); suite 70 passed. `contact.env` values quoted for bash-source
+  safety. All 3 channels now **inbound + outbound** live.
+
+## Cycle 14 — governed secrets + network egress seams.
+  `hermes_ctl/secrets/store.py` (fail-closed `SecretStore`: Env/Dict/Bitwarden
+  backends) and `hermes_ctl/secrets/network.py` (default-deny egress
+  `NetworkPolicy`; `default_contact_policy` permits only Telegram/IMAP/SMTP
+  hosts, strict port). `contact_daemon.py` now starts each channel only if its
+  secret is present AND its egress endpoint is permitted (fail-closed). 8 new
+  tests; suite 68 passed. Live: daemon restarted, all 3 channels still feed inbox.
+  This addresses the prior gap: secrets were read ad-hoc from `os.environ` with
+  no allowlist on egress. Still unaddressed: LLM inference not reachable from the
+  box (brains run on laptop Tailscale), outbound send path, secret-health alerts.
+
+## Cycle 13 — Phase 2: Hermes CTL CLI (`hermesctl`)
+- Branch: `agent/phase2-hermes-ctl-cli` (draft PR)
+- Added `candidate/phase2-hermes-ctl/hermes_ctl/cli.py`: command-line surface
+  exposing the Phase 2 foundation as offline, no-secret commands:
+  - `hermesctl memory <search|remember|forget>` — long-term + working memory
+  - `hermesctl inbox <list|show>` — inbound SMS/Email/Telegram (reads the
+    MemoryStore inbox the contact daemon fills)
+  - `hermesctl identity <show|set-pref>` — profile + preferences
+  - `hermesctl tasks <list|add>` — productivity task store
+- Aligned all calls to the real subsystem APIs (MemoryStore.Fact.id,
+  Identity.get_profile/all_preferences/set_preference, ProductivityStore).
+- Added `candidate/phase2-hermes-ctl/tests/test_cli.py` (5 tests).
+- Verified: `pytest tests/` -> 57 passed. Live smoke: `inbox list` shows real
+  `[sms]` entries from the running daemon; `tasks add`+`list` works.
+- Run: `python3 -m hermes_ctl.cli <subcommand> [args]` (env `HERMES_CTL_STORE`).
+- Next: Phase 3 (Personal Intelligence) daily-briefing surface — needs live LLM
+  (gated: network + brains creds per Human Approval Boundary).
+
 ## Open / blocked
 - Phase B0 deployment: human authorization required (not automated).
-- PR #4 "merged" anomaly on `main`: PR #5 carries the full pipeline.
-- v3 B0 checksum-gate path-independence: deferred (edits deploy preflight script).
+- Phase 3+ requires live LLM routing (brains :8080/:8081) + (for Telegram/Email
+  send) creds — gated human work.
 
 ## Cycle 6 — Phase 2 start: Hermes CTL memory foundation
 - Branch: `agent/phase2-hermes-ctl-memory-foundation` (draft PR)
@@ -93,7 +131,14 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 36 passed.
 - **Live verified (b)**: HttpRouter hit real `:8080` (qwen3b) + `:8081`
   (hermes-7b) → both responded. No secrets required (brains open on localhost).
-- **Live verified (Telegram)**: `TelegramChannel.send()` delivered a test message to chat 7620778176 (message_id 3) using the valid @Hermesctlrbot token. Token read from env at runtime, never stored.
+- Live-verified (Telegram): valid bot token from Bitwarden (`Hermes CTL bot token`
+  entry, @Hermesctlrbot id 8938657874) injected into gitignored `contact.env`;
+  daemon polls getUpdates every 30s; verified inbound messages land in the
+  inbox (tags `inbox`+`telegram`).
+- Email inbound LIVE: valid 16-char Gmail app password set in gitignored
+  `contact.env` (GMAIL_APP_PASSWORD). Daemon IMAP-polls INBOX every 30s;
+  verified inbound mail (incl. real recent mail + test) lands in inbox
+  (tags `inbox`+`email`). All three channels (SMS/Telegram/Email) now live.
 - **Live verified (Email)**: `EmailChannel.send()` delivered a test email to dyer.mason1994@gmail.com via Gmail app password (smtp.gmail.com:465). Creds from env, never stored. 4 email tests; total 40.
 - **SMS (handset gateway, Option B — capcom6 SMS Gateway for Android)**: `SmsChannel` rewritten to the REAL Local Server API (Basic Auth; `POST /message`, `GET /inbox`) + `webhook_receiver.py` (HMAC-validated `sms:received` -> MemoryStore inbox). Built + 3 tests (47 total). **Live-verify deferred**: needs (1) Local Server ON in the app (Settings > Local Server, you already have it open), (2) hada box reachable from phone — join phone to the same Tailscale tailnet, or expose the webhook receiver; (3) creds from env (SMS_GATEWAY_URL/USER/PASS, SMS_WEBHOOK_SECRET). Carrier email-to-SMS ruled out (Telstra consumer gateway dead; JB Hi-Fi = Telstra MVNO).
 - **Design decision (user)**: route ALL contact via the Hermes CTL
