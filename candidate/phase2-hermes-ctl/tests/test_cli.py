@@ -136,6 +136,28 @@ def test_briefing_validate_rejects_bad(tmp_path):
     assert main(["briefing", "validate", str(bad)]) == 1
 
 
+def test_briefing_run_executes(monkeypatch, tmp_path):
+    import hermes_ctl.cli as cli
+    from hermes_ctl.intelligence.briefing import run_briefing
+
+    class _CliFakeRouter:
+        def __init__(self, replies):
+            self._replies = list(replies)
+        def complete(self, role, prompt, *, max_tokens=400):
+            return self._replies.pop(0)
+
+    monkeypatch.setattr(cli, "load_brains", lambda: object())
+    monkeypatch.setattr("hermes_ctl.intelligence.http_router.HttpRouter", lambda b: _CliFakeRouter([
+        '{"headline":"h1","prescription":"p1","evidence":["a","b","c"],"command":"x"}',
+        '{"headline":"h2","prescription":"p2","evidence":["d","e","f"],"command":"y"}',
+        '{"headline":"h3","prescription":"p3","evidence":["g","h","i"],"command":"z"}',
+        '{"headline":"h4","prescription":"p4","evidence":["j","k","l"],"command":"w"}',
+    ]))
+    monkeypatch.setenv("HERMES_CTL_STORE", str(tmp_path / "store.json"))
+    monkeypatch.setenv("HERMES_DREAMS_DIR", str(tmp_path / "dreams"))
+    assert main(["briefing", "run"]) == 0
+
+
 def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):

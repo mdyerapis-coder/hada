@@ -40,3 +40,18 @@ def test_poll_loop_stores_new_and_skips_seen():
     inbox = store.search(tag="inbox")
     assert len(inbox) == 2
     assert calls["n"] >= 2  # loop ran multiple times
+
+def test_daemon_skips_channels_without_secrets(monkeypatch, tmp_path):
+    # With no GMAIL/TELEGRAM secrets in env, the daemon's presence checks
+    # must NOT raise (they used to crash on SecretError). We exercise the
+    # helper path directly via a minimal import smoke + _has_secret.
+    import hermes_ctl.communications.contact_daemon as cd
+    from hermes_ctl.secrets import EnvSecretStore, SecretError
+    store = EnvSecretStore(env={})
+    assert cd._has_secret(store, "GMAIL_SMTP_USER") is False
+    assert cd._has_secret(store, "TELEGRAM_BOT_TOKEN") is False
+    # present secret -> True
+    store2 = EnvSecretStore(env={"GMAIL_APP_PASSWORD": "x"})
+    assert cd._has_secret(store2, "GMAIL_APP_PASSWORD") is True
+    # importing the daemon module must not fail
+    assert callable(cd.main)

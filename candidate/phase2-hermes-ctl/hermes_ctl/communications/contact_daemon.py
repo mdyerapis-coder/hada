@@ -37,6 +37,19 @@ from hermes_ctl.memory.store import MemoryStore
 from hermes_ctl.secrets import EnvSecretStore, SecretError, NetworkDenied, default_contact_policy
 
 
+def _has_secret(secrets: EnvSecretStore, name: str) -> bool:
+    """Fail-closed secret presence check.
+
+    EnvSecretStore.get raises SecretError on a missing/empty secret (by design),
+    so we cannot use a truthiness test. Catch and treat absence as False so a
+    channel is simply skipped when its credentials are not configured.
+    """
+    try:
+        return bool(secrets.get(name))
+    except SecretError:
+        return False
+
+
 def _store_inbox(store: MemoryStore, msg: Message, ref: str) -> None:
     store.remember(
         f"inbox:{msg.channel}:{ref}",
@@ -98,7 +111,7 @@ def main() -> None:
     print(f"[contact] SMS webhook receiver on :{port} (TLS={'on' if tls else 'off'})")
 
     # Email: periodic IMAP poll (only if creds present + egress permitted)
-    if secrets.get("GMAIL_SMTP_USER") and secrets.get("GMAIL_APP_PASSWORD"):
+    if _has_secret(secrets, "GMAIL_SMTP_USER") and _has_secret(secrets, "GMAIL_APP_PASSWORD"):
         try:
             net_policy.require("imaps://imap.gmail.com:993")
             email_ch = EmailChannel()
@@ -115,7 +128,7 @@ def main() -> None:
         print("[contact] Email disabled (no GMAIL_SMTP_USER / GMAIL_APP_PASSWORD)")
 
     # Telegram: periodic getUpdates poll (only if token present + egress permitted)
-    if secrets.get("TELEGRAM_BOT_TOKEN"):
+    if _has_secret(secrets, "TELEGRAM_BOT_TOKEN"):
         try:
             net_policy.require("https://api.telegram.org:443")
             tg_ch = TelegramChannel()

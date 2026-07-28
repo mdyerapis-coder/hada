@@ -273,9 +273,10 @@ def _cmd_briefing(args: argparse.Namespace) -> int:
             print(f"brains config error: {exc}", file=sys.stderr)
             return 1
         from hermes_ctl.intelligence.briefing import run_briefing
+        from hermes_ctl.intelligence.http_router import HttpRouter
         try:
             path = run_briefing(
-                brains=brains,
+                brains=HttpRouter(brains),
                 store=_store(),
                 dreams_dir=os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams")),
             )
