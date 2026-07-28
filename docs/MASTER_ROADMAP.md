@@ -372,9 +372,11 @@ Completion does not signify the end of development. Instead, it marks the transi
 
 ## Phase 2 — Hermes CTL (personal AI operating environment)
 
-**Foundation complete (Cycles 6–11).** All six Phase 2 foundation blocks
-delivered as a stdlib-only, offline-verifiable Python package under
-`candidate/phase2-hermes-ctl/hermes_ctl/`, 31 unit tests passing:
+**Foundation complete; deployable surface in progress (Cycles 6–13).** All six
+Phase 2 foundation blocks delivered as a stdlib-only, offline-verifiable Python
+package under `candidate/phase2-hermes-ctl/hermes_ctl/`. Phase 2 is MERGED to
+`main` (PR #13) + unified contact daemon deployed (PR #13 follow-up, commit
+aaa0067) + `hermesctl` CLI drafted (PR #15). 57 unit tests passing:
 
 1. Memory ✅ — `MemoryStore` (long-term facts+tags+TTL, working memory,
    typed knowledge graph, JSON persistence).
@@ -389,10 +391,12 @@ delivered as a stdlib-only, offline-verifiable Python package under
    Phase 6 (Infrastructure) — requires the running inference stack + creds
    (Human Approval Boundary).
 
-**Boundary:** the six foundation blocks are complete and verified locally.
-Wiring real external integrations (live messaging transports, calendar/CRM
-sync, model inference) is gated human work — each is a later, explicitly
-authorized cycle. ADR 0003 (Hermes CTL architecture) Accepted.
+**Boundary:** the six foundation blocks are complete and verified (57 unit
+tests). Inbound SMS is LIVE via the deployed unified contact daemon (Sms
+Forwarder app -> webhook receiver -> MemoryStore inbox). The `hermesctl` CLI
+exposes memory/identity/inbox/tasks offline. Live Telegram/Email send + model
+inference remain gated human work (creds / running inference stack — Human
+Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
 
