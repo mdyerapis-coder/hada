@@ -1,19 +1,15 @@
-<<<<<<< HEAD
 """Tests for the relationship management module (offline, no LLM/network)."""
 
 import json
 import os
 import tempfile
-=======
 """Tests for the relationship management module (offline, no network/LLM)."""
 
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 import time
 
 import pytest
 
 from hermes_ctl.intelligence.relationships import (
-<<<<<<< HEAD
     Relationship,
     RelationshipError,
     RelationshipSnapshot,
@@ -21,18 +17,15 @@ from hermes_ctl.intelligence.relationships import (
     scan_relationships,
     update_relationship,
     _compute_strength,
-=======
     RELATIONSHIP_TYPES,
     Interaction,
     Relationship,
     RelationshipError,
     Relationships,
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 )
 from hermes_ctl.memory.store import MemoryStore
 
 
-<<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Dataclass tests
 # ---------------------------------------------------------------------------
@@ -309,7 +302,6 @@ def test_relationship_fact_is_expired(tmp_path):
     # Verify it's searchable
     facts = list(store.search(tag="relationship"))
     assert len(facts) == 1
-=======
 def _make_store(tmp_path) -> MemoryStore:
     return MemoryStore(persist_path=str(tmp_path / "mem.json"))
 
@@ -539,4 +531,3 @@ def test_relationship_types():
     assert "friend" in RELATIONSHIP_TYPES
     assert "work" in RELATIONSHIP_TYPES
     assert len(RELATIONSHIP_TYPES) >= 10
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
