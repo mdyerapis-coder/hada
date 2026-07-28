@@ -4,6 +4,20 @@ Autonomous build loop log. Each cycle implements one bounded, verified change
 on a feature branch, opens a draft PR, and records progress here. No merge,
 deploy, secret/infra change, or governance bypass occurs.
 
+## Cycle 25 — Relationship management (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-relationship-management-cycle25`
+- New module `hermes_ctl/intelligence/relationships.py` — `Relationships` class
+  wrapping MemoryStore with relationship types, interaction logging, and
+  important-date tracking.
+- Features:
+  - `Relationships.add()` / `.get()` / `.list()` / `.remove()` (with type filter)
+  - `Relationships.log_interaction()` / `.interactions()` / `.last_interaction()`
+  - `Relationships.set_important_date()` / `.upcoming_dates()`
+  - Knowledge-graph integration (Node + Edge for person nodes)
+  - CLI: `hermesctl crm rel-add|rel-list|rel-log|rel-recent|rel-dates`
+- Tests: 21 unit tests + 4 CLI tests
+- Verified: 174 total tests passing
+
 ## Cycle 1 — Repair-pipeline test suite + guardrail fix
 - Branch: `agent/autofix-add-autonomous-repair-pipeline` (PR #5)
 - Added `tests/ci/test_repair_pipeline.sh` (guardrail allow/deny + orchestrator
@@ -211,60 +225,6 @@ deploy, secret/infra change, or governance bypass occurs.
 - NOTE: M1 appliance NOT reinit'd — target runs newer 0.2.2 than local v5 (0.2.0);
   full redeploy would downgrade + risk downtime. Worker tree staged instead.
 
-## Cycle 24 — Long-term memory curation (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-long-term-memory-cycle24`
-- New module `hermes_ctl/intelligence/curation.py` — importance scoring,
-  curation suggestions, and consolidation of facts in MemoryStore:
-  - `score_fact()`: computes recency, frequency, tag-boost, and composite
-    importance scores (0.0–1.0) for any fact.
-  - `curate()`: scans all facts, scores them, returns `keep`/`review`/`archive`
-    suggestions with human-readable reasons.
-  - `consolidate()`: token-overlap similarity detection for near-duplicate
-    facts, suggesting merges with `duplicate`/`related` labels.
-  - `apply_suggestions()`: applies curation actions to the store (dry-run safe
-    by default, can actually `forget()` up to N archival candidates).
-- New CLI commands: `hermesctl memory curate` (scan + score) and
-  `hermesctl memory consolidate` (find similar facts).
-- 24 new tests in `tests/test_curation.py` + 4 CLI tests in `tests/test_cli.py`.
-- Verified: `pytest tests/` → 150 passed.
-- Next: Relationship management (Phase 3: Personal Intelligence).
-
-## Cycle 25 — Relationship management (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-relationship-management-cycle25`
-- New module `hermes_ctl/intelligence/relationships.py` — tracks contacts,
-  relationship type, interaction strength, and contact frequency:
-  - `Relationship` / `RelationshipSnapshot` dataclasses with to_dict/from_dict.
-  - `scan_relationships()` — reads all relationship facts from MemoryStore
-    (read-only, safe defaults, type breakdown).
-  - `update_relationship()` — create or update a relationship record (upsert
-    with channel/tag/notes/strength).
-  - `record_interaction()` — auto-increment contact count + recency on message
-    receipt, with strength recalculation.
-  - `_compute_strength()` — frequency × recency formula (log scale, clamped).
-- New CLI commands: `hermesctl relationship list|show|update|interact`.
-- 22 new tests in `tests/test_relationships.py`.
-- Verified: `pytest tests/` → 159 passed.
-- Next: Shopping intelligence (Phase 3: Personal Intelligence).
-
-## Cycle 23 — Context awareness (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-context-awareness-cycle23`
-- New module `hermes_ctl/intelligence/context.py` — `ContextSnapshot` dataclass
-  with structured snapshot of current system state:
-  - `scan_context()`: reads MemoryStore inbox (last 5, capped), open tasks via
-    ProductivityStore, today's plan + latest briefing from dreams dir, user
-    profile from Identity, and existing context-tagged facts. All read-only,
-    safe defaults for missing data, no network/LLM.
-  - `deliver_context()`: persists snapshot to MemoryStore (tagged `context` +
-    `snapshot`) for downstream Phase 3 consumers.
-- New CLI command: `hermesctl context` — scans, persists, prints JSON snapshot.
-- 13 new tests in `tests/test_context.py`: empty store, inbox collection,
-  inbox cap, plan loading, briefing loading, to_dict/from_dict roundtrip,
-  safe defaults, deliver persistence, no-store safety, tag correctness,
-  missing plans dir, corrupt plan file, open tasks.
-- Verified: `pytest tests/` → 122 passed (up from previous count).
-- Next: Long-term memory (curation, consolidation, importance scoring).
-
->>>>>>> 9e2cff6 (feat(phase3): long-term memory curation module (Cycle 24))
 ## Cycle 19c — durable deployment state (2026-07-28)
 
 ### Brain forwarder (hermes-clean, this box)
@@ -288,16 +248,18 @@ deploy, secret/infra change, or governance bypass occurs.
 ### Open
 - Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
 
-## Cycle 26 — Shopping intelligence (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-shopping-intelligence-cycle26`
-- New module `hermes_ctl/intelligence/shopping.py` — manages shopping lists,
-  items, purchase tracking, and category grouping:
-  - `ShoppingItem` / `ShoppingSnapshot` dataclasses with to_dict/from_dict.
-  - `scan_shopping()` — reads all shopping items from MemoryStore (with list
-    filter and active-only modes, category/list breakdown).
-  - `add_item()` — creates items, merges duplicates (increments quantity).
-  - `remove_item()`, `mark_purchased()`, `clear_purchased()`.
-- New CLI commands: `hermesctl shopping list|add|remove|buy|clear`.
-- 22 new tests in `tests/test_shopping.py`.
-- Verified: `pytest tests/` → 152 passed.
-- Next: Travel planning (Phase 3: Personal Intelligence).
+## Cycle 27 — Travel planning (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-travel-planning-cycle27`
+- New module `hermes_ctl/intelligence/travel.py` — manages trips, destinations,
+  dates, itinerary items, and travel status tracking:
+  - `TravelTrip` / `TravelSnapshot` / `ItineraryItem` dataclasses with
+    to_dict/from_dict.
+  - `scan_trips()` — reads all trip facts from MemoryStore (status filter,
+    breakdown, upcoming-sorted).
+  - `add_trip()` — create a new trip (auto-id from destination).
+  - `update_trip_status()` — planned/active/completed/cancelled.
+  - `add_itinerary()` — add scheduled activities to a trip.
+- New CLI commands: `hermesctl travel list|add|status|itinerary`.
+- 20 new tests in `tests/test_travel.py`.
+- Verified: `pytest tests/` → 129 passed (clean tree).
+- Next: Health tracking (Phase 3: Personal Intelligence).
