@@ -253,6 +253,23 @@ def _cmd_brains(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_context(args: argparse.Namespace) -> int:
+    """Show current system context snapshot (read-only, no network)."""
+    from hermes_ctl.intelligence.context import scan_context, deliver_context
+
+    plans_dir = os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams"))
+    try:
+        ctx = scan_context(store=_store(), plans_dir=plans_dir)
+        # persist the snapshot for downstream consumers
+        deliver_context(ctx, store=_store())
+    except Exception as exc:  # noqa: BLE001 - surface collection failures cleanly
+        print(f"context scan failed: {exc}", file=sys.stderr)
+        return 1
+    import json as _json
+    print(_json.dumps(ctx.to_dict(), indent=2, ensure_ascii=False))
+    return 0
+
+
 def _cmd_briefing(args: argparse.Namespace) -> int:
     if args.briefing_action == "validate":
         try:
@@ -442,6 +459,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     pb = sub.add_parser("brains", help="list configured llmfit brains (HADA inference backend)")
     pb.set_defaults(func=_cmd_brains)
+
+    pcx = sub.add_parser("context", help="show current system context snapshot")
+    pcx.set_defaults(func=_cmd_context)
 
     pbr = sub.add_parser("briefing", help="Dream-style daily briefing (validate | run)")
     brsub = pbr.add_subparsers(dest="briefing_action", required=True)
