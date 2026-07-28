@@ -22,6 +22,17 @@ deploy, secret/infra change, or governance bypass occurs.
 - Promoted `docs/adr/0001-governed-release-pipeline.md` Proposed → Accepted.
 - Recorded progress (this file).
 
+- **Cycle 14 — governed secrets + network egress seams.** Added
+  `hermes_ctl/secrets/store.py` (fail-closed `SecretStore`: Env/Dict/Bitwarden
+  backends) and `hermes_ctl/secrets/network.py` (default-deny egress
+  `NetworkPolicy`; `default_contact_policy` permits only Telegram/IMAP/SMTP
+  hosts, strict port). `contact_daemon.py` now starts each channel only if its
+  secret is present AND its egress endpoint is permitted (fail-closed). 8 new
+  tests; suite 68 passed. Live: daemon restarted, all 3 channels still feed inbox.
+  This addresses the prior gap: secrets were read ad-hoc from `os.environ` with
+  no allowlist on egress. Still unaddressed: LLM inference not reachable from the
+  box (brains run on laptop Tailscale), outbound send path, secret-health alerts.
+
 ## Cycle 13 — Phase 2: Hermes CTL CLI (`hermesctl`)
 - Branch: `agent/phase2-hermes-ctl-cli` (draft PR)
 - Added `candidate/phase2-hermes-ctl/hermes_ctl/cli.py`: command-line surface
