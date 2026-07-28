@@ -1,0 +1,236 @@
+name: hada
+
+x-security: &security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  restart: unless-stopped
+  networks:
+    - control
+
+x-stateful-security: &stateful-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    - CHOWN
+    - DAC_OVERRIDE
+    - FOWNER
+    - SETGID
+    - SETUID
+  restart: unless-stopped
+  networks:
+    - control
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    <<: *stateful-security
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    <<: *stateful-security
+    # The Valkey password is NEVER placed in process arguments, the
+    # healthcheck, the environment, or any rendered command array. Valkey 8
+    # does NOT implement --requirepass-file, so the password is supplied via
+    # a PROTECTED COMPLETE CONFIGURATION FILE generated atomically on
+    # hada-control by provision-secrets.sh at
+    # /var/lib/hada/secrets/valkey/valkey.conf (owned by the numeric
+    # container UID/GID 999:1000 of valkey/valkey:8-alpine, mode 0400) and
+    # mounted READ-ONLY into the container as /run/secrets/valkey.conf.
+    # valkey-server is started with the supported configuration-file form.
+    # No secret value appears in `docker inspect`, command arrays,
+    # healthchecks, logs, or evidence.
+    command:
+      - valkey-server
+      - /run/secrets/valkey.conf
+    secrets:
+      - source: valkey_conf
+        target: valkey.conf
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      # Reads the password from the protected configuration file INSIDE the
+      # container at runtime (VALKEY_PASSWORD is NOT in this container's
+      # environment); never embeds a value, never uses valkey-cli -a.
+      test: ["CMD", "sh", "-c", "valkey-cli -a \"$(awk '/^requirepass /{print $2}' /run/secrets/valkey.conf)\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  orchestrator:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: hada-orchestrator:0.2.0
+    <<: *security
+    read_only: true
+    environment:
+      HADA_CONFIG: /opt/hada/config/hada.yaml
+      HADA_DATABASE_DSN: ${HADA_DATABASE_DSN}
+      HADA_VALKEY_URL: ${HADA_VALKEY_URL}
+      HADA_STATE_DIR: /var/lib/hada
+    volumes:
+      - ${HADA_STATE_DIR:-/var/lib/hada}:/var/lib/hada
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /var/log/hada:size=64m,mode=0750,uid=10001,gid=10001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9108/readyz', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 45s
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    <<: *security
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+
+  loki:
+    image: grafana/loki:3.4.2
+    <<: *security
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ../loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:v1.12.0
+    <<: *security
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    read_only: false
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      HOSTNAME: ${HOSTNAME:-hada-host}
+    volumes:
+      - ../alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - alloy-data:/var/lib/alloy/data:rw
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    networks:
+      - control
+      - ingress
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: https://${HADA_DOMAIN}/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HADA_DOMAIN: ${HADA_DOMAIN}
+      HADA_ACME_EMAIL: ${HADA_ACME_EMAIL}
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - ingress
+    depends_on:
+      - grafana
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    <<: *security
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+
+networks:
+  control:
+    internal: true
+  ingress:
+    internal: false
+
+volumes:
+  postgres-data:
+  valkey-data:
+  prometheus-data:
+  loki-data:
+  alloy-data:
+  grafana-data:
+  caddy-data:
+  caddy-config:
+
+# Protected runtime secret files. The Valkey password is supplied to the
+# container via a COMPLETE valkey configuration file (never in process args,
+# env, or healthcheck). The host source is written atomically by
+# provision-secrets.sh at /var/lib/hada/secrets/valkey/valkey.conf, owned by
+# the numeric valkey container UID/GID (999:1000, valkey/valkey:8-alpine),
+# mode 0400, and is NOT included in evidence. NOTE: /var/lib/hada is a
+# persistent disk path, not tmpfs; no tmpfs claim is made. Compose mounts the
+# secret read-only into the container as /run/secrets/valkey.conf.
+secrets:
+  valkey_conf:
+    file: /var/lib/hada/secrets/valkey/valkey.conf

@@ -1,0 +1,3 @@
+Ed25519 key ID: b5acf693e8261ce592bc968e15dfe1f0
+Public PEM SHA-256: cbbb464308fa4ca001c57f76d8815b1edd04368d802d149df0e3bc3ead6244e3
+Party 3 must retain and authenticate this fingerprint outside the reviewed archive.

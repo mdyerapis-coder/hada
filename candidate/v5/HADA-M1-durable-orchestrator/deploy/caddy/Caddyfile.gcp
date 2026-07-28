@@ -1,0 +1,35 @@
+# HADA M1 Production Caddyfile for Google Cloud (hada-control VM)
+#
+# Applied via compose.gcp.yaml override (mounts this file at /etc/caddy/Caddyfile).
+#
+# Design decisions:
+#   - HTTP only (no HTTPS / no TLS termination at Caddy).
+#   - ACME certificate issuance is DISABLED (no email directive).
+#   - Caddy is bound to 127.0.0.1:80 via the compose override.
+#   - Administrative access is via IAP SSH port forwarding:
+#       gcloud compute ssh hada-control --tunnel-through-iap -- -L 8080:localhost:80
+#     Then access http://localhost:8080/grafana/ in the local browser.
+#   - Port 443 is NOT published. No private TLS design is documented yet.
+
+{
+  admin off
+}
+
+:80 {
+  encode zstd gzip
+
+  header {
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+
+  handle_path /grafana/* {
+    reverse_proxy grafana:3000
+  }
+
+  respond /healthz 200
+
+  respond 404
+}
