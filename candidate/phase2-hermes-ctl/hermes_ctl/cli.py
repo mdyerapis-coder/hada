@@ -266,16 +266,24 @@ def _cmd_briefing(args: argparse.Namespace) -> int:
         print("OK: briefing schema valid")
         return 0
     if args.briefing_action == "run":
-        # Gated: requires a live brain (Phase 3 inference). Mac must be online.
+        # Gated: requires a live brain (Phase 3 inference).
         try:
             brains = load_brains()
         except (ValueError, FileNotFoundError) as exc:
             print(f"brains config error: {exc}", file=sys.stderr)
             return 1
-        # Production of prescriptions needs live LLM — not available headless.
-        print("briefing run requires live inference (Mac/Hermes-clean online).", file=sys.stderr)
-        print("Schema + delivery are offline-verified; wire the LLM step when brains reachable.", file=sys.stderr)
-        return 1
+        from hermes_ctl.intelligence.briefing import run_briefing
+        try:
+            path = run_briefing(
+                brains=brains,
+                store=_store(),
+                dreams_dir=os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams")),
+            )
+        except Exception as exc:  # noqa: BLE001 - surface inference/delivery failures cleanly
+            print(f"briefing run failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"briefing delivered: {path}")
+        return 0
     return 2  # pragma: no cover
 
 

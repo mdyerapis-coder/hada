@@ -3,6 +3,8 @@
 import os
 import tempfile
 
+import pytest
+
 from hermes_ctl.intelligence.briefing import (
     Briefing,
     BriefingError,
@@ -125,3 +127,51 @@ def test_scan_signals_read_only(tmp_path):
     sig = scan_signals(store=store, inbox_dir=str(tmp_path))
     assert "memory_facts" in sig
     assert sig["memory_facts"]
+
+
+class _FakeRouter:
+    """Stand-in for HttpRouter that returns deterministic JSON (no network)."""
+
+    def __init__(self, replies):
+        self._replies = list(replies)
+        self.calls = []
+
+    def complete(self, role, prompt, *, max_tokens=400):
+        self.calls.append((role, prompt))
+        return self._replies.pop(0)
+
+
+def test_run_briefing_generates_and_delivers(tmp_path):
+    from hermes_ctl.intelligence.briefing import run_briefing
+
+    store = MemoryStore(persist_path=str(tmp_path / "mem.json"))
+    dreams = str(tmp_path / "dreams")
+    replies = [
+        '{"headline":"Archive stale evidence","prescription":"Move old logs to cold storage.","evidence":["a","b","c"],"command":"archive --old"}',
+        '{"headline":"Trim spend","prescription":"Cancel unused subscription.","evidence":["x","y","z"],"command":"billing review"}',
+        '{"headline":"Learn tooling","prescription":"Practice the new CLI.","evidence":["1","2","3"],"command":"hermesctl tasks"}',
+        '{"headline":"Batch comms","prescription":"Group notifications.","evidence":["p","q","r"],"command":"none"}',
+    ]
+    router = _FakeRouter(replies)
+    path = run_briefing(brains=router, store=store, dreams_dir=dreams, date="2026-07-28")
+    assert path.endswith("dream-2026-07-28.json")
+    # 4 categories -> 4 calls
+    assert len(router.calls) == 4
+    # persisted + valid
+    assert store.search(tag="briefing")
+    import json
+    data = json.load(open(path, encoding="utf-8"))
+    assert len(data["prescriptions"]) == 4
+    cats = {p["cat"] for p in data["prescriptions"]}
+    assert cats == {"MEMORY", "COST", "SKILLS", "WORKFLOW"}
+
+
+def test_run_briefing_fail_closed_on_bad_llm(tmp_path):
+    from hermes_ctl.intelligence.briefing import run_briefing, BriefingError
+
+    store = MemoryStore(persist_path=str(tmp_path / "mem.json"))
+    # first reply is malformed -> must raise, no delivery
+    router = _FakeRouter(["not json at all", "{}", "{}", "{}"])
+    with pytest.raises(BriefingError):
+        run_briefing(brains=router, store=store, dreams_dir=str(tmp_path / "dreams"), date="2026-07-28")
+    assert store.search(tag="briefing") == []
