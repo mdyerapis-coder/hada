@@ -178,11 +178,11 @@ Enable proactive assistance.
 - Smart reminders
 - Context awareness
 - Long-term memory
-- Relationship management
-- Shopping intelligence
+- Relationship management ✅ (Cycle 25: Relationships class + interaction logging + important dates + CLI)
+- Shopping intelligence ✅ (Cycle 26: shopping lists — items, purchase tracking, categories, CLI)
 - Travel planning ✅ (Cycle 27: travel trip planning — destinations, dates, itineraries, CLI)
-- Health tracking ✅ (Cycle 28: health metrics — weight, steps, sleep, water, mood, exercise, CLI)
-- Habit tracking
+- Health tracking
+- Habit tracking ✅ (Cycle 29: habit tracking — streaks, categories, logs, due-today, CLI)
 - Financial awareness
 
 ## Definition of Done
