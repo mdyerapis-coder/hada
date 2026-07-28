@@ -104,6 +104,19 @@ def test_send_telegram_routes_to_channel(monkeypatch, tmp_path):
     assert sent == {"to": "7620778176", "body": "hello"}
 
 
+def test_brains_command_lists_roles(monkeypatch, tmp_path):
+    p = tmp_path / "brains.yaml"
+    p.write_text(
+        "brains:\n"
+        "  fast:\n    endpoint: http://127.0.0.1:8080/v1/chat/completions\n    model: /m.gguf\n"
+        "  agent:\n    endpoint: http://127.0.0.1:8081/v1/chat/completions\n    model: /a.gguf\n"
+        "  max:\n    endpoint: http://127.0.0.1:8081/v1/chat/completions\n    model: /a.gguf\n"
+    )
+    monkeypatch.setenv("HERMES_BRAINS_PATH", str(p))
+    rc = main(["brains"])
+    assert rc == 0
+
+
 def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):

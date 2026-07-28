@@ -40,6 +40,7 @@ from hermes_ctl.secrets import (
     NetworkDenied,
     default_contact_policy,
 )
+from hermes_ctl.intelligence.brains import load_brains
 
 
 def _store() -> MemoryStore:
@@ -235,6 +236,17 @@ def _cmd_send(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_brains(args: argparse.Namespace) -> int:
+    try:
+        brains = load_brains()
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"brains config error: {exc}", file=sys.stderr)
+        return 1
+    for b in brains:
+        print(f"{b.role:7} {b.url}  model={b.model}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -280,6 +292,9 @@ def build_parser() -> argparse.ArgumentParser:
     ssub = ps.add_subparsers(dest="send_channel", required=True)
     sem = ssub.add_parser("email"); sem.add_argument("--to", required=True); sem.add_argument("--subject", default="(no subject)"); sem.add_argument("--body", required=True); sem.set_defaults(func=_cmd_send)
     stg = ssub.add_parser("telegram"); stg.add_argument("--to", required=True, help="chat id"); stg.add_argument("--body", required=True); stg.set_defaults(func=_cmd_send)
+
+    pb = sub.add_parser("brains", help="list configured llmfit brains (HADA inference backend)")
+    pb.set_defaults(func=_cmd_brains)
     return p
 
 
