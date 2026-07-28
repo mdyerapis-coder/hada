@@ -31,5 +31,14 @@
 
   respond /healthz 200
 
+  handle_path /hada-control/* {
+    root * /srv/board
+    file_server
+  }
+
+  handle_path /hada-api/* {
+    reverse_proxy orchestrator:9108
+  }
+
   respond 404
 }
