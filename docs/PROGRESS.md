@@ -94,6 +94,8 @@ deploy, secret/infra change, or governance bypass occurs.
 - **Live verified (b)**: HttpRouter hit real `:8080` (qwen3b) + `:8081`
   (hermes-7b) → both responded. No secrets required (brains open on localhost).
 - **Live verified (Telegram)**: `TelegramChannel.send()` delivered a test message to chat 7620778176 (message_id 3) using the valid @Hermesctlrbot token. Token read from env at runtime, never stored.
+- **Live verified (Email)**: `EmailChannel.send()` delivered a test email to dyer.mason1994@gmail.com via Gmail app password (smtp.gmail.com:465). Creds from env, never stored. 4 email tests; total 40.
+- **SMS**: not yet built — awaiting provider + credentials (Twilio / telnyx / carrier).
 - **Design decision (user)**: route ALL contact via the Hermes CTL
   communications seam; HADA is invoked *behind* it as the governed engineering
   worker, not the contact receiver. Keeps personal chat responsive + independent
