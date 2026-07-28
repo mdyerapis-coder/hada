@@ -225,6 +225,7 @@ def orchestrator_run(config: Path = typer.Option(..., exists=True, readable=True
         listen_port=loaded.monitoring.listen_port,
         probe_interval_seconds=loaded.monitoring.dependency_probe_interval_seconds,
         unhealthy_exit_threshold=loaded.monitoring.unhealthy_exit_threshold,
+        governance=loaded.governance,
     )
     raise typer.Exit(code=runtime.run())
 

@@ -37,7 +37,8 @@ def test_valkey_bind_definition_is_exact() -> None:
 def test_valkey_secret_and_password_absence_are_preserved() -> None:
     base = _load("compose.yaml")
     valkey = base["services"]["valkey"]
-    assert "valkey_conf" in valkey["secrets"]
+    secret_sources = [s["source"] for s in valkey["secrets"]]
+    assert "valkey_conf" in secret_sources
     assert base["secrets"]["valkey_conf"]["file"] == "/var/lib/hada/secrets/valkey/valkey.conf"
     assert "VALKEY_PASSWORD" not in valkey.get("environment", {})
     assert "--requirepass" not in repr(valkey.get("command", []))

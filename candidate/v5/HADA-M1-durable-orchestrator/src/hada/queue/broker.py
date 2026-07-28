@@ -63,6 +63,10 @@ class StreamBackend(Protocol):
 
     def delete(self, stream: str, stream_id: str) -> None: ...
 
+    def length(self, stream: str) -> int: ...
+
+    def pending_count(self, stream: str, group: str) -> int: ...
+
 
 class RedisStreamBackend:
     def __init__(self, url: str) -> None:
@@ -178,6 +182,22 @@ class RedisStreamBackend:
     def delete(self, stream: str, stream_id: str) -> None:
         self._client.xdel(stream, stream_id)
 
+    def length(self, stream: str) -> int:
+        try:
+            return int(self._client.xlen(stream))
+        except Exception:
+            return 0
+
+    def pending_count(self, stream: str, group: str) -> int:
+        try:
+            summary = self._client.xpending(stream, group)
+            if isinstance(summary, dict):
+                value = summary.get("pending", summary.get(b"pending", 0))
+                return int(value)
+        except Exception:
+            return 0
+        return 0
+
 
 @dataclass
 class _MemoryPending:
@@ -266,6 +286,14 @@ class InMemoryStreamBackend:
             row for row in self.messages.get(stream, []) if row[0] != stream_id
         ]
 
+    def length(self, stream: str) -> int:
+        return len(self.messages.get(stream, []))
+
+    def pending_count(self, stream: str, group: str) -> int:
+        return sum(
+            1 for key in self.pending if key[0] == stream and key[1] == group
+        )
+
 
 class ClaimedMessage(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -285,6 +313,7 @@ class DurableQueue:
         maximum_delivery_attempts: int,
         maximum_stream_length: int,
         visibility_timeout_seconds: int,
+        primary_queue: str = "tasks",
     ) -> None:
         self.backend = backend
         self.namespace = namespace
@@ -292,6 +321,7 @@ class DurableQueue:
         self.maximum_delivery_attempts = maximum_delivery_attempts
         self.maximum_stream_length = maximum_stream_length
         self.visibility_timeout_seconds = visibility_timeout_seconds
+        self.primary_queue = primary_queue
 
     def _stream(self, queue: str) -> str:
         allowed = "abcdefghijklmnopqrstuvwxyz0123456789-_"
@@ -376,3 +406,15 @@ class DurableQueue:
 
     def ping(self) -> bool:
         return self.backend.ping()
+
+    def stats(self) -> dict[str, object]:
+        """Real queue depth for the primary queue (no message bodies read)."""
+        stream = self._stream(self.primary_queue)
+        return {
+            "queue": self.primary_queue,
+            "namespace": self.namespace,
+            "consumer_group": self.consumer_group,
+            "enqueued": self.backend.length(stream),
+            "pending": self.backend.pending_count(stream, self.consumer_group),
+            "maximum_delivery_attempts": self.maximum_delivery_attempts,
+        }

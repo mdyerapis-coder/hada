@@ -194,9 +194,25 @@ function renderDevelopment(snap) {
 }
 
 // ===== GOVERNANCE =====
-function renderGovernance(snap) {
+function renderGovernance(snap, state) {
   const g = snap.governance;
   const adrRows = (g.adrs || []).map((a) => `<tr><td>${esc(a.id)}</td><td><span class="pill ${tag(a.status === "Accepted" ? "ok" : "neutral")}">${esc(a.status)}</span></td><td><code>${esc(a.path)}</code></td></tr>`).join("");
+  const gates = (state && state.gates && state.gates.available)
+    ? `<div class="panel" style="margin-top:14px">
+        <div class="panel-header"><div><h2>Live governance policy</h2><p>Real gate configuration from the orchestrator (read-only)</p></div><span class="pill ${tag("ok")}">exposed</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Setting</th></tr></thead><tbody>
+          <tr><td>Self-approval prohibited</td><td><span class="pill ${tag(state.gates.prohibit_self_approval ? "bad" : "neutral")}">${state.gates.prohibit_self_approval}</span></td></tr>
+          <tr><td>Scope expansion prohibited</td><td><span class="pill ${tag(state.gates.prohibit_scope_expansion ? "bad" : "neutral")}">${state.gates.prohibit_scope_expansion}</span></td></tr>
+          <tr><td>Max agent iterations / gate</td><td><code>${state.gates.maximum_agent_iterations_per_gate}</code></td></tr>
+          <tr><td>Max recovery attempts</td><td><code>${state.gates.maximum_recovery_attempts}</code></td></tr>
+          <tr><td>Architecture review required</td><td><span class="pill ${tag(state.gates.require_architecture_review ? "ok" : "neutral")}">${state.gates.require_architecture_review}</span></td></tr>
+          <tr><td>Security review required</td><td><span class="pill ${tag(state.gates.require_security_review ? "ok" : "neutral")}">${state.gates.require_security_review}</span></td></tr>
+          <tr><td>Test review required</td><td><span class="pill ${tag(state.gates.require_test_review ? "ok" : "neutral")}">${state.gates.require_test_review}</span></td></tr>
+          <tr><td>External review required</td><td><span class="pill ${tag(state.gates.require_external_review ? "ok" : "neutral")}">${state.gates.require_external_review}</span></td></tr>
+          <tr><td>Stop on critical security finding</td><td><span class="pill ${tag(state.gates.stop_on_critical_security_finding ? "bad" : "neutral")}">${state.gates.stop_on_critical_security_finding}</span></td></tr>
+        </tbody></table></div>
+      </div>`
+    : "";
   $("gov-body").innerHTML = availWrap(g, `
     <div class="panel" style="margin-bottom:14px">
       <div class="panel-header"><div><h2>Authority boundary</h2></div><span class="pill bad">read-only</span></div>
@@ -207,7 +223,7 @@ function renderGovernance(snap) {
       <div class="panel-header"><div><h2>ADRs</h2><p>Architecture decision records</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>ID</th><th>Status</th><th>Path</th></tr></thead>
       <tbody>${adrRows || '<tr><td colspan="3">none</td></tr>'}</tbody></table></div>
-    </div>`);
+    </div>${gates}`);
 }
 
 // ===== EVIDENCE =====
@@ -266,6 +282,7 @@ function renderInfrastructure(snap, live, state) {
       <div class="table-wrap"><table><thead><tr><th>Service</th><th>Health</th><th>Signal</th></tr></thead>
       <tbody>${rows.map((r) => `<tr><td>${esc(r.svc)}</td><td><span class="pill ${tag(r.health)}">${esc(r.health)}</span></td><td><code>${esc(r.note)}</code></td></tr>`).join("")}</tbody></table></div>
       <p style="color:var(--muted);font-size:12px">Outbox publisher — published: <code>${outPub ?? "n/a"}</code>, failures: <code>${outFail ?? "n/a"}</code>${state ? "" : " (state API not reachable)"}</p>
+      ${state && state.tasks && state.tasks.available ? `<p style="color:var(--muted);font-size:12px">Task queue <code>${esc(state.tasks.queue)}</code> — enqueued: <code>${state.tasks.enqueued}</code>, pending: <code>${state.tasks.pending}</code>, max delivery attempts: <code>${state.tasks.maximum_delivery_attempts}</code></p>` : ""}
       <p style="color:var(--muted);font-size:12px">Repository/deployment: candidate v5 (PR #12). Data freshness: live probe, fetched on page load.</p>
     </div>`;
 }
@@ -349,7 +366,7 @@ async function boot() {
     $("agents-body").innerHTML = notice("Snapshot unavailable", "Agent data could not be loaded.");
   } else {
     renderOverview(snap, live);
-    renderRoadmap(snap); renderDevelopment(snap); renderGovernance(snap);
+    renderRoadmap(snap); renderDevelopment(snap); renderGovernance(snap, state);
     renderEvidence(snap, state); renderAgents(snap);
     if (!live || live.error) setBanner("error", "Snapshot fresh (" + freshness(snap.generated_at).label + ") but live infra unreachable.");
     else setBanner("live", "Snapshot " + freshness(snap.generated_at).label + " · live infra " + (live.ok ? "healthy" : "degraded"));
