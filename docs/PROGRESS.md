@@ -211,6 +211,24 @@ deploy, secret/infra change, or governance bypass occurs.
 - NOTE: M1 appliance NOT reinit'd — target runs newer 0.2.2 than local v5 (0.2.0);
   full redeploy would downgrade + risk downtime. Worker tree staged instead.
 
+## Cycle 23 — Context awareness (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-context-awareness-cycle23`
+- New module `hermes_ctl/intelligence/context.py` — `ContextSnapshot` dataclass
+  with structured snapshot of current system state:
+  - `scan_context()`: reads MemoryStore inbox (last 5, capped), open tasks via
+    ProductivityStore, today's plan + latest briefing from dreams dir, user
+    profile from Identity, and existing context-tagged facts. All read-only,
+    safe defaults for missing data, no network/LLM.
+  - `deliver_context()`: persists snapshot to MemoryStore (tagged `context` +
+    `snapshot`) for downstream Phase 3 consumers.
+- New CLI command: `hermesctl context` — scans, persists, prints JSON snapshot.
+- 13 new tests in `tests/test_context.py`: empty store, inbox collection,
+  inbox cap, plan loading, briefing loading, to_dict/from_dict roundtrip,
+  safe defaults, deliver persistence, no-store safety, tag correctness,
+  missing plans dir, corrupt plan file, open tasks.
+- Verified: `pytest tests/` → 122 passed (up from previous count).
+- Next: Long-term memory (curation, consolidation, importance scoring).
+
 ## Cycle 19c — durable deployment state (2026-07-28)
 
 ### Brain forwarder (hermes-clean, this box)
