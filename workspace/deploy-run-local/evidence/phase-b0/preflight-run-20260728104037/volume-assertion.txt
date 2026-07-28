@@ -1,0 +1,10 @@
+Volumes found:
+  alloy-data: type=none o=bind device=/var/lib/hada/docker-volumes/alloy-data
+  caddy-config: type=none o=bind device=/var/lib/hada/docker-volumes/caddy-config
+  caddy-data: type=none o=bind device=/var/lib/hada/docker-volumes/caddy-data
+  grafana-data: type=none o=bind device=/var/lib/hada/docker-volumes/grafana-data
+  loki-data: type=none o=bind device=/var/lib/hada/docker-volumes/loki-data
+  postgres-data: type=none o=bind device=/var/lib/hada/docker-volumes/postgres-data
+  prometheus-data: type=none o=bind device=/var/lib/hada/docker-volumes/prometheus-data
+  valkey-data: type=none o=bind device=/var/lib/hada/docker-volumes/valkey-data
+PASS: all 8 volumes have type=none, o=bind, device beneath /var/lib/hada/docker-volumes/

@@ -177,8 +177,8 @@ Enable proactive assistance.
 - Planning ✅ (delivered, live via Telegram)
 - Smart reminders ✅ (live, checks plan items hourly)
 - Context awareness ✅ (Cycle 23: scan_context + deliver_context + CLI)
-- Long-term memory
-- Relationship management
+- Long-term memory ✅ (Cycle 24: curation module — importance scoring, consolidation, CLI)
+- Relationship management ✅ (Cycle 25: relationship tracking — contacts, strength, interactions, CLI)
 - Shopping intelligence
 - Travel planning
 - Health tracking

@@ -1,0 +1,29 @@
+[Unit]
+Description=HADA Watchdog Supervisor
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=hada
+Group=hada
+SupplementaryGroups=docker
+WorkingDirectory=/opt/hada
+ExecStart=/opt/hada/scripts/supervisor.sh
+Restart=on-failure
+RestartSec=60
+RestartPreventExitStatus=70 78
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/hada /var/log/hada
+
+[Install]
+WantedBy=multi-user.target

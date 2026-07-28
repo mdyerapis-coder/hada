@@ -1,0 +1,8 @@
+PASS YAML deploy/compose/compose.yaml
+PASS YAML .github/workflows/ci.yml
+PASS YAML config/hada.yaml
+PASS YAML deploy/prometheus/prometheus.yml
+PASS YAML deploy/prometheus/rules/hada.yml
+PASS YAML deploy/loki/config.yml
+PASS TOML pyproject.toml
+PASS JSON deploy/grafana/dashboards/hada-control-plane.json

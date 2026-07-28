@@ -1,0 +1,23 @@
+groups:
+  - name: hada-control-plane
+    rules:
+      - alert: HadaDatabaseUnavailable
+        expr: hada_database_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: HADA cannot reach PostgreSQL
+      - alert: HadaQueueUnavailable
+        expr: hada_queue_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: HADA cannot reach Valkey
+      - alert: HadaOutboxPublishFailures
+        expr: increase(hada_outbox_publish_failures_total[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: HADA outbox publication is failing
