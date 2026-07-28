@@ -105,3 +105,30 @@ def test_webhook_rejects_bad_signature():
     code, obj = handle_webhook(store, raw, {"X-Signature": "sha256=bad"}, secret_key="key")
     assert code == 401
     assert store.search(tag="inbox") == []
+
+
+def test_forwarder_payload_stored():
+    store = MemoryStore(persist_path=None)
+    raw = json.dumps({"from": "+61400111222", "text": "Your code is 123456",
+                      "sentStamp": 1700000000000, "receivedStamp": 1700000001000, "sim": "0"}).encode()
+    code, obj = handle_webhook(store, raw, {}, secret_key="", source="forwarder")
+    assert code == 200 and obj.get("ok") is True
+    inbox = store.search(tag="inbox")
+    assert len(inbox) == 1
+    v = inbox[0].value
+    assert v["channel"] == "sms" and v["sender"] == "+61400111222"
+    assert v["body"] == "Your code is 123456"
+
+
+def test_auto_detect_forwarder():
+    store = MemoryStore(persist_path=None)
+    raw = json.dumps({"from": "+61", "text": "hi"}).encode()
+    code, _ = handle_webhook(store, raw, {}, secret_key="", source="auto")
+    assert code == 200
+    assert store.search(tag="inbox")[0].value["body"] == "hi"
+
+
+def test_auto_detect_unrecognized():
+    store = MemoryStore(persist_path=None)
+    code, obj = handle_webhook(store, b"{}", {}, secret_key="", source="auto")
+    assert code == 400 and "unrecognized" in obj.get("error", "")

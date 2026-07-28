@@ -1,5 +1,5 @@
 [Unit]
-Description=Hermes CTL contact services (SMS webhook receiver, TLS)
+Description=Hermes CTL contact services (SMS webhook receiver)
 After=network-online.target tailscaled.service
 Wants=network-online.target
 

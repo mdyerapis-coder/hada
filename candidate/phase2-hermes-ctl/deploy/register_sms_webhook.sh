@@ -1,27 +1,20 @@
 #!/usr/bin/env bash
-# Register the Hermes CTL SMS webhook with the capcom6 app on the phone.
+# Register the Hermes CTL SMS webhook with the phone's forwarder app.
 #
-# The phone's Local Server API is only reachable on the phone's LAN (or via the
-# phone itself). Run this from a host that can reach the phone's Local Server
-# URL (the laptop on the same Wi-Fi, or a shell on the phone). It tells the app
-# to PUSH `sms:received` to the Hermes CTL receiver on hada-control over Tailscale.
+# For "SMS to URL Forwarder" (F-Droid: tech.bogomolov.incomingsmsgateway):
+#   just open the app, add a rule:
+#     - sender: *   (all senders)
+#     - URL:    http://100.72.245.64:8089/webhook
+#     - enable "Local network mode" (so it sends over Tailscale without public internet)
+#   The app POSTs {"from":..,"text":..,"sentStamp":..,"receivedStamp":..,"sim":..}
+#   to that URL. Retries automatically. No cert needed (Tailscale encrypts).
 #
-# Args:
-#   $1  phone Local Server base URL  (e.g. http://192.0.0.2:8080)
-#   $2  phone Local Server username  (from app Settings > Local Server)
-#   $3  phone Local Server password
-#   $4  (optional) Hermes CTL receiver URL  (default https://100.77.108.35:8089/webhook)
-set -euo pipefail
-
-PHONE_URL="${1:?usage: register_sms_webhook.sh <phone_local_url> <user> <pass> [receiver_url]}"
-USER="${2:?}"
-PASS="${3:?}"
-RECEIVER_URL="${4:-https://100.72.245.64:8089/webhook}"
-
-echo "Registering sms:received -> $RECEIVER_URL on $PHONE_URL"
-curl -s -u "$USER:$PASS" -X POST \
-  -H "Content-Type: application/json" \
-  -d "{\"url\":\"$RECEIVER_URL\",\"event\":\"sms:received\"}" \
-  "$PHONE_URL/webhooks"
-echo
-echo "Done. Send an SMS to the phone; it should arrive in the Hermes CTL inbox."
+# For capcom6 SMS Gateway for Android (Local Server mode):
+#   run from a host that can reach the phone's Local Server (laptop on same Wi-Fi):
+#     curl -u <user>:<pass> -X POST -H "Content-Type: application/json" \
+#       -d '{"url":"https://100.72.245.64:8089/webhook?source=capcom6","event":"sms:received"}' \
+#       http://<phone-local-ip>:8080/webhooks
+#
+# This script is a helper only; the Bogomolov app is configured in its UI.
+echo "SMS to URL Forwarder -> set webhook URL: http://100.72.245.64:8089/webhook (enable Local network mode)"
+echo "capcom6 -> POST {url:'https://100.72.245.64:8089/webhook?source=capcom6',event:'sms:received'} to the phone's /webhooks"

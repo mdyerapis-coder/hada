@@ -1,11 +1,13 @@
-"""Hermes CTL — SMS webhook receiver (capcom6 sms:received) (Phase 2).
+"""Hermes CTL — SMS webhook receiver (Phase 2).
 
-Real-time inbound SMS: the phone app POSTs `sms:received` webhooks to this
-endpoint. We validate the HMAC signature (if a secret is configured), convert
-the payload to a `Message`, and persist it into the `MemoryStore` inbox.
+Real-time inbound SMS: a phone app POSTs incoming SMS to this endpoint and we
+persist it into the MemoryStore inbox. Two app formats are supported:
 
-Stdlib-only (http.server). Designed to be mounted in the Hermes CTL service.
-HMAC secret + listen host/port from env; never stored.
+* capcom6 SMS Gateway for Android  -> {"event":"sms:received","payload":{...}}
+* "SMS to URL Forwarder" (Bogomolov) -> {"from":..,"text":..,"sentStamp":..,..}
+  (flat JSON; optional HMAC via X-Signature; plain HTTP, "Local network mode")
+
+Stdlib-only (http.server). HMAC secret + listen host/port from env; never stored.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ import hmac
 import json
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Callable
+from typing import Any
 
 from hermes_ctl.communications.channels import Message
 from hermes_ctl.memory.store import MemoryStore
@@ -30,8 +32,21 @@ def verify_signature(secret_key: str, raw_body: bytes, timestamp: str, signature
     return hmac.compare_digest(expected, signature)
 
 
-def payload_to_message(payload: dict) -> Message:
-    """Convert an sms:received webhook payload to a Message."""
+def payload_to_message(payload: dict, source: str = "capcom6") -> Message:
+    """Convert a webhook payload to a Message.
+
+    `source` selects the field mapping:
+      * "capcom6" -> payload.message / payload.sender / payload.recipient / payload.messageId
+      * "forwarder" (SMS to URL Forwarder) -> text / from / sim / receivedStamp
+    """
+    if source == "forwarder":
+        return Message(
+            channel="sms",
+            sender=str(payload.get("from", "")),
+            recipient="",
+            body=str(payload.get("text", "")),
+            id=str(payload.get("receivedStamp") or payload.get("sentStamp") or ""),
+        )
     return Message(
         channel="sms",
         sender=str(payload.get("sender", "")),
@@ -41,8 +56,12 @@ def payload_to_message(payload: dict) -> Message:
     )
 
 
-def handle_webhook(store: MemoryStore, raw_body: bytes, headers: dict, secret_key: str = "") -> tuple[int, dict]:
-    """Process a raw webhook POST. Returns (http_status, json_body)."""
+def handle_webhook(store: MemoryStore, raw_body: bytes, headers: dict, secret_key: str = "",
+                   source: str = "auto") -> tuple[int, dict]:
+    """Process a raw webhook POST. Returns (http_status, json_body).
+
+    `source`: "auto" (detect), "capcom6", or "forwarder".
+    """
     try:
         body = json.loads(raw_body or b"{}")
     except json.JSONDecodeError:
@@ -51,25 +70,35 @@ def handle_webhook(store: MemoryStore, raw_body: bytes, headers: dict, secret_ke
     sig = headers.get("X-Signature", "") or headers.get("Signature", "")
     if secret_key and not verify_signature(secret_key, raw_body, ts, sig):
         return 401, {"error": "bad signature"}
-    event = body.get("event")
-    if event == "sms:received":
-        msg = payload_to_message(body.get("payload", {}))
-        store.remember(
-            f"inbox:{msg.channel}:{msg.id}",
-            {
-                "channel": msg.channel,
-                "sender": msg.sender,
-                "recipient": msg.recipient,
-                "body": msg.body,
-                "ref": msg.id,
-            },
-            tags=("inbox", "sms"),
-        )
-        return 200, {"ok": True}
-    return 200, {"ok": True, "ignored": event}
+
+    # Detect payload format when auto.
+    if source == "auto":
+        if "event" in body:
+            source = "capcom6"
+        elif "text" in body or "from" in body:
+            source = "forwarder"
+        else:
+            return 400, {"error": "unrecognized payload"}
+    if source == "capcom6":
+        payload = body.get("payload", {})
+    else:
+        payload = body
+    msg = payload_to_message(payload, source=source)
+    store.remember(
+        f"inbox:{msg.channel}:{msg.id}",
+        {
+            "channel": msg.channel,
+            "sender": msg.sender,
+            "recipient": msg.recipient,
+            "body": msg.body,
+            "ref": msg.id,
+        },
+        tags=("inbox", "sms"),
+    )
+    return 200, {"ok": True}
 
 
-def make_handler(store: MemoryStore, secret_key: str = "") -> type[BaseHTTPRequestHandler]:
+def make_handler(store: MemoryStore, secret_key: str = "", source: str = "auto") -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def _respond(self, code: int, obj: dict) -> None:
             self.send_response(code)
@@ -80,7 +109,13 @@ def make_handler(store: MemoryStore, secret_key: str = "") -> type[BaseHTTPReque
         def do_POST(self) -> None:  # noqa: N802
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length) if length else b"{}"
-            code, obj = handle_webhook(store, raw, dict(self.headers), secret_key)
+            # allow ?source= override on the URL
+            src = source
+            if "source=forwarder" in (self.path or ""):
+                src = "forwarder"
+            elif "source=capcom6" in (self.path or ""):
+                src = "capcom6"
+            code, obj = handle_webhook(store, raw, dict(self.headers), secret_key, source=src)
             self._respond(code, obj)
 
         def log_message(self, format: str, *args: Any) -> None:  # silence default stderr logging
@@ -89,17 +124,24 @@ def make_handler(store: MemoryStore, secret_key: str = "") -> type[BaseHTTPReque
     return Handler
 
 
-def serve(store: MemoryStore, host: str = "0.0.0.0", port: int = 8089, secret_key: str = "") -> None:
-    """Blocking serve. In production mount under the Hermes CTL service instead."""
-    httpd = HTTPServer((host, port), make_handler(store, secret_key))
+def serve(store: MemoryStore, host: str = "0.0.0.0", port: int = 8089, secret_key: str = "",
+          source: str = "auto", tls: bool = False, cert: str = "", key: str = "") -> None:
+    """Blocking serve. `tls=True` wraps the socket with the given cert/key."""
+    handler = make_handler(store, secret_key, source)
+    httpd = HTTPServer((host, port), handler)
+    if tls:
+        import ssl
+
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(cert, key)
+        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
     httpd.serve_forever()
 
 
 if __name__ == "__main__":
-    import sys
-
     secret = os.environ.get("SMS_WEBHOOK_SECRET", "")
     port = int(os.environ.get("SMS_WEBHOOK_PORT", "8089"))
     store = MemoryStore(persist_path=os.environ.get("MEMORY_STORE_PATH"))
     print(f"SMS webhook receiver on :{port} (secret={'set' if secret else 'none'})")
     serve(store, port=port, secret_key=secret)
+
