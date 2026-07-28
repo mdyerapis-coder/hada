@@ -229,23 +229,6 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 150 passed.
 - Next: Relationship management (Phase 3: Personal Intelligence).
 
-## Cycle 25 — Relationship management (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-relationship-management-cycle25`
-- New module `hermes_ctl/intelligence/relationships.py` — tracks contacts,
-  relationship type, interaction strength, and contact frequency:
-  - `Relationship` / `RelationshipSnapshot` dataclasses with to_dict/from_dict.
-  - `scan_relationships()` — reads all relationship facts from MemoryStore
-    (read-only, safe defaults, type breakdown).
-  - `update_relationship()` — create or update a relationship record (upsert
-    with channel/tag/notes/strength).
-  - `record_interaction()` — auto-increment contact count + recency on message
-    receipt, with strength recalculation.
-  - `_compute_strength()` — frequency × recency formula (log scale, clamped).
-- New CLI commands: `hermesctl relationship list|show|update|interact`.
-- 22 new tests in `tests/test_relationships.py`.
-- Verified: `pytest tests/` → 159 passed.
-- Next: Shopping intelligence (Phase 3: Personal Intelligence).
-
 ## Cycle 23 — Context awareness (Phase 3: Personal Intelligence)
 - Branch: `agent/phase3-context-awareness-cycle23`
 - New module `hermes_ctl/intelligence/context.py` — `ContextSnapshot` dataclass
