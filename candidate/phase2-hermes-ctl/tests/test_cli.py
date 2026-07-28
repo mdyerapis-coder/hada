@@ -162,3 +162,49 @@ def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):
         build_parser().parse_args([])
+
+
+# =======================================================================
+# memory curate / consolidate CLI
+# =======================================================================
+
+
+def test_memory_curate_empty(tmp_path):
+    """memory curate on empty store returns no suggestions."""
+    store = _env(tmp_path)
+    out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli memory curate").read()
+    assert "0 facts" in out
+
+
+def test_memory_curate_with_data(tmp_path):
+    """memory curate ranks facts by importance."""
+    store = _env(tmp_path)
+    from hermes_ctl.memory.store import MemoryStore
+    s = MemoryStore(persist_path=store)
+    s.remember("task:buy-milk", {"body": "buy milk"}, tags=("inbox",))
+    s.remember("note:old-thought", {"body": "old thought from ages ago"}, tags=("stale",), ttl=None)
+    out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli memory curate").read()
+    assert "Curation suggestions" in out
+    assert "buy-milk" in out or "old-thought" in out
+
+
+def test_memory_consolidate_empty(tmp_path):
+    """memory consolidate on empty store returns no groups."""
+    store = _env(tmp_path)
+    out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli memory consolidate").read()
+    assert "0 group" in out
+
+
+def test_memory_consolidate_with_similar(tmp_path):
+    """memory consolidate detects similar facts."""
+    store = _env(tmp_path)
+    from hermes_ctl.memory.store import MemoryStore
+    s = MemoryStore(persist_path=store)
+    s.remember("msg:1", {"body": "Can you pick up milk and bread"}, tags=("inbox", "sms"))
+    s.remember("msg:2", {"body": "Please grab milk and bread from shop"}, tags=("inbox", "sms"))
+    out = os.popen(
+        f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli memory consolidate --threshold 0.4"
+    ).read()
+    assert "Consolidation suggestions" in out
+    assert "msg:" in out
+

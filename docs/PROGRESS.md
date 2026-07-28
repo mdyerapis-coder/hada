@@ -211,6 +211,24 @@ deploy, secret/infra change, or governance bypass occurs.
 - NOTE: M1 appliance NOT reinit'd — target runs newer 0.2.2 than local v5 (0.2.0);
   full redeploy would downgrade + risk downtime. Worker tree staged instead.
 
+## Cycle 24 — Long-term memory curation (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-long-term-memory-cycle24`
+- New module `hermes_ctl/intelligence/curation.py` — importance scoring,
+  curation suggestions, and consolidation of facts in MemoryStore:
+  - `score_fact()`: computes recency, frequency, tag-boost, and composite
+    importance scores (0.0–1.0) for any fact.
+  - `curate()`: scans all facts, scores them, returns `keep`/`review`/`archive`
+    suggestions with human-readable reasons.
+  - `consolidate()`: token-overlap similarity detection for near-duplicate
+    facts, suggesting merges with `duplicate`/`related` labels.
+  - `apply_suggestions()`: applies curation actions to the store (dry-run safe
+    by default, can actually `forget()` up to N archival candidates).
+- New CLI commands: `hermesctl memory curate` (scan + score) and
+  `hermesctl memory consolidate` (find similar facts).
+- 24 new tests in `tests/test_curation.py` + 4 CLI tests in `tests/test_cli.py`.
+- Verified: `pytest tests/` → 150 passed.
+- Next: Relationship management (Phase 3: Personal Intelligence).
+
 ## Cycle 23 — Context awareness (Phase 3: Personal Intelligence)
 - Branch: `agent/phase3-context-awareness-cycle23`
 - New module `hermes_ctl/intelligence/context.py` — `ContextSnapshot` dataclass
@@ -229,6 +247,7 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 122 passed (up from previous count).
 - Next: Long-term memory (curation, consolidation, importance scoring).
 
+>>>>>>> 9e2cff6 (feat(phase3): long-term memory curation module (Cycle 24))
 ## Cycle 19c — durable deployment state (2026-07-28)
 
 ### Brain forwarder (hermes-clean, this box)
@@ -251,12 +270,3 @@ deploy, secret/infra change, or governance bypass occurs.
 
 ### Open
 - Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
-
-## Cycle 31 — Phase 3 completion documentation (2026-07-29)
-- Branch: `agent/phase3-complete-docs-cycle31` (PR — draft)
-- All 11 Phase 3 features now properly documented in MASTER_ROADMAP.md with ✅ status, PR numbers, and mergeability state.
-- Added Phase 3 Current Status table showing merged vs draft state for every feature.
-- Added integration gating notes and next-steps for human merge.
-- Cleaned stale working-tree files (curation.py, scripts/, test_curation.py — leftovers from previous branches).
-- All 8 draft PRs #25–#32 are MERGEABLE with green CI, awaiting human merge.
-- Stale autofix PRs #11 (for PR #8) and #14 (for PR #13) remain open; their target PRs were merged long ago.
