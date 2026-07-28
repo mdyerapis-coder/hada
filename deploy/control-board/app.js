@@ -110,7 +110,7 @@ function renderOverview(snap, live) {
   $("milestone-status").className = tag(ms);
   const b0note = b0 ? ` M1 tactical: Phase B0 (deploy) is ${b0.status}.` : "";
   $("milestone-summary").textContent = (stratM1 ? stratM1.summary.slice(0, 160) : "") + b0note;
-  $("gate-count").textContent = `${complete}/${phases.length} strategic phases complete · ${blocked} blocked · M1 B0 ${b0 ? b0.status : "n/a"}`;
+  $("gate-count").textContent = `Strategic: ${complete}/${phases.length} complete · ${blocked} blocked · M1 B0 (deploy): ${b0 ? b0.status : "n/a"}`;
   $("gate-progress").style.width = Math.round((complete / Math.max(phases.length, 1)) * 100) + "%";
 
   // role separation (real design)
@@ -139,7 +139,7 @@ function renderRoadmap(snap) {
       <span class="pill ${tag(p.status)}">${esc(p.status)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.summary.slice(0, 160))}${p.summary.length > 160 ? "…" : ""}</p>
-      <small>evidence: ${p.evidence && p.evidence.length ? esc(p.evidence.join(", ")) : "not linked in this view"}</small>
+      <small>evidence: ${p.evidence && p.evidence.length ? esc(p.evidence.join(", ")) : "not modeled in this view"}</small>
     </div>`).join(""));
   const m1body = availWrap(m1, `
     <div class="table-wrap"><table>
