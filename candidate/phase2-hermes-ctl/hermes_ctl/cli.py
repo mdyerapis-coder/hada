@@ -686,38 +686,50 @@ def _cmd_travel(args: argparse.Namespace) -> int:
 
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 =======
-# health
+# habit
 # ---------------------------------------------------------------------------
-def _cmd_health(args: argparse.Namespace) -> int:
+def _cmd_habit(args: argparse.Namespace) -> int:
     store = _store()
-    from hermes_ctl.intelligence.health import log_metric, scan_health
+    from hermes_ctl.intelligence.habit import add_habit, log_habit, scan_habits
 
-    if args.health_action == "list":
-        snap = scan_health(store=store, metric=args.metric, date=args.date, limit=args.limit or 50)
-        print(f"Health entries ({snap.total_count} total):")
-        if snap.summary:
-            print("  Summary:")
-            for m, s in snap.summary.items():
-                print(f"    {m}: last={s['last_value']} avg={s['avg']} min={s['min']} max={s['max']} ({s['count']} entries)")
-        print(f"  Recent ({len(snap.recent)}):")
-        for e in snap.recent:
-            print(f"    {e.date} {e.metric}: {e.value} {e.unit} ({e.source})")
+    if args.habit_action == "list":
+        snap = scan_habits(store=store, category=args.category, active_only=args.active_only, due_today=args.due_today)
+        print(f"Habits ({snap.total_count} total: {snap.active_count} active):")
+        if snap.by_category:
+            print(f"  Categories: {', '.join(f'{k}={v}' for k, v in sorted(snap.by_category.items()))}")
+        if snap.top_streaks:
+            print(f"  Top streaks:")
+            for h in snap.top_streaks[:5]:
+                icon = "🔥" if h.streak >= 7 else "✅"
+                print(f"    {icon} {h.name:25s} streak={h.streak}d  total={h.total_count}")
+        if snap.due_today:
+            print(f"  Due today ({len(snap.due_today)}): {', '.join(h.name for h in snap.due_today)}")
+        elif snap.active_count > 0:
+            print("  ✓ All active habits done today!")
         return 0
 
-    if args.health_action == "log":
-        entry = log_metric(
+    if args.habit_action == "add":
+        habit = add_habit(
             store,
-            args.metric,
-            args.value,
+            args.name,
+            category=args.category or "health",
+            frequency=args.frequency or "daily",
+            target_per_day=args.target or 1,
             unit=args.unit or "",
-            date=args.date,
             notes=args.notes or "",
-            source=args.source or "manual",
         )
-        print(f"logged {entry.metric}={entry.value} {entry.unit} on {entry.date}")
+        print(f"added habit: {habit.name} (id={habit.id}, freq={habit.frequency})")
         return 0
 
->>>>>>> e0d604e (feat(phase3): health tracking module (Cycle 28))
+    if args.habit_action == "log":
+        habit = log_habit(store, args.habit_id, date=args.date, notes=args.notes or "")
+        if habit:
+            print(f"logged {habit.name} for {args.date or 'today'} (streak={habit.streak}d)")
+            return 0
+        print(f"(no habit with id {args.habit_id})", file=sys.stderr)
+        return 1
+
+>>>>>>> 307648d (feat(phase3): habit tracking module (Cycle 29))
     return 2  # pragma: no cover
 
 
@@ -906,22 +918,27 @@ def build_parser() -> argparse.ArgumentParser:
     tri.set_defaults(func=_cmd_travel)
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 =======
-    ph = sub.add_parser("health", help="health tracking (log and list metrics)")
-    hsub = ph.add_subparsers(dest="health_action", required=True)
-    hl = hsub.add_parser("log", help="log a health metric")
-    hl.add_argument("metric", choices=["weight", "steps", "sleep", "water", "mood", "exercise", "medication", "heart_rate", "blood_pressure", "blood_sugar", "calories", "custom"], help="metric type")
-    hl.add_argument("value", type=float, help="numeric value")
-    hl.add_argument("--unit", help="unit (kg, steps, hours, L, 1-10, min)")
-    hl.add_argument("--date", help="date YYYY-MM-DD (default: today)")
-    hl.add_argument("--notes", help="free-text notes")
-    hl.add_argument("--source", default="manual", choices=["manual", "auto", "pwa", "api"], help="how recorded")
-    hl.set_defaults(func=_cmd_health)
-    hls = hsub.add_parser("list", help="list health entries")
-    hls.add_argument("--metric", default=None, help="filter by metric type")
-    hls.add_argument("--date", default=None, help="filter by date YYYY-MM-DD")
-    hls.add_argument("--limit", type=int, default=20, help="max entries (default: 20)")
-    hls.set_defaults(func=_cmd_health)
->>>>>>> e0d604e (feat(phase3): health tracking module (Cycle 28))
+    phb = sub.add_parser("habit", help="habit tracking (add, log, list habits)")
+    hbsub = phb.add_subparsers(dest="habit_action", required=True)
+    hba = hbsub.add_parser("add", help="add a new habit")
+    hba.add_argument("name", help="habit name (e.g. 'meditate')")
+    hba.add_argument("--category", default="health", choices=["health", "productivity", "learning", "social", "mindfulness", "finance", "custom"], help="habit category")
+    hba.add_argument("--frequency", default="daily", choices=["daily", "weekdays", "weekly", "monthly", "custom"], help="frequency")
+    hba.add_argument("--target", type=int, default=1, help="target completions per day")
+    hba.add_argument("--unit", help="tracking unit (minutes, pages, glasses)")
+    hba.add_argument("--notes", help="free-text notes")
+    hba.set_defaults(func=_cmd_habit)
+    hbl = hbsub.add_parser("list", help="list habits with streaks")
+    hbl.add_argument("--category", default=None, help="filter by category")
+    hbl.add_argument("--active-only", action="store_true", default=False, dest="active_only", help="only active habits")
+    hbl.add_argument("--due-today", action="store_true", default=False, dest="due_today", help="habits not yet done today")
+    hbl.set_defaults(func=_cmd_habit)
+    hbo = hbsub.add_parser("log", help="mark habit as done for a date")
+    hbo.add_argument("habit_id", help="habit identifier")
+    hbo.add_argument("--date", help="date YYYY-MM-DD (default: today)")
+    hbo.add_argument("--notes", help="note about this completion")
+    hbo.set_defaults(func=_cmd_habit)
+>>>>>>> 307648d (feat(phase3): habit tracking module (Cycle 29))
     return p
 
 
