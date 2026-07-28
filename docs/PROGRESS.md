@@ -22,7 +22,20 @@ deploy, secret/infra change, or governance bypass occurs.
 - Promoted `docs/adr/0001-governed-release-pipeline.md` Proposed → Accepted.
 - Recorded progress (this file).
 
-- **Cycle 15 — outbound send (`hermesctl send`).** Added `send`
+- **Cycle 16 — llmfit brain wiring (Phase 3 enabler).** Forked
+  `AlexsJones/llmfit` -> `mdyerapis-coder/llmfit` (parent confirmed). Added
+  `hermes_ctl/intelligence/brains.py`: `load_brains()` adapts the llmfit
+  `brains.yaml` (`~/.config/hermes/brains.yaml`) into `Brain` descriptors for
+  `HttpRouter`. Strips `/chat/completions` to base url; `HERMES_BRAIN_HOST` env
+  rewrites loopback -> Mac Tailscale IP (`100.109.135.0`) so the hada box reaches
+  brains served on Hermes-clean. `hermesctl brains` lists them. 75 tests pass.
+  Live: load_brains + HttpRouter construct verified against real brains.yaml;
+  actual inference gated on the Mac being online (Tailscale probe UNREACHABLE
+  this turn). NOTE: `mdyerapis-coder` is a USER account, not an org — `gh repo
+  fork` must target the user (no `--org`); forked llmfit lives at
+  github.com/mdyerapis-coder/llmfit.
+
+## Cycle 15 — outbound send (`hermesctl send`).
   subcommand: `hermesctl send <email|telegram> --to X --body Y [--subject Z]`.
   Reads creds from `SecretStore`, checks egress via `NetworkPolicy`
   (fail-closed) before sending. `EmailChannel.send` (Gmail SMTP) + `TelegramChannel.send`
