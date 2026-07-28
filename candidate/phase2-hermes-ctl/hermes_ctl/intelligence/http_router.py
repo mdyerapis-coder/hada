@@ -50,7 +50,7 @@ class HttpRouter(Router):
             url, data=data, headers=self._auth_headers(brain), method="POST"
         )
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=600) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:  # pragma: no cover - network path
             body = e.read().decode("utf-8", "replace")
