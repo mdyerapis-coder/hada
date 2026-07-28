@@ -183,7 +183,7 @@ Enable proactive assistance.
 - Travel planning ✅ (Cycle 27: travel trip planning — destinations, dates, itineraries, CLI)
 - Health tracking
 - Habit tracking ✅ (Cycle 29: habit tracking — streaks, categories, logs, due-today, CLI)
-- Financial awareness
+- Financial awareness ✅ (Cycle 30: budget tracking, expense logging, spend analysis, CLI)
 
 ## Definition of Done
 

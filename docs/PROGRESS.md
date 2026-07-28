@@ -132,24 +132,6 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 27 passed.
 - Next: Intelligence (local LLM routing / cloud fallback / voice / mobile).
 
-## Cycle 29 — Habit tracking (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-habit-tracking-cycle29`
-- New module `hermes_ctl/intelligence/habit.py` — manages habits with
-  daily completion logging, streaks, and category grouping:
-  - `Habit` / `HabitLog` / `HabitSnapshot` dataclasses with to_dict/from_dict.
-  - `scan_habits()` — reads habits from MemoryStore (category filter,
-    active-only, due-today, streak-ranked summary).
-  - `add_habit()` — create a new habit (validates frequency, auto-id).
-  - `log_habit()` — mark habit as done for a date (streak tracking,
-    best-streak, idempotent for same day).
-  - 5 valid frequencies: daily, weekdays, weekly, monthly, custom.
-  - 7 valid categories: health, productivity, learning, social,
-    mindfulness, finance, custom.
-- New CLI commands: `hermesctl habit add|list|log`.
-- 24 new tests in `tests/test_habit.py`.
-- Verified: `pytest tests/` → 157 passed.
-- Next: Financial awareness (Phase 3: Personal Intelligence).
-
 ## Cycle 12 — Phase 2: gated integrations (Telegram + live LLM routing)
 - Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
 - Added `communications/telegram.py`: `TelegramChannel` (Bot API) implementing
@@ -252,18 +234,23 @@ deploy, secret/infra change, or governance bypass occurs.
 ### Open
 - Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
 
-## Cycle 28 — Health tracking (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-health-tracking-cycle28`
-- New module `hermes_ctl/intelligence/health.py` — logs and tracks health
-  metrics with per-metric summaries:
-  - `HealthEntry` / `HealthSnapshot` dataclasses with to_dict/from_dict.
-  - `scan_health()` — reads health entries from MemoryStore (metric filter,
-    date filter, per-metric summary with min/max/avg/last).
-  - `log_metric()` — create a new health entry (validates metric type,
-    auto-date, unique id with random counter for same-millisecond entries).
-  - 12 valid metric types: weight, steps, sleep, water, mood, exercise,
-    medication, heart_rate, blood_pressure, blood_sugar, calories, custom.
-- New CLI commands: `hermesctl health log|list` with metric/date/limit filters.
-- 19 new tests in `tests/test_health.py`.
-- Verified: `pytest tests/` → 171 passed (152 baseline + 19 new).
-- Next: Habit tracking (Phase 3: Personal Intelligence).
+## Cycle 29 — Habit tracking (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-habit-tracking-cycle29` (PR #31 — draft)
+- New module `hermes_ctl/intelligence/habit.py` — manages habits with daily completion logging, streaks, and category grouping.
+- Strengths: 5 frequency types, 7 categories, streak calculation, due-today analysis.
+- CLI: `hermesctl habit add|list|log`.
+- 24 tests; 157 suite total.
+- CI: green (verify + clean-room-e2e).
+
+## Cycle 30 — Financial awareness (Phase 3: Personal Intelligence) — LAST Phase 3 feature
+- Branch: `agent/phase3-financial-awareness-cycle30` (PR #32 — draft)
+- New module `hermes_ctl/intelligence/finance.py`:
+  - `Budget` / `Expense` / `FinancialSnapshot` dataclasses with to_dict/from_dict
+  - `add_budget()` — create/update budget categories with limit validation
+  - `add_expense()` — log expenses with same-millisecond unique ID nonce
+  - `scan_finances()` — MemoryStore-backed budget vs spend, per-category breakdown, overspent detection
+  - `deliver_finances()` — persist snapshot to MemoryStore
+- CLI: `hermesctl finance add-budget|add-expense|list`
+- 22 new tests in `tests/test_finance.py`; 155 suite total.
+- Fixed pre-existing env-var test pollution in `test_brains.py`.
+- Phase 3 features all delivered ✅ (briefing, planning, reminders, context, long-term memory, relationship, shopping, travel, health, habit, financial awareness)
