@@ -392,6 +392,12 @@ Key merged/applied work (PRs against `mdyerapis-coder/hada`):
 - #7 draft — release-manifest gate regression test.
 - #8 draft — hermetic `--continue` stage test.
 - #9 draft — Phase-B local gate suite wired into `verify.yml` (CI green).
+- #10 draft — this Master Roadmap (8-phase living document) + hermetic
+  `--scan` stage test (closes full orchestrator coverage: scan → diagnose →
+  continue → draft PR, verified end-to-end, no network).
+
+All `verify.yml` checks pass in CI (ShellCheck, release manifests, fast tests,
+Phase-B local suite, scan-stage test). `Self-contained E2E` also green.
 
 **Outstanding (human decision):** Phase B0 deployment execution. The runner is
 correct and proven by local tests; execution is gated on explicit human
