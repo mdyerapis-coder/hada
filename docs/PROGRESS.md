@@ -72,6 +72,31 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 23 passed.
 - Next: Information (Files / Search / Knowledge management).
 
+## Cycle 10 — Phase 2: Information layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/information/index.py`: FileIndex (metadata + sha256,
+  read-only scan), SearchIndex (inverted term index, AND-query), KnowledgeBase
+  (thin wrapper over MemoryStore graph). Stdlib-only.
+- Added `tests/test_information.py` (4 tests). All pass.
+- Verified: `pytest tests/` → 27 passed.
+- Next: Intelligence (local LLM routing / cloud fallback / voice / mobile).
+
+## Cycle 11 — Phase 2: Intelligence layer (foundation + boundary)
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/intelligence/router.py`: `Brain` dataclass + `Router`
+  (ABC) + `LocalRouter` (rule-based, offline, per-brain auth header seam).
+  No live model calls; the real routing is the existing llmfit-gui service
+  (external to this repo) which the Router can target via HTTP later.
+- Added `tests/test_intelligence.py` (4 tests). All pass.
+- Verified: `pytest tests/` → 31 passed.
+- **Boundary reached**: real local LLM routing (loading GGUF, GPU/CPU
+  scheduling) and cloud fallback require the running inference stack +
+  credentials, which is Phase 6 (Infrastructure) and governed by the Human
+  Approval Boundary. The Intelligence *interface* is complete and testable;
+  wiring it to live models is a human-gated integration. Phase 2 foundation
+  blocks (Memory, Identity, Communications, Productivity, Information,
+  Intelligence interface) are all delivered and verified.
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)

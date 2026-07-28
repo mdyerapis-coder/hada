@@ -372,21 +372,29 @@ Completion does not signify the end of development. Instead, it marks the transi
 
 ## Phase 2 — Hermes CTL (personal AI operating environment)
 
-**In progress (Cycle 6).** Phase 2 foundation scaffolded under
-`candidate/phase2-hermes-ctl/hermes_ctl/`. First bounded unit delivered:
-`MemoryStore` (long-term facts + tags + TTL, working memory, typed knowledge
-graph) — stdlib-only, JSON-file persistence, 8 unit tests passing. ADR 0003
-(Hermes CTL architecture) Proposed.
+**Foundation complete (Cycles 6–11).** All six Phase 2 foundation blocks
+delivered as a stdlib-only, offline-verifiable Python package under
+`candidate/phase2-hermes-ctl/hermes_ctl/`, 31 unit tests passing:
 
-Build order (governed, one bounded change per cycle):
-1. Memory foundation ✅ (this cycle)
-2. Identity layer (user profile / preferences / context on MemoryStore)
-3. Communications adapters (Email / SMS / Telegram / Contacts)
-4. Productivity (Calendar / Tasks / Notes / CRM)
-5. Information (Files / Search / Knowledge management)
-6. Intelligence (local LLM routing / cloud fallback / voice / mobile)
+1. Memory ✅ — `MemoryStore` (long-term facts+tags+TTL, working memory,
+   typed knowledge graph, JSON persistence).
+2. Identity ✅ — `Identity` (profile / preferences / volatile context).
+3. Communications ✅ — `Message` / `Channel` (ABC seam) / `LocalChannel`
+   (offline) / `Directory` (contacts). Real Email/SMS/Telegram transports
+   are deferred (network + secrets — governance boundary).
+4. Productivity ✅ — Tasks / Notes / Calendar / CRM on MemoryStore.
+5. Information ✅ — FileIndex / SearchIndex / KnowledgeBase.
+6. Intelligence ✅ (interface) — `Brain` / `Router` / `LocalRouter`
+   (rule-based, offline). Real LLM routing + cloud fallback deferred to
+   Phase 6 (Infrastructure) — requires the running inference stack + creds
+   (Human Approval Boundary).
 
-Each cycle opens a draft PR; merges require human approval.
+**Boundary:** the six foundation blocks are complete and verified locally.
+Wiring real external integrations (live messaging transports, calendar/CRM
+sync, model inference) is gated human work — each is a later, explicitly
+authorized cycle. ADR 0003 (Hermes CTL architecture) Accepted.
+
+Build loop continues with gated integration cycles as authorized.
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 

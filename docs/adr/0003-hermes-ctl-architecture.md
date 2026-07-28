@@ -1,7 +1,8 @@
 # ADR 0003 — Hermes CTL Architecture (Phase 2)
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-07-28
+- Promoted: 2026-07-28 (after Cycles 6–11 delivered + verified, 31 tests)
 - Phase: 2 (Hermes CTL — personal AI operating environment)
 - Supersedes: —
 
