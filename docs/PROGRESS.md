@@ -210,3 +210,26 @@ deploy, secret/infra change, or governance bypass occurs.
   on target (no reused/exposed secrets). Inbox persists (real SMS confirmed landed).
 - NOTE: M1 appliance NOT reinit'd — target runs newer 0.2.2 than local v5 (0.2.0);
   full redeploy would downgrade + risk downtime. Worker tree staged instead.
+
+## Cycle 19c — durable deployment state (2026-07-28)
+
+### Brain forwarder (hermes-clean, this box)
+- `scripts/brain_forwarder.py` forwards Tailscale IP `100.72.245.64:8080/8081` -> `127.0.0.1:8080/8081`
+  (binds the TS IP, NOT 0.0.0.0, to avoid colliding with loopback-bound llmfit).
+- NOW a **systemd user service**: `~/.config/systemd/user/hermes-brain-forwarder.service`
+  (Type=simple, Restart=on-failure, WantedBy=default.target). `loginctl enable-linger` set.
+- Verified reachable from hada-control over Tailscale (HTTP 200 on both ports).
+
+### hada-control (runtime home, Tailscale 100.77.108.35)
+- Unified contact daemon: `/etc/systemd/system/hermes-contact.service` -> `contact_daemon.py`
+  (SMS webhook :8089 + Email IMAP poll + Telegram getUpdates poll). Graceful skip on missing creds.
+- Daily briefing: `/etc/systemd/system/hermes-briefing.{service,timer}` (07:00 UTC, oneshot,
+  TimeoutStartSec=900, ExecStartPre warms fast brain). Delivers to inbox store.
+- `contact.env` at `/opt/hada/candidate/phase2-hermes-ctl/contact.env` (0600, root:hada):
+  GMAIL creds LIVE (Email inbound pulling mailbox); TELEGRAM token is masked `8938657874:***`
+  in local source -> Telegram poll returns 404 until real token supplied.
+- `HERMES_BRAIN_HOST=100.72.245.64` so `load_brains` rewrites 127.0.0.1 -> TS IP.
+- `/root/.config/hermes/brains.yaml` present (no secrets; endpoints rewritten via env).
+
+### Open
+- Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
