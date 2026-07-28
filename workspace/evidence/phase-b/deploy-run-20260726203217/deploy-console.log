@@ -1,2 +1,0 @@
-[2026-07-26T10:32:17Z] FAIL: B0 preflight-summary.txt does not record the complete v3 PASS result
-[2026-07-26T10:32:17Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-nhtjms/b0-evidence-v1/candidate-sha256.txt

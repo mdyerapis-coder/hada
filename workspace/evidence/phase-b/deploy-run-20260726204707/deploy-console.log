@@ -1,4 +1,0 @@
-[2026-07-26T10:47:07Z] PASS: Phase B0 v3 evidence lock verified (locked at /tmp/hada-b0-ck-qgsiSq/b0-evidence-v3)
-[2026-07-26T10:47:07Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-qgsiSq/b0-evidence-v1/candidate-sha256.txt
-[2026-07-26T10:47:07Z] FAIL: B0 compose-version-check.txt contains a FAIL line
-[2026-07-26T10:47:07Z] FAIL: B0 target-identity.txt has 2 'project=' lines (expected exactly 1)
