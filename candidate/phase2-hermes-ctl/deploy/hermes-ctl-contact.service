@@ -1,0 +1,15 @@
+[Unit]
+Description=Hermes CTL contact services (SMS webhook receiver)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/hada/candidate/phase2-hermes-ctl
+ExecStart=/usr/bin/python3 serve_contact.py
+EnvironmentFile=%h/hada/candidate/phase2-hermes-ctl/deploy/contact.env
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

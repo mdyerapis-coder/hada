@@ -27,6 +27,85 @@ deploy, secret/infra change, or governance bypass occurs.
 - PR #4 "merged" anomaly on `main`: PR #5 carries the full pipeline.
 - v3 B0 checksum-gate path-independence: deferred (edits deploy preflight script).
 
+## Cycle 6 — Phase 2 start: Hermes CTL memory foundation
+- Branch: `agent/phase2-hermes-ctl-memory-foundation` (draft PR)
+- Scaffolded `candidate/phase2-hermes-ctl/hermes_ctl/` (Phase 2 package).
+- `MemoryStore`: long-term (facts + tags + TTL), working (session scratch),
+  knowledge graph (typed nodes + directed edges). Stdlib-only; JSON-file
+  persistence backend. No network/secrets/infra.
+- Added `tests/test_memory_store.py` (8 tests: remember/recall/forget, TTL
+  expiry, tag search, working-memory lifecycle, graph edges, JSON roundtrip,
+  serialization). All pass.
+- Added `docs/adr/0003-hermes-ctl-architecture.md` (Proposed).
+- Verified: `pytest tests/` → 8 passed.
+- Next bounded tasks (in order): Identity layer (user profile/prefs/context
+  on MemoryStore), then Communications adapters, Productivity, Intelligence.
+
+## Cycle 7 — Phase 2: Identity layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/identity/profile.py`: `Identity` built on `MemoryStore` —
+  profile (merge fields), preferences (key/value + defaults), volatile context
+  (working memory). Stdlib-only.
+- Added `tests/test_identity.py` (5 tests: profile merge, prefs + default, key
+  validation, volatile context, persistence). All pass.
+- Verified: `pytest tests/` → 13 passed (8 memory + 5 identity).
+- Next: Communications adapters (Email / SMS / Telegram / Contacts).
+
+## Cycle 8 — Phase 2: Communications layer (foundation)
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/communications/channels.py`: `Message` (content-hashable),
+  `Channel` (ABC transport seam), `LocalChannel` (offline in-memory transport,
+  no network/credentials), `Directory` (contacts on MemoryStore).
+- Real Email/SMS/Telegram transports intentionally NOT here — they need
+  network + secrets (governance boundary). The `Channel` ABC is the seam
+  they implement later, gated.
+- Added `tests/test_communications.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 18 passed.
+- Next: Productivity (Calendar / Tasks / Notes / CRM).
+
+## Cycle 9 — Phase 2: Productivity layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/productivity/store.py`: TaskStore + NoteStore + Calendar
+  (events, upcoming-window query) + CRM (entities), all on MemoryStore.
+  Stdlib-only dataclasses + query logic.
+- Added `tests/test_productivity.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 23 passed.
+- Next: Information (Files / Search / Knowledge management).
+
+## Cycle 10 — Phase 2: Information layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/information/index.py`: FileIndex (metadata + sha256,
+  read-only scan), SearchIndex (inverted term index, AND-query), KnowledgeBase
+  (thin wrapper over MemoryStore graph). Stdlib-only.
+- Added `tests/test_information.py` (4 tests). All pass.
+- Verified: `pytest tests/` → 27 passed.
+- Next: Intelligence (local LLM routing / cloud fallback / voice / mobile).
+
+## Cycle 12 — Phase 2: gated integrations (Telegram + live LLM routing)
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `communications/telegram.py`: `TelegramChannel` (Bot API) implementing
+  the `Channel` seam. Token read from env/`TELEGRAM_BOT_TOKEN` at runtime, never
+  stored. `send`/`received` real HTTP; offline-testable via `_post` monkeypatch.
+- Added `intelligence/http_router.py`: `HttpRouter` (real `chat/completions`
+  against the running llmfit-gui brains). Auth header name from `Brain`; secret
+  injected at request time from env via `token_resolver`, never persisted.
+- Added `tests/test_integrations.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 36 passed.
+- **Live verified (b)**: HttpRouter hit real `:8080` (qwen3b) + `:8081`
+  (hermes-7b) → both responded. No secrets required (brains open on localhost).
+- **Live verified (Telegram)**: `TelegramChannel.send()` delivered a test message to chat 7620778176 (message_id 3) using the valid @Hermesctlrbot token. Token read from env at runtime, never stored.
+- **Live verified (Email)**: `EmailChannel.send()` delivered a test email to dyer.mason1994@gmail.com via Gmail app password (smtp.gmail.com:465). Creds from env, never stored. 4 email tests; total 40.
+- **SMS (handset gateway, Option B — capcom6 SMS Gateway for Android)**: `SmsChannel` rewritten to the REAL Local Server API (Basic Auth; `POST /message`, `GET /inbox`) + `webhook_receiver.py` (HMAC-validated `sms:received` -> MemoryStore inbox). Built + 3 tests (47 total). **Live-verify deferred**: needs (1) Local Server ON in the app (Settings > Local Server, you already have it open), (2) hada box reachable from phone — join phone to the same Tailscale tailnet, or expose the webhook receiver; (3) creds from env (SMS_GATEWAY_URL/USER/PASS, SMS_WEBHOOK_SECRET). Carrier email-to-SMS ruled out (Telstra consumer gateway dead; JB Hi-Fi = Telstra MVNO).
+- **Design decision (user)**: route ALL contact via the Hermes CTL
+  communications seam; HADA is invoked *behind* it as the governed engineering
+  worker, not the contact receiver. Keeps personal chat responsive + independent
+  of the appliance's read-only gating.
+
+## Tier 1 engineering responsiveness (separate from Phase 2)
+- Cron `hada-repair-scan` (every 2h, read-only `--scan` on `mdyerapis-coder/hada`)
+  created. Lists + diagnoses failing PRs; NEVER `--continue`/open/merge/deploy.
+- Verified: manual scan detected PR #13 failing CI, wrote worktree + diagnosis.
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)

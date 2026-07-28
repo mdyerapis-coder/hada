@@ -51,12 +51,23 @@ cleanup() { rm -rf "$STUB" "${REMOTE%/*}" "$WT" "${WT2:-}" 2>/dev/null; }
 trap cleanup EXIT
 WT2=""
 
+# Ensure a usable base ref (origin/main) exists. In CI the PR checkout may not
+# have fetched origin/main, so synthesise it from the current HEAD — the test
+# only needs a stable base to branch/commit against, not the real main.
+ensure_origin_main() {
+  local wt="$1"
+  if ! git -C "$wt" rev-parse -q origin/main >/dev/null 2>&1; then
+    git -C "$wt" update-ref refs/remotes/origin/main "$(git -C "$wt" rev-parse HEAD)"
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Scenario 1 — happy path (benign fix)
 # ---------------------------------------------------------------------------
 TRACE1=$(mktemp)
 WT=$(mktemp -d)/wt
 git clone "$REMOTE" "$WT" >/dev/null 2>&1
+ensure_origin_main "$WT"
 git -C "$WT" checkout -q origin/main
 # Benign, uncommitted edit so the orchestrator's git add -A && commit has work.
 printf '\n# benign test comment\n' >> "$WT/README.md"
@@ -85,6 +96,7 @@ fi
 TRACE2=$(mktemp)
 WT2=$(mktemp -d)/wt2
 git clone "$REMOTE" "$WT2" >/dev/null 2>&1
+ensure_origin_main "$WT2"
 git -C "$WT2" checkout -q origin/main
 mkdir -p "$WT2/policies"
 echo "change" > "$WT2/policies/RELEASE_GOVERNANCE.md"
