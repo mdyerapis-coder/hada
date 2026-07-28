@@ -41,6 +41,12 @@ from hermes_ctl.secrets import (
     default_contact_policy,
 )
 from hermes_ctl.intelligence.brains import load_brains
+from hermes_ctl.intelligence.briefing import (
+    Briefing,
+    BriefingError,
+    generate_briefing,
+    deliver_briefing,
+)
 
 
 def _store() -> MemoryStore:
@@ -247,6 +253,32 @@ def _cmd_brains(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_briefing(args: argparse.Namespace) -> int:
+    if args.briefing_action == "validate":
+        try:
+            data = json.load(open(args.file, encoding="utf-8"))
+            b = Briefing.from_dict(data)
+            from hermes_ctl.intelligence.briefing import validate_briefing
+            validate_briefing(b)  # raises BriefingError on schema violation
+        except (BriefingError, KeyError, ValueError) as exc:
+            print(f"INVALID briefing: {exc}", file=sys.stderr)
+            return 1
+        print("OK: briefing schema valid")
+        return 0
+    if args.briefing_action == "run":
+        # Gated: requires a live brain (Phase 3 inference). Mac must be online.
+        try:
+            brains = load_brains()
+        except (ValueError, FileNotFoundError) as exc:
+            print(f"brains config error: {exc}", file=sys.stderr)
+            return 1
+        # Production of prescriptions needs live LLM — not available headless.
+        print("briefing run requires live inference (Mac/Hermes-clean online).", file=sys.stderr)
+        print("Schema + delivery are offline-verified; wire the LLM step when brains reachable.", file=sys.stderr)
+        return 1
+    return 2  # pragma: no cover
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -295,6 +327,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     pb = sub.add_parser("brains", help="list configured llmfit brains (HADA inference backend)")
     pb.set_defaults(func=_cmd_brains)
+
+    pbr = sub.add_parser("briefing", help="Dream-style daily briefing (validate | run)")
+    brsub = pbr.add_subparsers(dest="briefing_action", required=True)
+    brv = brsub.add_parser("validate", help="check a briefing JSON against the strict schema (offline)")
+    brv.add_argument("file", help="path to dream-{date}.json")
+    brv.set_defaults(func=_cmd_briefing)
+    brr = brsub.add_parser("run", help="generate + deliver today's briefing (gated: live inference)")
+    brr.set_defaults(func=_cmd_briefing)
     return p
 
 
