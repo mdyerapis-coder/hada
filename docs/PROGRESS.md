@@ -63,6 +63,15 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 18 passed.
 - Next: Productivity (Calendar / Tasks / Notes / CRM).
 
+## Cycle 9 — Phase 2: Productivity layer
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/productivity/store.py`: TaskStore + NoteStore + Calendar
+  (events, upcoming-window query) + CRM (entities), all on MemoryStore.
+  Stdlib-only dataclasses + query logic.
+- Added `tests/test_productivity.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 23 passed.
+- Next: Information (Files / Search / Knowledge management).
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)
