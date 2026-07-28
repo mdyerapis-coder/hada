@@ -1,0 +1,329 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-28T02:54:17.626929+00:00",
+  "is_fixture": false,
+  "data_sources": {
+    "github": "gh api (read-only)",
+    "roadmap": "docs/MASTER_ROADMAP.md",
+    "governance": "docs/adr",
+    "live_infrastructure": "browser-side /hada-api/metrics (not in snapshot)"
+  },
+  "repository": {
+    "available": true,
+    "default_branch": "main",
+    "latest_commit": {
+      "sha": "d321f01",
+      "full_sha": "d321f01da3a769453d5915d0a0762125586799b8",
+      "date": "2026-07-28T00:11:31Z",
+      "message": "docs: add HADA Master Roadmap (8-phase living document) (#10)",
+      "author": "mdyerapis-coder"
+    },
+    "pull_requests": {
+      "total_open": 2,
+      "total_draft": 3,
+      "items": [
+        {
+          "number": 12,
+          "title": "fix: HADA M1 v5 candidate \u2014 8 deployment-blocking fixes",
+          "state": "OPEN",
+          "is_draft": false,
+          "branch": "agent/hada-m1-v5-candidate-fixes",
+          "base": "main",
+          "updated_at": "2026-07-28T02:44:13Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/12"
+        },
+        {
+          "number": 11,
+          "title": "fix: autonomous repair for PR #8",
+          "state": "OPEN",
+          "is_draft": true,
+          "branch": "agent/autofix-pr-8-1785197537",
+          "base": "main",
+          "updated_at": "2026-07-28T00:12:20Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/11"
+        },
+        {
+          "number": 10,
+          "title": "docs: add HADA Master Roadmap (8-phase living document)",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/master-roadmap",
+          "base": "main",
+          "updated_at": "2026-07-28T00:11:33Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/10"
+        },
+        {
+          "number": 9,
+          "title": "ci: run Phase B local-only gate suite in verify.yml",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/ci-phase-b-suite",
+          "base": "main",
+          "updated_at": "2026-07-28T00:08:03Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/9"
+        },
+        {
+          "number": 8,
+          "title": "test(ci): hermetic test for autonomous_repair.sh --continue stage",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/test-continue-stage",
+          "base": "main",
+          "updated_at": "2026-07-28T00:10:26Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/8"
+        },
+        {
+          "number": 7,
+          "title": "test(ci): regression test for release-manifest gate",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/test-release-manifest-gate",
+          "base": "main",
+          "updated_at": "2026-07-28T00:08:08Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/7"
+        },
+        {
+          "number": 6,
+          "title": "docs: add ROADMAP.md, promote ADR 0001 to Accepted",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/docs-roadmap-and-adr1-accepted",
+          "base": "main",
+          "updated_at": "2026-07-28T00:08:00Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/6"
+        },
+        {
+          "number": 5,
+          "title": "feat(ci): governed autonomous PR-repair pipeline",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agent/autofix-add-autonomous-repair-pipeline",
+          "base": "main",
+          "updated_at": "2026-07-27T23:16:35Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/5"
+        },
+        {
+          "number": 4,
+          "title": "fix(ci): resolve ShellCheck failures in repository-verification (auto-repair for PR #1)",
+          "state": "MERGED",
+          "is_draft": false,
+          "branch": "agents/auto-repair-pr-1",
+          "base": "agent/hada-governed-pipeline",
+          "updated_at": "2026-07-27T22:10:39Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/4"
+        },
+        {
+          "number": 3,
+          "title": "fix: autonomous repair for PR #2",
+          "state": "CLOSED",
+          "is_draft": true,
+          "branch": "agent/autofix-pr-2-8a7fc85a-20260727t130534z",
+          "base": "agent/fix-phase-b0-clean-room-e2e",
+          "updated_at": "2026-07-27T16:17:12Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/3"
+        },
+        {
+          "number": 2,
+          "title": "fix: remove operator-local Phase B0 DEPLOY_DIR hardcoding",
+          "state": "CLOSED",
+          "is_draft": true,
+          "branch": "agent/fix-phase-b0-clean-room-e2e",
+          "base": "main",
+          "updated_at": "2026-07-27T16:17:08Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/2"
+        },
+        {
+          "number": 1,
+          "title": "Add governed HADA release pipeline",
+          "state": "CLOSED",
+          "is_draft": false,
+          "branch": "agent/hada-governed-pipeline",
+          "base": "main",
+          "updated_at": "2026-07-27T22:10:40Z",
+          "url": "https://github.com/mdyerapis-coder/hada/pull/1"
+        }
+      ]
+    },
+    "provenance": "github.com/mdyerapis-coder/hada via gh (read-only)"
+  },
+  "ci": {
+    "available": true,
+    "recent": [
+      {
+        "run": 26,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:44:16Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30323957201"
+      },
+      {
+        "run": 32,
+        "status": "completed",
+        "conclusion": "failure",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:44:16Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30323957177"
+      },
+      {
+        "run": 25,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:06:32Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30322173623"
+      },
+      {
+        "run": 31,
+        "status": "completed",
+        "conclusion": "failure",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:06:32Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30322173620"
+      },
+      {
+        "run": 30,
+        "status": "completed",
+        "conclusion": "failure",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:03:07Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30322006639"
+      },
+      {
+        "run": 24,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "agent/hada-m1-v5-candidate-fixes",
+        "created_at": "2026-07-28T02:03:07Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30322006594"
+      },
+      {
+        "run": 29,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "main",
+        "created_at": "2026-07-28T00:11:34Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30316565421"
+      },
+      {
+        "run": 28,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "agent/master-roadmap",
+        "created_at": "2026-07-28T00:11:33Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30316564448"
+      },
+      {
+        "run": 23,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "agent/master-roadmap",
+        "created_at": "2026-07-28T00:11:33Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30316564420"
+      },
+      {
+        "run": 27,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "main",
+        "created_at": "2026-07-28T00:10:27Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30316508575"
+      }
+    ],
+    "provenance": "github.com/mdyerapis-coder/hada/actions via gh (read-only)"
+  },
+  "roadmap": {
+    "available": true,
+    "source": "docs/MASTER_ROADMAP.md",
+    "provenance": "parsed from canonical roadmap Markdown (definitions + status sections)",
+    "phases": [
+      {
+        "name": "Phase 0",
+        "title": "Phase 0 -- Governance Foundation",
+        "status": "active",
+        "summary": "Build the governance framework that allows autonomous software engineering to occur safely. - Governance architecture - Engineering handbook - Security policies - Development lifecycle - RFC process - ADR framework - Coding standards - Testing standards - Evidence standards - Audit logging - Release governance - Project dashboard HADA is capable of supervising engineering work safely. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 1",
+        "title": "Phase 1 -- Autonomous Engineering",
+        "status": "complete",
+        "summary": "Allow HADA to engineer software with minimal supervision. - GitHub integration - CI monitoring - Autonomous failure diagnosis - Autonomous repository inspection - Autonomous repair - Local verification - Regression detection - Evidence generation - Documentation updates - Draft PR generation - Continuous roadmap tracking HADA can autonomously: - Detect failures - Diagnose failures - Implement repairs",
+        "evidence": []
+      },
+      {
+        "name": "Phase 2",
+        "title": "Phase 2 -- Hermes CTL",
+        "status": "planned",
+        "summary": "Build the personal AI operating environment. - User profile - Preferences - Context - Long-term memory - Working memory - Knowledge graph - Email - SMS - Telegram - Contacts - Calendar - Tasks - Notes - CRM - Files - Search - Knowledge management - Local LLM routing - Cloud fallback - Voice interface - Mobile interface Hermes CTL functions as a complete personal AI operating system. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 3",
+        "title": "Phase 3 -- Personal Intelligence",
+        "status": "planned",
+        "summary": "Enable proactive assistance. - Daily briefing - Planning - Smart reminders - Context awareness - Long-term memory - Relationship management - Shopping intelligence - Travel planning - Health tracking - Habit tracking - Financial awareness Hermes proactively assists without requiring continual prompting. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 4",
+        "title": "Phase 4 -- Home Hub Integration",
+        "status": "planned",
+        "summary": "Integrate household services while maintaining project separation. Implementation remains external to HADA and is governed through review and evidence. - Shopping - Inventory - Pantry - Calendar - Family tasks - Smart home - Cameras - Notifications - Dashboards - Household automation Home Hub integrates cleanly through governed interfaces. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 5",
+        "title": "Phase 5 -- Financial Intelligence",
+        "status": "planned",
+        "summary": "Develop governed financial assistance. - Budget engine - Spending analysis - Savings planning - Subscription management - Invoice OCR - Bill reminders - Investment tracking - Tax preparation support - Wise integration - Transaction reconciliation Hermes provides accurate financial guidance while maintaining human control over money movement. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 6",
+        "title": "Phase 6 -- Infrastructure",
+        "status": "planned",
+        "summary": "Operate primarily from local infrastructure with optional burst compute. - Local inference - GPU scheduling - Kubernetes - Vast.ai burst compute - RunPod burst compute - Backup automation - Monitoring - Secret management - Disaster recovery - High availability Hermes operates reliably from local infrastructure with governed cloud augmentation. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 7",
+        "title": "Phase 7 -- ADHD OS",
+        "status": "planned",
+        "summary": "Develop ADHD OS as a separate product. - Executive function tools - Routine management - Visual task planning - Motivation systems - Privacy-first architecture - Consent framework - Offline capability - Cross-platform support ADHD OS is independently deployable while remaining interoperable with Hermes. ---",
+        "evidence": []
+      },
+      {
+        "name": "Phase 8",
+        "title": "Phase 8 -- Continuous Improvement",
+        "status": "planned",
+        "summary": "Never stop improving the ecosystem. - Code review - Refactoring - Technical debt reduction - Documentation improvements - Test improvements - Dependency updates - Security improvements - Performance optimisation - Model benchmarking - Tool evaluation - Architecture review --- For every iteration HADA shall: 1. Review roadmap. 2. Identify highest-priority unfinished task. 3. Verify prerequisites. 4. Implement one bounded change.",
+        "evidence": []
+      }
+    ]
+  },
+  "governance": {
+    "available": true,
+    "human_approval_required": true,
+    "self_approval_prohibited": true,
+    "authority_boundary": "The control board is read-only. It cannot merge, deploy, alter secrets, change infrastructure, or approve gates.",
+    "reviewers": {
+      "implementation": "Party 1 (implementation_engineer)",
+      "adversarial": "Party 2 (adversarial_reviewer)",
+      "external": "Party 3 (independent_external_reviewer, automated mode)"
+    },
+    "adrs": [
+      {
+        "id": "0001-governed-release-pipeline",
+        "status": "Accepted",
+        "path": "docs/adr/0001-governed-release-pipeline.md"
+      },
+      {
+        "id": "0002-autonomous-repair-pipeline",
+        "status": "Accepted",
+        "path": "docs/adr/0002-autonomous-repair-pipeline.md"
+      }
+    ],
+    "provenance": "docs/adr + HADA governance config"
+  }
+}
