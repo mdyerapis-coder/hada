@@ -186,3 +186,27 @@ deploy, secret/infra change, or governance bypass occurs.
   Previously only `run_fast_tests.sh` ran, so the most important deployment
   gate tests were NOT exercised in CI.
 - run_all.sh is local-only (mocked SSH, no docker daemon); 19/19 pass locally.
+
+## Cycle 16 — llmfit brain wiring (Phase 2 enabler, PR #16)
+- Forked `AlexsJones/llmfit` -> `mdyerapis-coder/llmfit` (user account, not org).
+- `hermes_ctl/intelligence/brains.py`: `load_brains()` adapts `~/.config/hermes/brains.yaml`
+  into Brain descriptors; `HERMES_BRAIN_HOST` env rewrites loopback -> remote host.
+- `hermesctl brains` command. 75 tests pass. Draft PR #16 (forge-approved).
+
+## Cycle 17 — Dream-style daily briefing (Phase 2 enabler, PR #17) — DEPLOYED
+- Ported Claude Code OS `/dream` contract: `hermes_ctl/intelligence/briefing.py`
+  (fail-closed 4-category schema, generate/deliver to MemoryStore + idempotent
+  dream-{date}.json). `hermesctl briefing validate|run`. 89 tests pass.
+- Merged to main (f8b7619) via "deploy now"; agent-forge e2e APPROVE.
+
+## Cycle 18 — Deploy Hermes CTL worker + contact daemon to hada-control — DEPLOYED
+- Target topology clarified: hermes-clean = build host (Tailscale 100.72.245.64);
+  hada-control = HADA runtime (Tailscale 100.77.108.35, GCP VM). M1 appliance already
+  running healthy there (hada-orchestrator:0.2.2; 9 containers Up).
+- Transferred `candidate/phase2-hermes-ctl` to `/opt/hada/candidate/phase2-hermes-ctl`
+  (tar-over-IAP-SSH, exclude .env). Verified imports + briefing deliver on target venv.
+- Wired `serve_contact.py` as `hermes-contact.service` (systemd, active, listening
+  0.0.0.0:8089, Tailscale-encrypted HTTP, HMAC auth enforced). contact.env generated
+  on target (no reused/exposed secrets). Inbox persists (real SMS confirmed landed).
+- NOTE: M1 appliance NOT reinit'd — target runs newer 0.2.2 than local v5 (0.2.0);
+  full redeploy would downgrade + risk downtime. Worker tree staged instead.
