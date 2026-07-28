@@ -247,11 +247,13 @@ function renderAgents(snap) {
 }
 
 // ===== INFRASTRUCTURE =====
-function renderInfrastructure(snap, live) {
+function renderInfrastructure(snap, live, state) {
   if (!live || live.error) {
     $("infra-body").innerHTML = notice("Live infrastructure unavailable", "The orchestrator probe (/hada-api/metrics) could not be reached. Service health is not shown as healthy.");
     return;
   }
+  const outPub = state ? state.outbox_published_total : null;
+  const outFail = state ? state.outbox_publish_failures_total : null;
   const rows = [
     { svc: "orchestrator", health: live.ok ? "healthy" : "unhealthy", note: "probe 9108" },
     { svc: "postgres", health: live.dbUp ? "healthy" : "unhealthy", note: "hada_database_up=" + live.dbUp },
@@ -263,8 +265,28 @@ function renderInfrastructure(snap, live) {
       <span class="pill ${tag(live.ok ? "ok" : "bad")}">${live.ok ? "all up" : "degraded"}</span></div>
       <div class="table-wrap"><table><thead><tr><th>Service</th><th>Health</th><th>Signal</th></tr></thead>
       <tbody>${rows.map((r) => `<tr><td>${esc(r.svc)}</td><td><span class="pill ${tag(r.health)}">${esc(r.health)}</span></td><td><code>${esc(r.note)}</code></td></tr>`).join("")}</tbody></table></div>
+      <p style="color:var(--muted);font-size:12px">Outbox publisher — published: <code>${outPub ?? "n/a"}</code>, failures: <code>${outFail ?? "n/a"}</code>${state ? "" : " (state API not reachable)"}</p>
       <p style="color:var(--muted);font-size:12px">Repository/deployment: candidate v5 (PR #12). Data freshness: live probe, fetched on page load.</p>
     </div>`;
+}
+
+// ===== EVIDENCE (real state where exposed, fail-closed otherwise) =====
+function renderEvidence(snap, state) {
+  const items = [];
+  if (snap && snap.repository && snap.repository.latest_commit)
+    items.push({ k: "Latest commit", v: snap.repository.latest_commit.sha, ts: snap.repository.latest_commit.date, prov: "github", url: null });
+  (snap.repository.pull_requests.items || []).forEach((p) => items.push({ k: "PR #" + p.number, v: p.state + (p.is_draft ? " (draft)" : ""), ts: p.updated_at, prov: "github", url: p.url }));
+  const rows = items.map((i) => `<tr><td>${esc(i.k)}</td><td>${esc(i.v)}</td><td>${esc(i.ts || "—")}</td><td><code>${esc(i.prov)}</code></td><td>${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">link</a>` : "n/a"}</td></tr>`).join("");
+  const sig = state && state.evidence && state.evidence.available === false
+    ? `<p style="color:var(--muted);font-size:12px">Integrity/signature status: ${esc(state.evidence.reason)}. Unavailable data is never shown as verified.</p>`
+    : `<p style="color:var(--muted);font-size:12px">Integrity/signature status: not yet exposed by the v5 orchestrator over HTTP.</p>`;
+  $("evidence-body").innerHTML = `
+    <div class="panel">
+      <div class="panel-header"><div><h2>Evidence bundle</h2><p>Commit/PR identifiers with provenance (signed bundles not yet exposed)</p></div>
+      <span class="pill neutral">partial</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Item</th><th>State</th><th>Timestamp</th><th>Provenance</th><th>Link</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+      ${sig}`;
 }
 
 // ===== DOCS =====
@@ -304,11 +326,16 @@ async function boot() {
   try { snap = await getJSON(SNAP); }
   catch (e) { setBanner("error", "Snapshot unavailable: " + e.message + " — showing live infra only."); }
   try {
-    const [h, m] = await Promise.all([getText("/hada-api/healthz"), getText("/hada-api/metrics")]);
+    const [h, m, st] = await Promise.all([
+      getText("/hada-api/healthz"),
+      getText("/hada-api/metrics"),
+      getJSON("/hada-api/api/v1/state").catch(() => null),
+    ]);
     const mm = parseMetrics(m);
     live = { ok: h.trim() === "ok" && mm["hada_database_up"] === "1" && mm["hada_queue_up"] === "1",
              dbUp: mm["hada_database_up"] === "1", qUp: mm["hada_queue_up"] === "1", error: null };
-  } catch (e) { live = { ok: false, error: e.message }; }
+    state = st;
+  } catch (e) { live = { ok: false, error: e.message }; state = null; }
 
   if (!snap) {
     // fail closed: render unavailable notices everywhere
@@ -323,10 +350,10 @@ async function boot() {
   } else {
     renderOverview(snap, live);
     renderRoadmap(snap); renderDevelopment(snap); renderGovernance(snap);
-    renderEvidence(snap); renderAgents(snap);
+    renderEvidence(snap, state); renderAgents(snap);
     if (!live || live.error) setBanner("error", "Snapshot fresh (" + freshness(snap.generated_at).label + ") but live infra unreachable.");
     else setBanner("live", "Snapshot " + freshness(snap.generated_at).label + " · live infra " + (live.ok ? "healthy" : "degraded"));
   }
-  renderInfrastructure(snap, live);
+  renderInfrastructure(snap, live, state);
 }
 boot();
