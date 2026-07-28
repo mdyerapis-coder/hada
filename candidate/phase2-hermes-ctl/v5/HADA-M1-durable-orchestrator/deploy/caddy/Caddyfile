@@ -1,0 +1,22 @@
+{
+  email {$HADA_ACME_EMAIL}
+  admin off
+}
+
+{$HADA_DOMAIN} {
+  encode zstd gzip
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+
+  handle_path /grafana/* {
+    reverse_proxy grafana:3000
+  }
+
+  respond /healthz 200
+  respond 404
+}

@@ -1,0 +1,3 @@
+project=api-intergrations-501314
+zone=australia-southeast1-b
+vm=hada-control

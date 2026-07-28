@@ -1,0 +1,545 @@
+{
+  "name": "hada",
+  "networks": {
+    "control": {
+      "name": "hada_control",
+      "ipam": {},
+      "internal": true
+    },
+    "ingress": {
+      "name": "hada_ingress",
+      "ipam": {}
+    }
+  },
+  "secrets": {
+    "valkey_conf": {
+      "name": "hada_valkey_conf",
+      "file": "/var/lib/hada/secrets/valkey/valkey.conf"
+    }
+  },
+  "services": {
+    "alloy": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "run",
+        "--server.http.listen-addr=0.0.0.0:12345",
+        "--storage.path=/var/lib/alloy/data",
+        "/etc/alloy/config.alloy"
+      ],
+      "depends_on": {
+        "loki": {
+          "condition": "service_started",
+          "required": true
+        }
+      },
+      "entrypoint": null,
+      "environment": {
+        "HOSTNAME": "hada-host"
+      },
+      "image": "grafana/alloy:v1.12.0",
+      "networks": {
+        "control": null
+      },
+      "read_only": true,
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:size=64m,mode=1777"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/alloy/config.alloy",
+          "target": "/etc/alloy/config.alloy",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/docker/containers",
+          "target": "/var/lib/docker/containers",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "volume",
+          "source": "alloy-data",
+          "target": "/var/lib/alloy/data",
+          "volume": {}
+        }
+      ]
+    },
+    "caddy": {
+      "cap_add": [
+        "NET_BIND_SERVICE"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": null,
+      "depends_on": {
+        "grafana": {
+          "condition": "service_started",
+          "required": true
+        }
+      },
+      "entrypoint": null,
+      "environment": {
+        "HADA_ACME_EMAIL": "",
+        "HADA_DOMAIN": "localhost"
+      },
+      "image": "caddy:2.10-alpine",
+      "networks": {
+        "ingress": null
+      },
+      "ports": [
+        {
+          "mode": "ingress",
+          "host_ip": "127.0.0.1",
+          "target": 80,
+          "published": "80",
+          "protocol": "tcp"
+        }
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/caddy/Caddyfile.gcp",
+          "target": "/etc/caddy/Caddyfile",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "volume",
+          "source": "caddy-data",
+          "target": "/data",
+          "volume": {}
+        },
+        {
+          "type": "volume",
+          "source": "caddy-config",
+          "target": "/config",
+          "volume": {}
+        }
+      ]
+    },
+    "grafana": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": null,
+      "depends_on": {
+        "loki": {
+          "condition": "service_started",
+          "required": true
+        },
+        "prometheus": {
+          "condition": "service_started",
+          "required": true
+        }
+      },
+      "entrypoint": null,
+      "environment": {
+        "GF_SECURITY_ADMIN_PASSWORD": "synthetic-not-a-real-secret",
+        "GF_SECURITY_ADMIN_USER": "admin",
+        "GF_SERVER_ROOT_URL": "http://localhost:8080/grafana/",
+        "GF_SERVER_SERVE_FROM_SUB_PATH": "true",
+        "GF_USERS_ALLOW_SIGN_UP": "false"
+      },
+      "image": "grafana/grafana:11.5.2",
+      "networks": {
+        "control": null,
+        "ingress": null
+      },
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "grafana-data",
+          "target": "/var/lib/grafana",
+          "volume": {}
+        },
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/grafana/provisioning",
+          "target": "/etc/grafana/provisioning",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/grafana/dashboards",
+          "target": "/var/lib/grafana/dashboards",
+          "read_only": true,
+          "bind": {}
+        }
+      ]
+    },
+    "loki": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "-config.file=/etc/loki/config.yml"
+      ],
+      "entrypoint": null,
+      "image": "grafana/loki:3.4.2",
+      "networks": {
+        "control": null
+      },
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/loki/config.yml",
+          "target": "/etc/loki/config.yml",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "volume",
+          "source": "loki-data",
+          "target": "/loki",
+          "volume": {}
+        }
+      ]
+    },
+    "node-exporter": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "--path.rootfs=/host"
+      ],
+      "entrypoint": null,
+      "image": "prom/node-exporter:v1.9.0",
+      "networks": {
+        "control": null
+      },
+      "pid": "host",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/",
+          "target": "/host",
+          "read_only": true,
+          "bind": {
+            "propagation": "rslave"
+          }
+        }
+      ]
+    },
+    "orchestrator": {
+      "build": {
+        "context": "/tmp/hada-b0-preflight-20260728104037",
+        "dockerfile": "Dockerfile"
+      },
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": null,
+      "depends_on": {
+        "postgres": {
+          "condition": "service_healthy",
+          "required": true
+        },
+        "valkey": {
+          "condition": "service_healthy",
+          "required": true
+        }
+      },
+      "entrypoint": null,
+      "environment": {
+        "HADA_CONFIG": "/opt/hada/config/hada.yaml",
+        "HADA_DATABASE_DSN": "postgresql://hada:***@postgres:5432/hada",
+        "HADA_STATE_DIR": "/var/lib/hada",
+        "HADA_VALKEY_URL": "redis://:synthetic-not-a-real-secret@valkey:6379/0"
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9108/readyz', timeout=3)"
+        ],
+        "timeout": "5s",
+        "interval": "15s",
+        "retries": 4,
+        "start_period": "45s"
+      },
+      "image": "hada-orchestrator:0.2.0",
+      "networks": {
+        "control": null
+      },
+      "read_only": true,
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:size=256m,mode=1777",
+        "/var/log/hada:size=64m,mode=0750,uid=10001,gid=10001"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/hada",
+          "target": "/var/lib/hada",
+          "bind": {}
+        }
+      ]
+    },
+    "postgres": {
+      "cap_add": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "SETGID",
+        "SETUID"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": null,
+      "entrypoint": null,
+      "environment": {
+        "POSTGRES_DB": "hada",
+        "POSTGRES_PASSWORD": "synthetic-not-a-real-secret",
+        "POSTGRES_USER": "hada"
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U hada -d hada"
+        ],
+        "timeout": "5s",
+        "interval": "10s",
+        "retries": 10,
+        "start_period": "20s"
+      },
+      "image": "postgres:17-alpine",
+      "networks": {
+        "control": null
+      },
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "postgres-data",
+          "target": "/var/lib/postgresql/data",
+          "volume": {}
+        }
+      ]
+    },
+    "prometheus": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "--config.file=/etc/prometheus/prometheus.yml",
+        "--storage.tsdb.path=/prometheus",
+        "--web.enable-lifecycle"
+      ],
+      "entrypoint": null,
+      "image": "prom/prometheus:v3.2.1",
+      "networks": {
+        "control": null
+      },
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/prometheus/prometheus.yml",
+          "target": "/etc/prometheus/prometheus.yml",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/tmp/hada-b0-preflight-20260728104037/deploy/prometheus/rules",
+          "target": "/etc/prometheus/rules",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "volume",
+          "source": "prometheus-data",
+          "target": "/prometheus",
+          "volume": {}
+        }
+      ]
+    },
+    "valkey": {
+      "cap_add": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "SETGID",
+        "SETUID"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "valkey-server",
+        "/run/secrets/valkey.conf"
+      ],
+      "entrypoint": null,
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "sh",
+          "-c",
+          "VALKEYCLI_AUTH=\"$$(awk '/^requirepass /{print $$2}' /run/secrets/valkey.conf)\" valkey-cli ping | grep -q PONG"
+        ],
+        "timeout": "5s",
+        "interval": "10s",
+        "retries": 10,
+        "start_period": "20s"
+      },
+      "image": "valkey/valkey:8-alpine",
+      "networks": {
+        "control": null
+      },
+      "restart": "unless-stopped",
+      "secrets": [
+        {
+          "source": "valkey_conf",
+          "target": "/run/secrets/valkey_conf"
+        }
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "valkey-data",
+          "target": "/data",
+          "volume": {}
+        }
+      ]
+    }
+  },
+  "volumes": {
+    "alloy-data": {
+      "name": "hada_alloy-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/alloy-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "caddy-config": {
+      "name": "hada_caddy-config",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/caddy-config",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "caddy-data": {
+      "name": "hada_caddy-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/caddy-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "grafana-data": {
+      "name": "hada_grafana-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/grafana-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "loki-data": {
+      "name": "hada_loki-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/loki-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "postgres-data": {
+      "name": "hada_postgres-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/postgres-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "prometheus-data": {
+      "name": "hada_prometheus-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/prometheus-data",
+        "o": "bind",
+        "type": "none"
+      }
+    },
+    "valkey-data": {
+      "name": "hada_valkey-data",
+      "driver_opts": {
+        "device": "/var/lib/hada/docker-volumes/valkey-data",
+        "o": "bind",
+        "type": "none"
+      }
+    }
+  },
+  "x-security": {
+    "cap_drop": [
+      "ALL"
+    ],
+    "networks": [
+      "control"
+    ],
+    "restart": "unless-stopped",
+    "security_opt": [
+      "no-new-privileges:true"
+    ]
+  },
+  "x-stateful-security": {
+    "cap_add": [
+      "CHOWN",
+      "DAC_OVERRIDE",
+      "FOWNER",
+      "SETGID",
+      "SETUID"
+    ],
+    "cap_drop": [
+      "ALL"
+    ],
+    "networks": [
+      "control"
+    ],
+    "restart": "unless-stopped",
+    "security_opt": [
+      "no-new-privileges:true"
+    ]
+  }
+}

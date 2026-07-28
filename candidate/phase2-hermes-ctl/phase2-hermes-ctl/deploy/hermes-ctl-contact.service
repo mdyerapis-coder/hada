@@ -1,0 +1,15 @@
+[Unit]
+Description=Hermes CTL unified contact daemon (SMS webhook + Email/Telegram poll -> inbox)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/hada/candidate/phase2-hermes-ctl
+ExecStart=/usr/bin/python3 hermes_ctl/communications/contact_daemon.py
+EnvironmentFile=%h/hada/candidate/phase2-hermes-ctl/deploy/contact.env
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
