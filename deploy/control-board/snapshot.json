@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-28T04:37:12.079849+00:00",
+  "generated_at": "2026-07-28T04:44:12.973059+00:00",
   "is_fixture": false,
   "data_sources": {
     "github": "gh api (read-only)",
@@ -13,10 +13,10 @@
     "available": true,
     "default_branch": "main",
     "latest_commit": {
-      "sha": "9346aa0",
-      "full_sha": "9346aa0fc5a3404c8957dc2290a98684cc063de7",
-      "date": "2026-07-28T04:22:39Z",
-      "message": "fix(deploy): caddy binds 0.0.0.0:80 (Tailscale access)",
+      "sha": "646d9e3",
+      "full_sha": "646d9e301f60cb1201ffdd64a0aa3582462c08d0",
+      "date": "2026-07-28T04:40:36Z",
+      "message": "fix(control-board): clarify roadmap evidence + gate-count labels",
       "author": "Hermes Agent"
     },
     "pull_requests": {
@@ -151,6 +151,22 @@
     "available": true,
     "recent": [
       {
+        "run": 44,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "main",
+        "created_at": "2026-07-28T04:40:39Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30329406525"
+      },
+      {
+        "run": 43,
+        "status": "completed",
+        "conclusion": "success",
+        "branch": "main",
+        "created_at": "2026-07-28T04:37:24Z",
+        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30329262149"
+      },
+      {
         "run": 42,
         "status": "completed",
         "conclusion": "success",
@@ -213,22 +229,6 @@
         "branch": "agent/hada-m1-v5-candidate-fixes",
         "created_at": "2026-07-28T03:11:43Z",
         "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30325252804"
-      },
-      {
-        "run": 29,
-        "status": "completed",
-        "conclusion": "success",
-        "branch": "agent/hada-m1-v5-candidate-fixes",
-        "created_at": "2026-07-28T03:11:43Z",
-        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30325252797"
-      },
-      {
-        "run": 34,
-        "status": "completed",
-        "conclusion": "failure",
-        "branch": "agent/hada-m1-v5-candidate-fixes",
-        "created_at": "2026-07-28T03:02:51Z",
-        "url": "https://github.com/mdyerapis-coder/hada/actions/runs/30324828241"
       }
     ],
     "provenance": "github.com/mdyerapis-coder/hada/actions via gh (read-only)"
@@ -311,15 +311,14 @@
       {
         "name": "Phase B0 execution",
         "goal": "Deploy candidate to target",
-        "state": "\u26d4 Blocked \u2014 human authorization required",
-        "status": "blocked"
+        "state": "\u2705 Executed (authorized 2026-07-28)",
+        "status": "complete"
       }
     ],
-    "current_release": "v3 preserved: SHA-256 `7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204`",
+    "current_release": null,
     "guardrails": [
-      "explicit human authorization and is **never** performed automatically.",
-      "| Phase B0 execution | Deploy candidate to target | \u26d4 Blocked \u2014 human authorization required |",
-      "Deployment remains non-mutating until staging rehearsal, workload identity,"
+      "Deployment remains non-mutating until staging rehearsal, workload identity,",
+      "The autonomous repair pipeline may open draft PRs but **never merges,"
     ]
   },
   "governance": {
