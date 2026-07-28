@@ -111,7 +111,14 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 36 passed.
 - **Live verified (b)**: HttpRouter hit real `:8080` (qwen3b) + `:8081`
   (hermes-7b) → both responded. No secrets required (brains open on localhost).
-- **Live verified (Telegram)**: `TelegramChannel.send()` delivered a test message to chat 7620778176 (message_id 3) using the valid @Hermesctlrbot token. Token read from env at runtime, never stored.
+- Live-verified (Telegram): valid bot token from Bitwarden (`Hermes CTL bot token`
+  entry, @Hermesctlrbot id 8938657874) injected into gitignored `contact.env`;
+  daemon polls getUpdates every 30s; verified inbound messages land in the
+  inbox (tags `inbox`+`telegram`).
+- Email inbound BLOCKED: Bitwarden `Google` entry (`dyer.mason1994@gmail.com`)
+  stores an INVALID app password (12 chars, Gmail rejects). Needs a valid
+  16-char Google app password in `contact.env` GMAIL_APP_PASSWORD. Secret
+  extraction done in-session (BW_SESSION), never committed (contact.env ignored).
 - **Live verified (Email)**: `EmailChannel.send()` delivered a test email to dyer.mason1994@gmail.com via Gmail app password (smtp.gmail.com:465). Creds from env, never stored. 4 email tests; total 40.
 - **SMS (handset gateway, Option B — capcom6 SMS Gateway for Android)**: `SmsChannel` rewritten to the REAL Local Server API (Basic Auth; `POST /message`, `GET /inbox`) + `webhook_receiver.py` (HMAC-validated `sms:received` -> MemoryStore inbox). Built + 3 tests (47 total). **Live-verify deferred**: needs (1) Local Server ON in the app (Settings > Local Server, you already have it open), (2) hada box reachable from phone — join phone to the same Tailscale tailnet, or expose the webhook receiver; (3) creds from env (SMS_GATEWAY_URL/USER/PASS, SMS_WEBHOOK_SECRET). Carrier email-to-SMS ruled out (Telstra consumer gateway dead; JB Hi-Fi = Telstra MVNO).
 - **Design decision (user)**: route ALL contact via the Hermes CTL
