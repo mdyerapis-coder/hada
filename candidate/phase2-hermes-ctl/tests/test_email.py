@@ -4,7 +4,7 @@ import email
 from email.message import EmailMessage
 
 from hermes_ctl.communications.channels import Message
-from hermes_ctl.communications.email import EmailChannel
+from hermes_ctl.communications.email_channel import EmailChannel
 
 
 class _FakeSMTP:
