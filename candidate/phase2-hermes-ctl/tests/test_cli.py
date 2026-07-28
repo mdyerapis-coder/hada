@@ -104,6 +104,38 @@ def test_send_telegram_routes_to_channel(monkeypatch, tmp_path):
     assert sent == {"to": "7620778176", "body": "hello"}
 
 
+def test_brains_command_lists_roles(monkeypatch, tmp_path):
+    p = tmp_path / "brains.yaml"
+    p.write_text(
+        "brains:\n"
+        "  fast:\n    endpoint: http://127.0.0.1:8080/v1/chat/completions\n    model: m\n"
+        "  agent:\n    endpoint: http://127.0.0.1:8081/v1/chat/completions\n    model: m\n"
+        "  max:\n    endpoint: http://127.0.0.1:8081/v1/chat/completions\n    model: m\n"
+    )
+    monkeypatch.setenv("HERMES_BRAINS_PATH", str(p))
+    rc = main(["brains"])
+    assert rc == 0
+
+
+def test_briefing_validate_ok(monkeypatch, tmp_path):
+    from hermes_ctl.intelligence.briefing import generate_briefing, Prescription, deliver_briefing
+    b = generate_briefing(
+        [Prescription(id="mem-a", cat="MEMORY", tone="pink", headline="h",
+                      prescription="p", evidence=["a", "b", "c"], command="x")],
+        date="2026-07-28", model="m")
+    f = tmp_path / "dream.json"
+    deliver_briefing(b, dreams_dir=str(tmp_path))
+    import json, glob
+    f = glob.glob(str(tmp_path / "dream-*.json"))[0]
+    assert main(["briefing", "validate", f]) == 0
+
+
+def test_briefing_validate_rejects_bad(tmp_path):
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps({"date": "2026-07-28", "model": "m", "generatedAt": "x", "prescriptions": []}))
+    assert main(["briefing", "validate", str(bad)]) == 1
+
+
 def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):
