@@ -27,6 +27,20 @@ deploy, secret/infra change, or governance bypass occurs.
 - PR #4 "merged" anomaly on `main`: PR #5 carries the full pipeline.
 - v3 B0 checksum-gate path-independence: deferred (edits deploy preflight script).
 
+## Cycle 6 — Phase 2 start: Hermes CTL memory foundation
+- Branch: `agent/phase2-hermes-ctl-memory-foundation` (draft PR)
+- Scaffolded `candidate/phase2-hermes-ctl/hermes_ctl/` (Phase 2 package).
+- `MemoryStore`: long-term (facts + tags + TTL), working (session scratch),
+  knowledge graph (typed nodes + directed edges). Stdlib-only; JSON-file
+  persistence backend. No network/secrets/infra.
+- Added `tests/test_memory_store.py` (8 tests: remember/recall/forget, TTL
+  expiry, tag search, working-memory lifecycle, graph edges, JSON roundtrip,
+  serialization). All pass.
+- Added `docs/adr/0003-hermes-ctl-architecture.md` (Proposed).
+- Verified: `pytest tests/` → 8 passed.
+- Next bounded tasks (in order): Identity layer (user profile/prefs/context
+  on MemoryStore), then Communications adapters, Productivity, Intelligence.
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)

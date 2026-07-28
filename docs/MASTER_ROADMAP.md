@@ -370,6 +370,24 @@ Completion does not signify the end of development. Instead, it marks the transi
 > draft-PR state as of the last cycle. Deployment (Phase B0) remains
 > human-authorized and is never executed autonomously.
 
+## Phase 2 — Hermes CTL (personal AI operating environment)
+
+**In progress (Cycle 6).** Phase 2 foundation scaffolded under
+`candidate/phase2-hermes-ctl/hermes_ctl/`. First bounded unit delivered:
+`MemoryStore` (long-term facts + tags + TTL, working memory, typed knowledge
+graph) — stdlib-only, JSON-file persistence, 8 unit tests passing. ADR 0003
+(Hermes CTL architecture) Proposed.
+
+Build order (governed, one bounded change per cycle):
+1. Memory foundation ✅ (this cycle)
+2. Identity layer (user profile / preferences / context on MemoryStore)
+3. Communications adapters (Email / SMS / Telegram / Contacts)
+4. Productivity (Calendar / Tasks / Notes / CRM)
+5. Information (Files / Search / Knowledge management)
+6. Intelligence (local LLM routing / cloud fallback / voice / mobile)
+
+Each cycle opens a draft PR; merges require human approval.
+
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
 **Locally complete and verified.** The HADA M1 release appliance demonstrates
