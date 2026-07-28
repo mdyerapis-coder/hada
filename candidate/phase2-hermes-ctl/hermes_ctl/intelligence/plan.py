@@ -81,6 +81,8 @@ Open inbox items (last signals):
 Return STRICT JSON only, no prose:
 {{"headline": "<=120 char day theme>", "items": [{{"time": "HH:MM or 'anytime'", "priority": "high|medium|low", "task": "<concrete actionable task>"}}]}}
 
+IMPORTANT: This is a work day — operational tasks and actionable items only. No lifestyle recommendations, health advice, brain exercises, or personal development suggestions. Be practical and grounded in the signals provided.
+
 Include 3-6 items. Order by time. Be specific and honest; no confabulation. If inputs are empty, propose a light maintenance day."""
 
 
