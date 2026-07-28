@@ -239,3 +239,98 @@ def scan_signals(*, inbox_dir: str | None = None, store: Any = None) -> dict[str
         signals["inbox_present"] = True
         signals["buckets"].append("conversation")
     return signals
+
+
+# Default brain role used to generate each prescription. Use the FAST brain
+# (Qwen2.5-3B) so a full 4-prescription briefing completes in seconds on CPU;
+# the agent/hermes-7b brain is reserved for harder reasoning elsewhere.
+RUN_ROLE = "fast"
+
+_PROMPT_TEMPLATE = """You are the HADA daily-briefing engine. Produce ONE high-impact prescription for the category '{cat}'.
+
+Context signals (last 24h):
+{context}
+
+Return STRICT JSON only, no prose, matching this shape:
+{{"headline": "<=120 char actionable headline>", "prescription": "<2-3 sentence concrete action>", "evidence": ["fact1","fact2","fact3"], "command": "<single shell/agent command to act, or 'none'>"}}
+
+Tone for {cat} is {tone}. Be specific, honest, no confabulation. If signals are empty, say so in evidence."""
+
+
+def _build_prompt(cat: str, tone: str, signals: dict[str, Any]) -> str:
+    ctx = json.dumps(signals, ensure_ascii=False)[:1500]
+    return _PROMPT_TEMPLATE.format(cat=cat, tone=tone, context=ctx)
+
+
+def _parse_prescription(cat: str, raw: str, date: str) -> Prescription:
+    """Parse an LLM JSON reply into a schema-valid Prescription.
+
+    Raises BriefingError if the model returned malformed content (fail-closed:
+    we never deliver a briefing with a broken prescription).
+    """
+    tone = CATEGORY_TONES[cat]
+    try:
+        # tolerate code-fence wrapping
+        text = raw.strip()
+        if text.startswith("```"):
+            text = text.split("```", 2)[1]
+            if text.startswith("json"):
+                text = text[4:]
+        data = json.loads(text)
+        headline = str(data.get("headline", "")).strip()
+        prescription = str(data.get("prescription", "")).strip()
+        evidence = [str(e).strip() for e in (data.get("evidence") or [])]
+        command = str(data.get("command", "none")).strip() or "none"
+    except (json.JSONDecodeError, TypeError, AttributeError) as exc:
+        raise BriefingError(f"{cat}: LLM returned unparseable content: {exc}") from exc
+
+    if not headline:
+        raise BriefingError(f"{cat}: empty headline from LLM")
+    if not prescription:
+        raise BriefingError(f"{cat}: empty prescription from LLM")
+    if len(evidence) != 3:
+        # pad/truncate to exactly 3 to satisfy the schema
+        while len(evidence) < 3:
+            evidence.append("(no further evidence)")
+        evidence = evidence[:3]
+    pid = f"{cat.lower()}-{date}"
+    return Prescription(
+        id=pid, cat=cat, tone=tone, headline=headline[:HEADLINE_MAX],
+        prescription=prescription, evidence=evidence, command=command,
+    )
+
+
+def run_briefing(
+    *,
+    brains: Any,
+    store: Any = None,
+    dreams_dir: str | None = None,
+    inbox_dir: str | None = None,
+    date: str | None = None,
+    model: str | None = None,
+) -> str:
+    """Generate + deliver today's 4-prescription briefing via live inference.
+
+    Gated step: requires a reachable ``brains`` router (HttpRouter). Scans
+    signals (read-only), asks the brain for one prescription per category,
+    validates fail-closed, and delivers. Returns the written path (or 'memory').
+    """
+    from hermes_ctl.intelligence.http_router import HttpRouter
+
+    if not hasattr(brains, "complete"):
+        raise BriefingError("brains must expose complete(role, prompt, *, max_tokens)")
+    router: HttpRouter = brains
+
+    date = date or time.strftime("%Y-%m-%d", time.gmtime())
+    model = model or RUN_ROLE
+    signals = scan_signals(inbox_dir=inbox_dir, store=store)
+
+    prescriptions: list[Prescription] = []
+    for cat in VALID_CATEGORIES:
+        tone = CATEGORY_TONES[cat]
+        prompt = _build_prompt(cat, tone, signals)
+        raw = router.complete(RUN_ROLE, prompt, max_tokens=300)
+        prescriptions.append(_parse_prescription(cat, raw, date))
+
+    briefing = generate_briefing(prescriptions, date=date, model=model)
+    return deliver_briefing(briefing, store=store, dreams_dir=dreams_dir)
