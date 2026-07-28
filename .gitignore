@@ -1,0 +1,5 @@
+
+# build artifacts (never track)
+__pycache__/
+*.pyc
+workspace/evidence/*/deploy-console.log

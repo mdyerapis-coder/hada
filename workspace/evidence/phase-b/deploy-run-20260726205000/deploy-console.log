@@ -1,3 +1,0 @@
-[2026-07-26T10:50:00Z] FAIL: B0 evidence missing required file: /tmp/hada-b0-ck-moUHYv/b0-evidence-v1/candidate-sha256.txt
-[2026-07-26T10:50:00Z] FAIL: B0 compose-version-check.txt contains a FAIL line
-[2026-07-26T10:50:00Z] FAIL: B0 target-identity.txt has 2 'project=' lines (expected exactly 1)
