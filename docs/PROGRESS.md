@@ -4,20 +4,6 @@ Autonomous build loop log. Each cycle implements one bounded, verified change
 on a feature branch, opens a draft PR, and records progress here. No merge,
 deploy, secret/infra change, or governance bypass occurs.
 
-## Cycle 25 — Relationship management (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-relationship-management-cycle25`
-- New module `hermes_ctl/intelligence/relationships.py` — `Relationships` class
-  wrapping MemoryStore with relationship types, interaction logging, and
-  important-date tracking.
-- Features:
-  - `Relationships.add()` / `.get()` / `.list()` / `.remove()` (with type filter)
-  - `Relationships.log_interaction()` / `.interactions()` / `.last_interaction()`
-  - `Relationships.set_important_date()` / `.upcoming_dates()`
-  - Knowledge-graph integration (Node + Edge for person nodes)
-  - CLI: `hermesctl crm rel-add|rel-list|rel-log|rel-recent|rel-dates`
-- Tests: 21 unit tests + 4 CLI tests
-- Verified: 174 total tests passing
-
 ## Cycle 1 — Repair-pipeline test suite + guardrail fix
 - Branch: `agent/autofix-add-autonomous-repair-pipeline` (PR #5)
 - Added `tests/ci/test_repair_pipeline.sh` (guardrail allow/deny + orchestrator
@@ -248,18 +234,18 @@ deploy, secret/infra change, or governance bypass occurs.
 ### Open
 - Telegram: real bot token not on this box (local store masked). Need BW unlock or user paste.
 
-## Cycle 27 — Travel planning (Phase 3: Personal Intelligence)
-- Branch: `agent/phase3-travel-planning-cycle27`
-- New module `hermes_ctl/intelligence/travel.py` — manages trips, destinations,
-  dates, itinerary items, and travel status tracking:
-  - `TravelTrip` / `TravelSnapshot` / `ItineraryItem` dataclasses with
-    to_dict/from_dict.
-  - `scan_trips()` — reads all trip facts from MemoryStore (status filter,
-    breakdown, upcoming-sorted).
-  - `add_trip()` — create a new trip (auto-id from destination).
-  - `update_trip_status()` — planned/active/completed/cancelled.
-  - `add_itinerary()` — add scheduled activities to a trip.
-- New CLI commands: `hermesctl travel list|add|status|itinerary`.
-- 20 new tests in `tests/test_travel.py`.
-- Verified: `pytest tests/` → 129 passed (clean tree).
-- Next: Health tracking (Phase 3: Personal Intelligence).
+## Cycle 28 — Health tracking (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-health-tracking-cycle28`
+- New module `hermes_ctl/intelligence/health.py` — logs and tracks health
+  metrics with per-metric summaries:
+  - `HealthEntry` / `HealthSnapshot` dataclasses with to_dict/from_dict.
+  - `scan_health()` — reads health entries from MemoryStore (metric filter,
+    date filter, per-metric summary with min/max/avg/last).
+  - `log_metric()` — create a new health entry (validates metric type,
+    auto-date, unique id with random counter for same-millisecond entries).
+  - 12 valid metric types: weight, steps, sleep, water, mood, exercise,
+    medication, heart_rate, blood_pressure, blood_sugar, calories, custom.
+- New CLI commands: `hermesctl health log|list` with metric/date/limit filters.
+- 19 new tests in `tests/test_health.py`.
+- Verified: `pytest tests/` → 171 passed (152 baseline + 19 new).
+- Next: Habit tracking (Phase 3: Personal Intelligence).
