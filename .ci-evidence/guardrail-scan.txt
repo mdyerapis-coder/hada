@@ -1,0 +1,2 @@
+Guardrail scan of /tmp/hada-repair-7bNwyH vs main
+PASS: no guardrail violation.

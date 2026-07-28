@@ -1,0 +1,28 @@
+[
+  {
+    "id": "power-design",
+    "name": "power-design",
+    "description": "Example project — a public repo graphed with graphify",
+    "path": "git:power-design",
+    "lang": "Code",
+    "color": "#7be0c8",
+    "nodeCount": 2935,
+    "edgeCount": 2858,
+    "communities": 88,
+    "extractedPct": 100,
+    "godNodes": [
+      {
+        "name": "Design Principles for Codified Slide Generation",
+        "degree": 17
+      },
+      {
+        "name": "Components",
+        "degree": 15
+      },
+      {
+        "name": "brand-style.md",
+        "degree": 12
+      }
+    ]
+  }
+]
