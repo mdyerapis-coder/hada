@@ -81,21 +81,29 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 27 passed.
 - Next: Intelligence (local LLM routing / cloud fallback / voice / mobile).
 
-## Cycle 11 — Phase 2: Intelligence layer (foundation + boundary)
+## Cycle 12 — Phase 2: gated integrations (Telegram + live LLM routing)
 - Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
-- Added `hermes_ctl/intelligence/router.py`: `Brain` dataclass + `Router`
-  (ABC) + `LocalRouter` (rule-based, offline, per-brain auth header seam).
-  No live model calls; the real routing is the existing llmfit-gui service
-  (external to this repo) which the Router can target via HTTP later.
-- Added `tests/test_intelligence.py` (4 tests). All pass.
-- Verified: `pytest tests/` → 31 passed.
-- **Boundary reached**: real local LLM routing (loading GGUF, GPU/CPU
-  scheduling) and cloud fallback require the running inference stack +
-  credentials, which is Phase 6 (Infrastructure) and governed by the Human
-  Approval Boundary. The Intelligence *interface* is complete and testable;
-  wiring it to live models is a human-gated integration. Phase 2 foundation
-  blocks (Memory, Identity, Communications, Productivity, Information,
-  Intelligence interface) are all delivered and verified.
+- Added `communications/telegram.py`: `TelegramChannel` (Bot API) implementing
+  the `Channel` seam. Token read from env/`TELEGRAM_BOT_TOKEN` at runtime, never
+  stored. `send`/`received` real HTTP; offline-testable via `_post` monkeypatch.
+- Added `intelligence/http_router.py`: `HttpRouter` (real `chat/completions`
+  against the running llmfit-gui brains). Auth header name from `Brain`; secret
+  injected at request time from env via `token_resolver`, never persisted.
+- Added `tests/test_integrations.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 36 passed.
+- **Live verified (b)**: HttpRouter hit real `:8080` (qwen3b) + `:8081`
+  (hermes-7b) → both responded. No secrets required (brains open on localhost).
+- **Live pending (Telegram)**: needs `TELEGRAM_BOT_TOKEN` from Bitwarden
+  (bw currently locked). Code complete + tested; live send deferred to unlock.
+- **Design decision (user)**: route ALL contact via the Hermes CTL
+  communications seam; HADA is invoked *behind* it as the governed engineering
+  worker, not the contact receiver. Keeps personal chat responsive + independent
+  of the appliance's read-only gating.
+
+## Tier 1 engineering responsiveness (separate from Phase 2)
+- Cron `hada-repair-scan` (every 2h, read-only `--scan` on `mdyerapis-coder/hada`)
+  created. Lists + diagnoses failing PRs; NEVER `--continue`/open/merge/deploy.
+- Verified: manual scan detected PR #13 failing CI, wrote worktree + diagnosis.
 
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
