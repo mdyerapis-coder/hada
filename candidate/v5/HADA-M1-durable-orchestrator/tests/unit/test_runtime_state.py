@@ -1,27 +1,33 @@
-"""Unit test for the read-only /api/v1/state endpoint shape."""
+"""Unit tests for real queue-depth stats used by the /api/v1/state endpoint."""
 from __future__ import annotations
-import importlib.util
-from pathlib import Path
-import sys
 
-ROOT = Path(__file__).resolve().parents[2]  # candidate/v5/HADA-M1-durable-orchestrator
-SRC = ROOT / "src"
-sys.path.insert(0, str(SRC))
-spec = importlib.util.spec_from_file_location("hada_runtime", SRC / "hada" / "runtime.py")
-mod = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(mod)
+from hada.queue.broker import DurableQueue, InMemoryStreamBackend, QueueMessage
 
 
-def test_state_shape_fail_closed():
-    # Build a health mock and registry-less state dict mirroring the handler.
-    health = mod.RuntimeHealth()
-    health.update(database=True, queue=True)
-    # We can't run prometheus registry here easily; assert the handler route
-    # exists and the unavailable sections are declared available:false.
-    assert hasattr(health, "snapshot")
-    db, q = health.snapshot()
-    assert (db, q) == (True, True)
-    # Mirror the unavailable contract the endpoint returns:
-    for key in ("tasks", "gates", "evidence"):
-        section = {"available": False, "reason": f"{key} not yet modelled"}
-        assert section["available"] is False
+def _new_queue() -> DurableQueue:
+    return DurableQueue(
+        InMemoryStreamBackend(),
+        namespace="hada", consumer_group="orchestrator",
+        maximum_delivery_attempts=5, maximum_stream_length=100,
+        visibility_timeout_seconds=300,
+    )
+
+
+def test_queue_stats_empty():
+    s = _new_queue().stats()
+    assert s["enqueued"] == 0 and s["pending"] == 0
+    assert s["queue"] == "tasks" and s["namespace"] == "hada"
+
+
+def test_queue_stats_after_enqueue_and_claim():
+    q = _new_queue()
+    q.enqueue("tasks", QueueMessage(kind="x", payload={}))
+    q.enqueue("tasks", QueueMessage(kind="y", payload={}))
+    assert q.stats()["enqueued"] == 2
+    c1 = q.claim("tasks", "worker")[0]
+    c2 = q.claim("tasks", "worker")[0]
+    assert q.stats()["pending"] == 2
+    q.complete("tasks", c1)
+    assert q.stats()["pending"] == 1
+    q.complete("tasks", c2)
+    assert q.stats()["pending"] == 0

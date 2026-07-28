@@ -4,10 +4,12 @@ import signal
 import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest
 
 from hada.db.postgres import PostgresStore
+from hada.models import GovernanceConfig
 from hada.orchestrator.publisher import OutboxPublisher
 from hada.queue.broker import DurableQueue
 
@@ -39,17 +41,23 @@ class ProbeServer:
         port: int,
         health: RuntimeHealth,
         registry: CollectorRegistry,
+        queue: DurableQueue | None = None,
+        governance: GovernanceConfig | None = None,
     ) -> None:
         self.host = host
         self.port = port
         self.health = health
         self.registry = registry
+        self.queue = queue
+        self.governance = governance
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         health = self.health
         registry = self.registry
+        queue = self.queue
+        governance = self.governance
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: N802
@@ -75,7 +83,7 @@ class ProbeServer:
                     # orchestrator actually tracks; subsystems it does not yet
                     # model are reported available:false so clients fail closed.
                     db_up, q_up = health.snapshot()
-                    state = {
+                    state: dict[str, Any] = {
                         "schema_version": "1.0",
                         "is_fixture": False,
                         "health": "ready" if health.ready() else "degraded",
@@ -89,9 +97,45 @@ class ProbeServer:
                             "hada_outbox_publish_failures_total"
                         )
                         or 0,
-                        "tasks": {"available": False, "reason": "orchestrator v5 does not model task ledger"},
-                        "gates": {"available": False, "reason": "governance gate state not yet exposed over HTTP"},
-                        "evidence": {"available": False, "reason": "signed evidence bundles not yet exposed over HTTP"},
+                    }
+                    # Real queue depth (no message bodies read).
+                    if queue is not None:
+                        qstats = queue.stats()
+                        state["tasks"] = {
+                            "available": True,
+                            "queue": qstats["queue"],
+                            "enqueued": qstats["enqueued"],
+                            "pending": qstats["pending"],
+                            "maximum_delivery_attempts": qstats["maximum_delivery_attempts"],
+                        }
+                    else:
+                        state["tasks"] = {
+                            "available": False,
+                            "reason": "queue not wired to probe",
+                        }
+                    # Real governance policy (from loaded config).
+                    if governance is not None:
+                        g = governance
+                        state["gates"] = {
+                            "available": True,
+                            "prohibit_self_approval": g.prohibit_self_approval,
+                            "prohibit_scope_expansion": g.prohibit_scope_expansion,
+                            "maximum_agent_iterations_per_gate": g.maximum_agent_iterations_per_gate,
+                            "maximum_recovery_attempts": g.maximum_recovery_attempts,
+                            "require_architecture_review": g.require_architecture_review,
+                            "require_security_review": g.require_security_review,
+                            "require_test_review": g.require_test_review,
+                            "require_external_review": g.require_external_review,
+                            "stop_on_critical_security_finding": g.stop_on_critical_security_finding,
+                        }
+                    else:
+                        state["gates"] = {
+                            "available": False,
+                            "reason": "governance config not wired to probe",
+                        }
+                    state["evidence"] = {
+                        "available": False,
+                        "reason": "signed evidence bundles not yet exposed over HTTP",
                     }
                     self._respond_json(state)
                     return
@@ -140,6 +184,7 @@ class OrchestratorRuntime:
         listen_port: int,
         probe_interval_seconds: int,
         unhealthy_exit_threshold: int,
+        governance: GovernanceConfig | None = None,
     ) -> None:
         self.store = store
         self.queue = queue
@@ -168,7 +213,14 @@ class OrchestratorRuntime:
             "Outbox publication failures",
             registry=self.registry,
         )
-        self.probe_server = ProbeServer(listen_host, listen_port, self.health, self.registry)
+        self.probe_server = ProbeServer(
+            listen_host,
+            listen_port,
+            self.health,
+            self.registry,
+            queue=self.queue,
+            governance=governance,
+        )
         self._stop = threading.Event()
 
     def _request_stop(self, signum: int, frame: object) -> None:
