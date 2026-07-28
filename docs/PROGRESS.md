@@ -132,6 +132,24 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 27 passed.
 - Next: Intelligence (local LLM routing / cloud fallback / voice / mobile).
 
+## Cycle 29 — Habit tracking (Phase 3: Personal Intelligence)
+- Branch: `agent/phase3-habit-tracking-cycle29`
+- New module `hermes_ctl/intelligence/habit.py` — manages habits with
+  daily completion logging, streaks, and category grouping:
+  - `Habit` / `HabitLog` / `HabitSnapshot` dataclasses with to_dict/from_dict.
+  - `scan_habits()` — reads habits from MemoryStore (category filter,
+    active-only, due-today, streak-ranked summary).
+  - `add_habit()` — create a new habit (validates frequency, auto-id).
+  - `log_habit()` — mark habit as done for a date (streak tracking,
+    best-streak, idempotent for same day).
+  - 5 valid frequencies: daily, weekdays, weekly, monthly, custom.
+  - 7 valid categories: health, productivity, learning, social,
+    mindfulness, finance, custom.
+- New CLI commands: `hermesctl habit add|list|log`.
+- 24 new tests in `tests/test_habit.py`.
+- Verified: `pytest tests/` → 157 passed.
+- Next: Financial awareness (Phase 3: Personal Intelligence).
+
 ## Cycle 12 — Phase 2: gated integrations (Telegram + live LLM routing)
 - Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
 - Added `communications/telegram.py`: `TelegramChannel` (Bot API) implementing
