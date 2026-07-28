@@ -52,6 +52,30 @@ def test_identity_set_pref_and_show():
         assert "synthwave" in out
 
 
+def test_notes_add_and_list():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = _env(tmp)
+        assert main(["notes", "add", "shopping list", "--body", "milk, eggs"]) == 0
+        out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli notes list").read()
+        assert "shopping list" in out
+
+
+def test_calendar_add_and_upcoming():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = _env(tmp)
+        assert main(["calendar", "add", "dentist", "--in-days", "2"]) == 0
+        out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli calendar upcoming").read()
+        assert "dentist" in out
+
+
+def test_crm_add_and_find():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = _env(tmp)
+        assert main(["crm", "add", "Courtney", "--kind", "partner"]) == 0
+        out = os.popen(f"HERMES_CTL_STORE={store} python3 -m hermes_ctl.cli crm find Courtney").read()
+        assert "Courtney" in out and "partner" in out
+
+
 def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):

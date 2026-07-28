@@ -116,6 +116,76 @@ def _cmd_tasks(args: argparse.Namespace) -> int:
     return 2
 
 
+# ---------------------------------------------------------------------------
+# notes
+# ---------------------------------------------------------------------------
+def _cmd_notes(args: argparse.Namespace) -> int:
+    store = _store()
+    notes = ProductivityStore(store)
+    if args.note_action == "list":
+        for n in notes.search_notes(tag=args.tag):
+            print(f"{n.id}\t{n.title}")
+        return 0
+    if args.note_action == "add":
+        import uuid
+        from hermes_ctl.productivity.store import Note
+        note = Note(id=uuid.uuid4().hex[:8], title=args.title, body=args.body or "")
+        notes.add_note(note)
+        print(f"added note {note.id}: {note.title}")
+        return 0
+    return 2
+
+
+# ---------------------------------------------------------------------------
+# calendar
+# ---------------------------------------------------------------------------
+def _cmd_calendar(args: argparse.Namespace) -> int:
+    store = _store()
+    cal = ProductivityStore(store)
+    if args.cal_action == "upcoming":
+        for e in cal.upcoming_events(within=args.within):
+            print(f"{e.id}\t{e.title}\t{__import__('time').ctime(e.start)}")
+        return 0
+    if args.cal_action == "add":
+        import time
+        import uuid
+        from hermes_ctl.productivity.store import Event
+        start = time.time() + (args.in_days * 86400)
+        ev = Event(id=uuid.uuid4().hex[:8], title=args.title, start=start, end=start + 3600)
+        cal.add_event(ev)
+        print(f"added event {ev.id}: {ev.title}")
+        return 0
+    return 2
+
+
+# ---------------------------------------------------------------------------
+# crm
+# ---------------------------------------------------------------------------
+def _cmd_crm(args: argparse.Namespace) -> int:
+    store = _store()
+    crm = ProductivityStore(store)
+    if args.crm_action == "list":
+        # list all entities via find by scanning (ProductivityStore has no list_all;
+        # iterate by searching known names is not feasible, so expose find + add)
+        print("(use 'crm find <name>' to look up; entities stored on demand)")
+        return 0
+    if args.crm_action == "add":
+        import uuid
+        from hermes_ctl.productivity.store import Entity
+        ent = Entity(id=uuid.uuid4().hex[:8], name=args.name, kind=args.kind, fields={})
+        crm.add_entity(ent)
+        print(f"added entity {ent.id}: {ent.name} ({ent.kind})")
+        return 0
+    if args.crm_action == "find":
+        ent = crm.find_entity(args.name)
+        if ent:
+            print(json.dumps(ent.to_dict(), indent=2, ensure_ascii=False))
+        else:
+            print(f"(no entity named {args.name})")
+        return 0
+    return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -140,6 +210,22 @@ def build_parser() -> argparse.ArgumentParser:
     tsub = pt.add_subparsers(dest="task_action", required=True)
     tsub.add_parser("list").set_defaults(func=_cmd_tasks)
     tap = tsub.add_parser("add"); tap.add_argument("title"); tap.set_defaults(func=_cmd_tasks)
+
+    pn_ = sub.add_parser("notes", help="note store")
+    ntsub = pn_.add_subparsers(dest="note_action", required=True)
+    nlp = ntsub.add_parser("list"); nlp.add_argument("--tag"); nlp.set_defaults(func=_cmd_notes)
+    nap = ntsub.add_parser("add"); nap.add_argument("title"); nap.add_argument("--body"); nap.set_defaults(func=_cmd_notes)
+
+    pc = sub.add_parser("calendar", help="calendar events")
+    calsub = pc.add_subparsers(dest="cal_action", required=True)
+    cup = calsub.add_parser("upcoming"); cup.add_argument("--within", type=float, default=None); cup.set_defaults(func=_cmd_calendar)
+    cap = calsub.add_parser("add"); cap.add_argument("title"); cap.add_argument("--in-days", type=float, default=1.0); cap.set_defaults(func=_cmd_calendar)
+
+    pr_ = sub.add_parser("crm", help="CRM entities")
+    crmsub = pr_.add_subparsers(dest="crm_action", required=True)
+    crmsub.add_parser("list").set_defaults(func=_cmd_crm)
+    cadd = crmsub.add_parser("add"); cadd.add_argument("name"); cadd.add_argument("--kind", default="person"); cadd.set_defaults(func=_cmd_crm)
+    cfind = crmsub.add_parser("find"); cfind.add_argument("name"); cfind.set_defaults(func=_cmd_crm)
     return p
 
 
