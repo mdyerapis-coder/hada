@@ -512,9 +512,6 @@ def _cmd_remind(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 # relationship
 # ---------------------------------------------------------------------------
 def _cmd_relationship(args: argparse.Namespace) -> int:
@@ -566,7 +563,6 @@ def _cmd_relationship(args: argparse.Namespace) -> int:
             relationship_type=args.rel_type,
         )
         print(f"recorded interaction: {rel.person_id} (count={rel.contact_count}, strength={rel.strength:.2f})")
-=======
 # shopping
 # ---------------------------------------------------------------------------
 def _cmd_shopping(args: argparse.Namespace) -> int:
@@ -629,10 +625,8 @@ def _cmd_shopping(args: argparse.Namespace) -> int:
     if args.shop_action == "clear":
         count = clear_purchased(store, list_name=args.list)
         print(f"cleared {count} purchased item(s)")
->>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
         return 0
 
-=======
 # travel
 # ---------------------------------------------------------------------------
 def _cmd_travel(args: argparse.Namespace) -> int:
@@ -692,8 +686,6 @@ def _cmd_travel(args: argparse.Namespace) -> int:
         print(f"(no trip with id {args.trip_id})", file=sys.stderr)
         return 1
 
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
-=======
 # finance
 # ---------------------------------------------------------------------------
 def _cmd_finance(args: argparse.Namespace) -> int:
@@ -753,7 +745,6 @@ def _cmd_finance(args: argparse.Namespace) -> int:
             print("  (no financial data yet — add budgets and expenses)")
         return 0
 
->>>>>>> 2b681c9 (feat(phase3): financial awareness module (Cycle 30))
     return 2  # pragma: no cover
 
 
@@ -766,7 +757,6 @@ def build_parser() -> argparse.ArgumentParser:
     sp = msub.add_parser("search"); sp.add_argument("--tag"); sp.add_argument("--limit", type=int, default=20); sp.set_defaults(func=_cmd_memory)
     rp = msub.add_parser("remember"); rp.add_argument("key"); rp.add_argument("value"); rp.add_argument("--tag", action="append"); rp.set_defaults(func=_cmd_memory)
     fp = msub.add_parser("forget"); fp.add_argument("key"); fp.set_defaults(func=_cmd_memory)
-<<<<<<< HEAD
     cp = msub.add_parser("curate", help="scan facts and rank by importance")
     cp.add_argument("--keep-threshold", type=float, default=0.5, dest="curate_keep_threshold")
     cp.add_argument("--archive-threshold", type=float, default=0.2, dest="curate_archive_threshold")
@@ -775,10 +765,8 @@ def build_parser() -> argparse.ArgumentParser:
     csol.add_argument("--threshold", type=float, default=0.7, dest="consolidate_threshold")
     csol.add_argument("--max-groups", type=int, default=10, dest="consolidate_max_groups")
     csol.set_defaults(func=_cmd_memory)
-=======
     cu = msub.add_parser("curate", help="scan and rank facts by importance"); cu.set_defaults(func=_cmd_memory)
     cmem = msub.add_parser("consolidate", help="find similar/duplicate facts"); cmem.add_argument("--threshold", type=float, default=0.5); cmem.set_defaults(func=_cmd_memory)
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 
     pi = sub.add_parser("inbox", help="inbound SMS/Email/Telegram")
     isub = pi.add_subparsers(dest="inbox_action", required=True)
@@ -860,9 +848,6 @@ def build_parser() -> argparse.ArgumentParser:
     rmr = rmsub.add_parser("run", help="check plan items due, send pending reminders to Telegram")
     rmr.set_defaults(func=_cmd_remind)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     prel = sub.add_parser("relationship", help="relationship management (track contacts, strength, interactions)")
     rsub = prel.add_subparsers(dest="rel_action", required=True)
     rl = rsub.add_parser("list", help="list all tracked relationships with type and strength")
@@ -885,7 +870,6 @@ def build_parser() -> argparse.ArgumentParser:
     ri.add_argument("--channel", help="channel this interaction came on (telegram, sms, email)")
     ri.add_argument("--type", dest="rel_type", help="relationship type")
     ri.set_defaults(func=_cmd_relationship)
-=======
     psh = sub.add_parser("shopping", help="shopping list management (add, list, buy, clear)")
     shsub = psh.add_subparsers(dest="shop_action", required=True)
     shl = shsub.add_parser("list", help="list shopping items (active-only with --active)")
@@ -914,8 +898,6 @@ def build_parser() -> argparse.ArgumentParser:
     shc = shsub.add_parser("clear", help="remove all purchased items")
     shc.add_argument("--list", dest="list", default=None, help="which list (default: all lists)")
     shc.set_defaults(func=_cmd_shopping)
->>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
-=======
     ptr = sub.add_parser("travel", help="travel planning (trips, destinations, itineraries)")
     trsub = ptr.add_subparsers(dest="travel_action", required=True)
     trl = trsub.add_parser("list", help="list all trips (optionally filter by status)")
@@ -940,8 +922,6 @@ def build_parser() -> argparse.ArgumentParser:
     tri.add_argument("--location", help="where the activity takes place")
     tri.add_argument("--notes", help="notes for this activity")
     tri.set_defaults(func=_cmd_travel)
->>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
-=======
     pf = sub.add_parser("finance", help="financial awareness (budgets, expenses, spend analysis)")
     fsub = pf.add_subparsers(dest="finance_action", required=True)
     fba = fsub.add_parser("add-budget", help="add or update a budget category")
@@ -960,7 +940,6 @@ def build_parser() -> argparse.ArgumentParser:
     fl_.add_argument("--budgets-only", action="store_true", default=False, help="only show budgets")
     fl_.set_defaults(func=_cmd_finance)
 
->>>>>>> 2b681c9 (feat(phase3): financial awareness module (Cycle 30))
     return p
 
 
