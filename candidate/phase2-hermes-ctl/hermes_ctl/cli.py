@@ -322,6 +322,21 @@ def _cmd_plan(args: argparse.Namespace) -> int:
     return 2  # pragma: no cover
 
 
+def _cmd_remind(args: argparse.Namespace) -> int:
+    if args.remind_action == "run":
+        from hermes_ctl.intelligence.remind import run_remind
+        try:
+            plans_dir = os.environ.get("HERMES_DREAMS_DIR", os.path.join(os.path.dirname(__file__), "..", "dreams"))
+            telegram_chat = os.environ.get("HERMES_TELEGRAM_CHAT", "7620778176")
+            count = run_remind(plans_dir=plans_dir, telegram_chat=telegram_chat, store=_store())
+        except Exception as exc:  # noqa: BLE001
+            print(f"remind run failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"remind delivered: {count} reminder(s) sent")
+        return 0
+    return 2  # pragma: no cover
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -386,6 +401,11 @@ def build_parser() -> argparse.ArgumentParser:
     plv.set_defaults(func=_cmd_plan)
     plr = plsub.add_parser("run", help="generate + deliver today's plan (gated: live inference)")
     plr.set_defaults(func=_cmd_plan)
+
+    prm = sub.add_parser("remind", help="smart reminders from daily plan (remind run)")
+    rmsub = prm.add_subparsers(dest="remind_action", required=True)
+    rmr = rmsub.add_parser("run", help="check plan items due, send pending reminders to Telegram")
+    rmr.set_defaults(func=_cmd_remind)
     return p
 
 
