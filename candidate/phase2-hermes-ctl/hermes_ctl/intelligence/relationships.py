@@ -1,5 +1,6 @@
 """Hermes CTL — relationship management (Phase 3: Personal Intelligence).
 
+<<<<<<< HEAD
 Tracks relationships with contacts, their type, strength, contact frequency,
 and context. Builds on the Directory (contacts) and MemoryStore for persistence.
 
@@ -8,6 +9,17 @@ Governance / safety (mirrors context.py, curation.py):
 - ``scan_relationships()`` reads relationship facts from MemoryStore — read-only.
 - ``update_relationship()`` and ``record_interaction()`` upsert to MemoryStore.
 - Every field has a safe default — no crashes on empty or missing stores.
+=======
+Models personal relationships and interaction history on top of the
+MemoryStore knowledge graph and inbox store. Supports tracking relationship
+types, logging interactions, and querying relationship context.
+
+Governance / safety:
+- Pure data model (no network, no LLM at module level).
+- Wraps the existing knowledge graph (Node/Edge) for relationship structure.
+- Interaction history stored as MemoryStore facts (tagged ``interaction``).
+- Every operation has safe defaults — no crashes on empty stores.
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 """
 
 from __future__ import annotations
@@ -17,11 +29,20 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+<<<<<<< HEAD
+=======
+# ---------------------------------------------------------------------------
+# Errors
+# ---------------------------------------------------------------------------
+
+
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 class RelationshipError(Exception):
     """Raised when relationship operations fail."""
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
 # Layer 1 — Dataclass model
 # ---------------------------------------------------------------------------
 
@@ -74,11 +95,90 @@ class Relationship:
             "notes": self.notes,
             "tags": list(self.tags),
             "updatedAt": self.updated_at,
+=======
+# Data models
+# ---------------------------------------------------------------------------
+
+
+# Standard relationship types
+RELATIONSHIP_TYPES = {
+    "partner",
+    "spouse",
+    "child",
+    "parent",
+    "sibling",
+    "family",
+    "friend",
+    "work",
+    "colleague",
+    "neighbour",
+    "professional",
+    "other",
+}
+
+# Relationship direction labels
+DIRECTION_LABELS = {
+    "partner": "partner",
+    "spouse": "spouse",
+    "child": "parent",
+    "parent": "child",
+    "sibling": "sibling",
+    "family": "family",
+    "friend": "friend",
+    "work": "colleague",
+    "colleague": "colleague",
+    "neighbour": "neighbour",
+    "professional": "client",
+    "other": "other",
+}
+
+
+@dataclass
+class Interaction:
+    """A single recorded interaction with a person."""
+
+    person: str
+    channel: str = ""  # "in-person" | "sms" | "email" | "telegram" | "call"
+    summary: str = ""
+    timestamp: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "person": self.person,
+            "channel": self.channel,
+            "summary": self.summary,
+            "timestamp": self.timestamp,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "Interaction":
+        return cls(**d)
+
+
+@dataclass
+class Relationship:
+    """A relationship with a person, stored as a knowledge graph edge."""
+
+    person: str
+    relation: str  # one of RELATIONSHIP_TYPES
+    since: float | None = None
+    notes: str = ""
+    important_dates: dict[str, str] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "person": self.person,
+            "relation": self.relation,
+            "since": self.since,
+            "notes": self.notes,
+            "importantDates": dict(self.important_dates),
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
         }
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "Relationship":
         return cls(
+<<<<<<< HEAD
             person_id=d.get("personId", d.get("person_id", "")),
             name=d.get("name", ""),
             relationship_type=d.get("relationshipType", d.get("relationship_type", "acquaintance")),
@@ -119,10 +219,18 @@ class RelationshipSnapshot:
             recent_contacts=[Relationship.from_dict(r) for r in d.get("recentContacts", d.get("recent_contacts", []))],
             relationships=[Relationship.from_dict(r) for r in d.get("relationships", [])],
             timestamp=d.get("timestamp", ""),
+=======
+            person=d["person"],
+            relation=d["relation"],
+            since=d.get("since"),
+            notes=d.get("notes", ""),
+            important_dates=d.get("importantDates", d.get("important_dates", {})),
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
         )
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
 # Layer 2 — Scan (read-only collection)
 # ---------------------------------------------------------------------------
 
@@ -351,3 +459,220 @@ def _compute_strength(contact_count: int, last_contacted: float) -> float:
     recency = max(0.0, recency)
 
     return min(freq + recency, 1.0)
+=======
+# RelationshipStore
+# ---------------------------------------------------------------------------
+
+
+class Relationships:
+    """Manage personal relationships on top of MemoryStore.
+
+    Uses the knowledge graph (Node -> person, Edge -> relationship) plus
+    interaction history stored as tagged facts.
+    """
+
+    _interaction_counter: int = 0
+
+    def __init__(self, store: Any) -> None:
+        self._store = store
+
+    # ---- define / query relationships ----
+
+    def add(
+        self,
+        person: str,
+        relation: str,
+        *,
+        since: float | None = None,
+        notes: str = "",
+        important_dates: dict[str, str] | None = None,
+    ) -> Relationship:
+        """Register or update a relationship with *person*.
+
+        Creates a knowledge-graph Node for the person (if not present) and
+        an Edge from the user node ``@me`` to the person with the given relation.
+        """
+        if relation not in RELATIONSHIP_TYPES:
+            raise RelationshipError(
+                f"unknown relationship type '{relation}'; "
+                f"valid: {', '.join(sorted(RELATIONSHIP_TYPES))}"
+            )
+
+        rel = Relationship(
+            person=person,
+            relation=relation,
+            since=since,
+            notes=notes,
+            important_dates=important_dates or {},
+        )
+
+        try:
+            # Ensure person node exists
+            try:
+                self._store.recall(f"person:{person}")
+            except Exception:
+                self._store.add_node(f"person:{person}", kind="person", props={"name": person})
+
+            # Ensure @me node exists
+            try:
+                self._store.recall("person:@me")
+            except Exception:
+                self._store.add_node("person:@me", kind="person", props={"name": "me"})
+
+            # Relate @me -> person
+            self._store.relate("person:@me", relation, f"person:{person}")
+
+            # Store the relationship metadata as a fact
+            self._store.remember(
+                f"rel:{person}",
+                rel.to_dict(),
+                tags={"relationship", relation, f"person:{person}"},
+            )
+        except Exception as exc:
+            raise RelationshipError(f"failed to add relationship: {exc}") from exc
+
+        return rel
+
+    def get(self, person: str) -> Relationship | None:
+        """Look up a relationship by person name."""
+        try:
+            raw = self._store.recall(f"rel:{person}")
+            return Relationship.from_dict(raw)
+        except Exception:
+            return None
+
+    def list(self, *, relation: str | None = None) -> list[Relationship]:
+        """List all relationships, optionally filtered by type."""
+        try:
+            facts = self._store.search(tag="relationship")
+        except Exception:
+            return []
+        out: list[Relationship] = []
+        for f in facts:
+            if relation is None or relation in f.tags:
+                try:
+                    out.append(Relationship.from_dict(f.value))
+                except Exception:
+                    continue
+        out.sort(key=lambda r: r.person.lower())
+        return out
+
+    def remove(self, person: str) -> bool:
+        """Remove a relationship and its metadata."""
+        try:
+            self._store.forget(f"rel:{person}")
+            return True
+        except Exception:
+            return False
+
+    # ---- interactions ----
+
+    def log_interaction(
+        self,
+        person: str,
+        *,
+        channel: str = "",
+        summary: str = "",
+    ) -> Interaction:
+        """Record an interaction with *person*."""
+        interaction = Interaction(
+            person=person,
+            channel=channel,
+            summary=summary,
+            timestamp=time.time(),
+        )
+        self.__class__._interaction_counter += 1
+        fact_id = f"interact:{person}:{int(interaction.timestamp)}:{self.__class__._interaction_counter}"
+        try:
+            self._store.remember(
+                fact_id,
+                interaction.to_dict(),
+                tags={"interaction", f"person:{person}", channel} if channel else {"interaction", f"person:{person}"},
+            )
+        except Exception as exc:
+            raise RelationshipError(f"failed to log interaction: {exc}") from exc
+        return interaction
+
+    def interactions(
+        self,
+        person: str | None = None,
+        *,
+        limit: int = 10,
+    ) -> list[Interaction]:
+        """List recent interactions, optionally filtered by person."""
+        try:
+            facts = self._store.search(tag="interaction")
+        except Exception:
+            return []
+        out: list[Interaction] = []
+        for f in facts:
+            try:
+                interaction = Interaction.from_dict(f.value)
+                if person is None or interaction.person == person:
+                    out.append(interaction)
+            except Exception:
+                continue
+        out.sort(key=lambda i: i.timestamp, reverse=True)
+        return out[:limit]
+
+    def last_interaction(self, person: str) -> Interaction | None:
+        """Get the most recent interaction with *person*."""
+        items = self.interactions(person, limit=1)
+        return items[0] if items else None
+
+    # ---- important dates ----
+
+    def set_important_date(self, person: str, label: str, date: str) -> bool:
+        """Set an important date (e.g. birthday=1990-06-15) for a person."""
+        rel = self.get(person)
+        if rel is None:
+            return False
+        rel.important_dates[label] = date
+        try:
+            self._store.remember(f"rel:{person}", rel.to_dict(), tags={"relationship", rel.relation, f"person:{person}"})
+        except Exception:
+            return False
+        return True
+
+    def upcoming_dates(self, *, within_days: float = 30) -> list[dict[str, Any]]:
+        """Find upcoming important dates (birthdays, anniversaries) within the window."""
+        now = time.gmtime()
+        current_year = now.tm_year
+        results: list[dict[str, Any]] = []
+
+        for rel in self.list():
+            for label, date_str in rel.important_dates.items():
+                # Parse YYYY-MM-DD or MM-DD
+                parts = date_str.split("-")
+                if len(parts) == 3:
+                    _, month, day = parts
+                elif len(parts) == 2:
+                    month, day = parts
+                else:
+                    continue
+                try:
+                    month_int = int(month)
+                    day_int = int(day)
+                except ValueError:
+                    continue
+
+                # Check this year's date
+                import calendar
+
+                target_day = min(day_int, calendar.monthrange(current_year, month_int)[1])
+                target = time.strptime(f"{current_year}-{month_int:02d}-{target_day:02d}", "%Y-%m-%d")
+                target_ts = time.mktime(target)
+                now_ts = time.time()
+
+                days_until = (target_ts - now_ts) / 86400.0
+                if 0 <= days_until <= within_days:
+                    results.append({
+                        "person": rel.person,
+                        "label": label,
+                        "date": date_str,
+                        "daysUntil": round(days_until),
+                    })
+
+        results.sort(key=lambda r: r["daysUntil"])
+        return results
+>>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))

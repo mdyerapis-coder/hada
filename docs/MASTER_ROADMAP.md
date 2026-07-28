@@ -178,9 +178,9 @@ Enable proactive assistance.
 - Smart reminders
 - Context awareness
 - Long-term memory
-- Relationship management ✅ (Cycle 25: relationship tracking — contacts, strength, interactions, CLI)
+- Relationship management ✅ (Cycle 25: Relationships class + interaction logging + important dates + CLI)
 - Shopping intelligence ✅ (Cycle 26: shopping lists — items, purchase tracking, categories, CLI)
-- Travel planning
+- Travel planning ✅ (Cycle 27: travel trip planning — destinations, dates, itineraries, CLI)
 - Health tracking
 - Habit tracking
 - Financial awareness
