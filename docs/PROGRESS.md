@@ -22,7 +22,16 @@ deploy, secret/infra change, or governance bypass occurs.
 - Promoted `docs/adr/0001-governed-release-pipeline.md` Proposed → Accepted.
 - Recorded progress (this file).
 
-- **Cycle 14 — governed secrets + network egress seams.** Added
+- **Cycle 15 — outbound send (`hermesctl send`).** Added `send`
+  subcommand: `hermesctl send <email|telegram> --to X --body Y [--subject Z]`.
+  Reads creds from `SecretStore`, checks egress via `NetworkPolicy`
+  (fail-closed) before sending. `EmailChannel.send` (Gmail SMTP) + `TelegramChannel.send`
+  (getUpdates) wired. **Live-verified both directions**: Telegram -> chat
+  7620778176 (ref 17), Email self-send OK. 2 new CLI tests (blocked-without-creds,
+  routes-to-channel); suite 70 passed. `contact.env` values quoted for bash-source
+  safety. All 3 channels now **inbound + outbound** live.
+
+## Cycle 14 — governed secrets + network egress seams.
   `hermes_ctl/secrets/store.py` (fail-closed `SecretStore`: Env/Dict/Bitwarden
   backends) and `hermes_ctl/secrets/network.py` (default-deny egress
   `NetworkPolicy`; `default_contact_policy` permits only Telegram/IMAP/SMTP
