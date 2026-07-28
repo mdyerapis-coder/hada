@@ -106,9 +106,31 @@ def make_handler(store: MemoryStore, secret_key: str = "", source: str = "auto")
             self.end_headers()
             self.wfile.write(json.dumps(obj).encode())
 
+        def _read_chunked(self) -> bytes:
+            data = b""
+            while True:
+                line = self.rfile.readline().strip()
+                if not line:
+                    continue
+                try:
+                    size = int(line.split(b";")[0], 16)
+                except ValueError:
+                    break
+                if size == 0:
+                    break
+                data += self.rfile.read(size)
+                self.rfile.read(2)  # trailing CRLF after chunk
+            return data
+
         def do_POST(self) -> None:  # noqa: N802
-            length = int(self.headers.get("Content-Length", 0))
-            raw = self.rfile.read(length) if length else b"{}"
+            length = self.headers.get("Content-Length")
+            te = (self.headers.get("Transfer-Encoding") or "").lower()
+            if length:
+                raw = self.rfile.read(int(length)) if int(length) else b"{}"
+            elif "chunked" in te:
+                raw = self._read_chunked() or b"{}"
+            else:
+                raw = b"{}"
             # allow ?source= override on the URL
             src = source
             if "source=forwarder" in (self.path or ""):
