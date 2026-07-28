@@ -506,6 +506,7 @@ def _cmd_remind(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # relationship
 # ---------------------------------------------------------------------------
 def _cmd_relationship(args: argparse.Namespace) -> int:
@@ -684,6 +685,39 @@ def _cmd_travel(args: argparse.Namespace) -> int:
         return 1
 
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
+=======
+# health
+# ---------------------------------------------------------------------------
+def _cmd_health(args: argparse.Namespace) -> int:
+    store = _store()
+    from hermes_ctl.intelligence.health import log_metric, scan_health
+
+    if args.health_action == "list":
+        snap = scan_health(store=store, metric=args.metric, date=args.date, limit=args.limit or 50)
+        print(f"Health entries ({snap.total_count} total):")
+        if snap.summary:
+            print("  Summary:")
+            for m, s in snap.summary.items():
+                print(f"    {m}: last={s['last_value']} avg={s['avg']} min={s['min']} max={s['max']} ({s['count']} entries)")
+        print(f"  Recent ({len(snap.recent)}):")
+        for e in snap.recent:
+            print(f"    {e.date} {e.metric}: {e.value} {e.unit} ({e.source})")
+        return 0
+
+    if args.health_action == "log":
+        entry = log_metric(
+            store,
+            args.metric,
+            args.value,
+            unit=args.unit or "",
+            date=args.date,
+            notes=args.notes or "",
+            source=args.source or "manual",
+        )
+        print(f"logged {entry.metric}={entry.value} {entry.unit} on {entry.date}")
+        return 0
+
+>>>>>>> e0d604e (feat(phase3): health tracking module (Cycle 28))
     return 2  # pragma: no cover
 
 
@@ -792,6 +826,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     prel = sub.add_parser("relationship", help="relationship management (track contacts, strength, interactions)")
     rsub = prel.add_subparsers(dest="rel_action", required=True)
     rl = rsub.add_parser("list", help="list all tracked relationships with type and strength")
@@ -870,6 +905,23 @@ def build_parser() -> argparse.ArgumentParser:
     tri.add_argument("--notes", help="notes for this activity")
     tri.set_defaults(func=_cmd_travel)
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
+=======
+    ph = sub.add_parser("health", help="health tracking (log and list metrics)")
+    hsub = ph.add_subparsers(dest="health_action", required=True)
+    hl = hsub.add_parser("log", help="log a health metric")
+    hl.add_argument("metric", choices=["weight", "steps", "sleep", "water", "mood", "exercise", "medication", "heart_rate", "blood_pressure", "blood_sugar", "calories", "custom"], help="metric type")
+    hl.add_argument("value", type=float, help="numeric value")
+    hl.add_argument("--unit", help="unit (kg, steps, hours, L, 1-10, min)")
+    hl.add_argument("--date", help="date YYYY-MM-DD (default: today)")
+    hl.add_argument("--notes", help="free-text notes")
+    hl.add_argument("--source", default="manual", choices=["manual", "auto", "pwa", "api"], help="how recorded")
+    hl.set_defaults(func=_cmd_health)
+    hls = hsub.add_parser("list", help="list health entries")
+    hls.add_argument("--metric", default=None, help="filter by metric type")
+    hls.add_argument("--date", default=None, help="filter by date YYYY-MM-DD")
+    hls.add_argument("--limit", type=int, default=20, help="max entries (default: 20)")
+    hls.set_defaults(func=_cmd_health)
+>>>>>>> e0d604e (feat(phase3): health tracking module (Cycle 28))
     return p
 
 
