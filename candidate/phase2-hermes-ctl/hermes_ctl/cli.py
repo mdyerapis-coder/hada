@@ -1,17 +1,24 @@
 """Hermes CTL command-line interface (Phase 2 deployable surface).
 
-Exposes the built foundation subsystems as offline, no-secret commands:
+Exposes the built foundation subsystems as operator commands:
   hermesctl memory  <search|remember|forget>   # long-term + working memory
   hermesctl inbox   <list|show>                 # inbound SMS/Email/Telegram
   hermesctl identity <show|set-pref>            # profile + preferences
   hermesctl tasks   <list|add>                  # productivity task store
+  hermesctl notes   <add|list>                  # knowledge notes
+  hermesctl calendar <add|upcoming>             # events
+  hermesctl crm     <add|find>                  # entities
+  hermesctl send    <email|telegram> --to X --body Y [--subject Z]
+                                                # OUTBOUND (gated: secrets + egress)
 
-All state lives in the MemoryStore (JSON file). No network, no creds.
-This is the "operating surface" that makes the foundation usable day-to-day.
+Inbound state lives in the MemoryStore (JSON file). The `send` command reads
+credentials from the SecretStore and checks egress via NetworkPolicy before
+talking to the network — fail-closed.
 
 Run:  python3 -m hermes_ctl.cli <subcommand> [args]
-Env:  HERMES_CTL_STORE (default: .comms/inbox.json is the inbox; the store path
-      is the same file — memory + inbox share one MemoryStore document).
+Env:  HERMES_CTL_STORE (store/inbox path)
+      contact.env vars (GMAIL_SMTP_USER, GMAIL_APP_PASSWORD, TELEGRAM_BOT_TOKEN)
+      for outbound send.
 """
 
 from __future__ import annotations
@@ -21,10 +28,18 @@ import json
 import os
 import sys
 from typing import Any
-
+from hermes_ctl.communications.channels import Message
+from hermes_ctl.communications.email_channel import EmailChannel
+from hermes_ctl.communications.telegram import TelegramChannel
 from hermes_ctl.identity.profile import Identity
 from hermes_ctl.memory.store import MemoryStore
 from hermes_ctl.productivity.store import ProductivityStore, Task
+from hermes_ctl.secrets import (
+    EnvSecretStore,
+    SecretError,
+    NetworkDenied,
+    default_contact_policy,
+)
 
 
 def _store() -> MemoryStore:
@@ -186,6 +201,40 @@ def _cmd_crm(args: argparse.Namespace) -> int:
     return 2
 
 
+# ---------------------------------------------------------------------------
+# send (OUTBOUND — gated by secrets + egress policy)
+# ---------------------------------------------------------------------------
+def _cmd_send(args: argparse.Namespace) -> int:
+    secrets = EnvSecretStore()
+    net = default_contact_policy()
+    try:
+        if args.send_channel == "email":
+            net.require("smtps://smtp.gmail.com:465")
+            user = secrets.get("GMAIL_SMTP_USER")
+            pw = secrets.get("GMAIL_APP_PASSWORD")
+            ch = EmailChannel(user=user, password=pw)
+            msg = Message(channel="email", sender=user, recipient=args.to, subject=args.subject, body=args.body)
+        elif args.send_channel == "telegram":
+            net.require("https://api.telegram.org:443")
+            token = secrets.get("TELEGRAM_BOT_TOKEN")
+            ch = TelegramChannel(token=token)
+            msg = Message(channel="telegram", sender="bot", recipient=args.to, body=args.body)
+        else:  # pragma: no cover - argparse enforces choices
+            print(f"unknown send channel: {args.send_channel}", file=sys.stderr)
+            return 2
+    except (SecretError, NetworkDenied) as exc:
+        print(f"send blocked: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        ref = ch.send(msg)
+    except Exception as exc:  # noqa: BLE001 - surface the network failure clearly
+        print(f"send failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"sent [{args.send_channel}] -> {args.to} (ref {ref})")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -226,6 +275,11 @@ def build_parser() -> argparse.ArgumentParser:
     crmsub.add_parser("list").set_defaults(func=_cmd_crm)
     cadd = crmsub.add_parser("add"); cadd.add_argument("name"); cadd.add_argument("--kind", default="person"); cadd.set_defaults(func=_cmd_crm)
     cfind = crmsub.add_parser("find"); cfind.add_argument("name"); cfind.set_defaults(func=_cmd_crm)
+
+    ps = sub.add_parser("send", help="OUTBOUND message (gated: secrets + egress)")
+    ssub = ps.add_subparsers(dest="send_channel", required=True)
+    sem = ssub.add_parser("email"); sem.add_argument("--to", required=True); sem.add_argument("--subject", default="(no subject)"); sem.add_argument("--body", required=True); sem.set_defaults(func=_cmd_send)
+    stg = ssub.add_parser("telegram"); stg.add_argument("--to", required=True, help="chat id"); stg.add_argument("--body", required=True); stg.set_defaults(func=_cmd_send)
     return p
 
 

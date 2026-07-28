@@ -76,6 +76,34 @@ def test_crm_add_and_find():
         assert "Courtney" in out and "partner" in out
 
 
+def test_send_email_blocked_without_creds(monkeypatch, tmp_path):
+    # no creds in env -> SecretError -> send blocked (rc 1)
+    monkeypatch.delenv("GMAIL_SMTP_USER", raising=False)
+    monkeypatch.delenv("GMAIL_APP_PASSWORD", raising=False)
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    rc = main(["send", "email", "--to", "x@y.com", "--body", "hi"])
+    assert rc == 1
+
+
+def test_send_telegram_routes_to_channel(monkeypatch, tmp_path):
+    # stub TelegramChannel.send to avoid network; creds present
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:abc")
+    sent = {}
+
+    class FakeCh:
+        def send(self, message):
+            sent["to"] = message.recipient
+            sent["body"] = message.body
+            message.id = "99"
+            return "99"
+
+    import hermes_ctl.cli as cli
+    monkeypatch.setattr(cli, "TelegramChannel", lambda token=None: FakeCh())
+    rc = main(["send", "telegram", "--to", "7620778176", "--body", "hello"])
+    assert rc == 0
+    assert sent == {"to": "7620778176", "body": "hello"}
+
+
 def test_parser_requires_subcommand():
     import pytest
     with pytest.raises(SystemExit):
