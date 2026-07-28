@@ -51,6 +51,18 @@ deploy, secret/infra change, or governance bypass occurs.
 - Verified: `pytest tests/` → 13 passed (8 memory + 5 identity).
 - Next: Communications adapters (Email / SMS / Telegram / Contacts).
 
+## Cycle 8 — Phase 2: Communications layer (foundation)
+- Continues branch `agent/phase2-hermes-ctl-memory-foundation` (PR #13).
+- Added `hermes_ctl/communications/channels.py`: `Message` (content-hashable),
+  `Channel` (ABC transport seam), `LocalChannel` (offline in-memory transport,
+  no network/credentials), `Directory` (contacts on MemoryStore).
+- Real Email/SMS/Telegram transports intentionally NOT here — they need
+  network + secrets (governance boundary). The `Channel` ABC is the seam
+  they implement later, gated.
+- Added `tests/test_communications.py` (5 tests). All pass.
+- Verified: `pytest tests/` → 18 passed.
+- Next: Productivity (Calendar / Tasks / Notes / CRM).
+
 ## Cycle 3 — Release-manifest gate regression test
 - Branch: `agent/test-release-manifest-gate` (PR #7)
 - Added `tests/ci/test_release_manifests.sh`: positive (real releases/ verifies)
