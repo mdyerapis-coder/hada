@@ -15,6 +15,15 @@ set -euo pipefail
 HADA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ORCH="$HADA_ROOT/scripts/ci/autonomous_repair.sh"
 
+# Guard against infinite recursion: this test calls autonomous_repair.sh
+# --continue, whose verification stage runs run_fast_tests.sh, which (via
+# test_pipeline_scripts.sh) re-invokes THIS script. When invoked from inside
+# the orchestrator's own verification we must not recurse; just pass through.
+if [[ -n "${_HADA_CONTINUE_TEST_ACTIVE:-}" ]]; then
+  echo "SKIP: test_continue_stage.sh re-invoked under --continue verification; passing."
+  exit 0
+fi
+
 fail=0; pass=0
 check() {
   local desc="$1" want="$2" got="$3"
@@ -46,6 +55,12 @@ chmod +x "$STUB/gh"
 # Make a throwaway bare mirror of HADA so --continue can push locally.
 REMOTE=$(mktemp -d)/bare.git
 git clone --bare "$HADA_ROOT" "$REMOTE" >/dev/null 2>&1
+# The --continue stage needs a 'main' branch in the bare remote to use as the
+# base ref. PR CI checkouts frequently fetch only the PR head (no local/remote
+# 'main'), so seed it deterministically from the source HEAD. Fully hermetic
+# (a local push, no network) and independent of what the surrounding checkout
+# happened to fetch.
+git -C "$HADA_ROOT" push "$REMOTE" "HEAD:refs/heads/main" >/dev/null 2>&1 || true
 
 cleanup() { rm -rf "$STUB" "${REMOTE%/*}" "$WT" "$WT2" 2>/dev/null; }
 trap cleanup EXIT
@@ -60,6 +75,9 @@ git -C "$WT" checkout -q origin/main
 # Benign, uncommitted edit so the orchestrator's git add -A && commit has work.
 printf '\n# benign test comment\n' >> "$WT/README.md"
 
+# Mark the environment so any re-invocation of this script from inside the
+# orchestrator's own verification stage skips out (prevents recursion).
+export _HADA_CONTINUE_TEST_ACTIVE=1
 set +e
 GH_STUB_TRACE="$TRACE1" PATH="$STUB:$PATH" \
   bash "$ORCH" --continue "$WT" 101 origin/main >/dev/null 2>&1

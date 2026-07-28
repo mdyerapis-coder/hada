@@ -1,0 +1,8 @@
+PASS: pipeline bootstrap scripts.
+PASS: happy path: --continue exits 0
+PASS: happy path opened a draft PR (gh pr create)
+PASS: happy path never called gh pr merge
+PASS: guardrail abort: --continue exits non-zero
+PASS: guardrail abort opened no PR (gh pr create not called)
+----
+continue-stage tests: 5 passed, 0 failed
