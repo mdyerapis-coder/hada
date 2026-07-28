@@ -28,14 +28,19 @@ brains:
 
 
 def test_load_brains_parses_roles():
-    with tempfile.TemporaryDirectory() as tmp:
-        p = _write(tmp, YAML)
-        brains = load_brains(p)
-        assert {b.role for b in brains} == {"fast", "agent", "max"}
-        fast = next(b for b in brains if b.role == "fast")
-        # endpoint /chat/completions stripped -> base url for HttpRouter
-        assert fast.url == "http://127.0.0.1:8080/v1"
-        assert fast.model == "/models/model.gguf"
+    saved = os.environ.pop("HERMES_BRAIN_HOST", None)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            p = _write(tmp, YAML)
+            brains = load_brains(p)
+            assert {b.role for b in brains} == {"fast", "agent", "max"}
+            fast = next(b for b in brains if b.role == "fast")
+            # endpoint /chat/completions stripped -> base url for HttpRouter
+            assert fast.url == "http://127.0.0.1:8080/v1"
+            assert fast.model == "/models/model.gguf"
+    finally:
+        if saved is not None:
+            os.environ["HERMES_BRAIN_HOST"] = saved
 
 
 def test_load_brains_host_override():

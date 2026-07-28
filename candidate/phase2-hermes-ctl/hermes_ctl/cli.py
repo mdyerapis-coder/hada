@@ -48,6 +48,14 @@ from hermes_ctl.intelligence.briefing import (
     generate_briefing,
     deliver_briefing,
 )
+from hermes_ctl.intelligence.finance import (
+    FinancialSnapshot,
+    FinanceError,
+    add_budget,
+    add_expense,
+    scan_finances,
+    deliver_finances,
+)
 
 
 def _store() -> MemoryStore:
@@ -686,50 +694,66 @@ def _cmd_travel(args: argparse.Namespace) -> int:
 
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 =======
-# habit
+# finance
 # ---------------------------------------------------------------------------
-def _cmd_habit(args: argparse.Namespace) -> int:
+def _cmd_finance(args: argparse.Namespace) -> int:
     store = _store()
-    from hermes_ctl.intelligence.habit import add_habit, log_habit, scan_habits
 
-    if args.habit_action == "list":
-        snap = scan_habits(store=store, category=args.category, active_only=args.active_only, due_today=args.due_today)
-        print(f"Habits ({snap.total_count} total: {snap.active_count} active):")
-        if snap.by_category:
-            print(f"  Categories: {', '.join(f'{k}={v}' for k, v in sorted(snap.by_category.items()))}")
-        if snap.top_streaks:
-            print(f"  Top streaks:")
-            for h in snap.top_streaks[:5]:
-                icon = "🔥" if h.streak >= 7 else "✅"
-                print(f"    {icon} {h.name:25s} streak={h.streak}d  total={h.total_count}")
-        if snap.due_today:
-            print(f"  Due today ({len(snap.due_today)}): {', '.join(h.name for h in snap.due_today)}")
-        elif snap.active_count > 0:
-            print("  ✓ All active habits done today!")
+    if args.finance_action == "add-budget":
+        try:
+            budget = add_budget(
+                store,
+                args.category,
+                args.limit,
+                period=args.period or "monthly",
+            )
+        except FinanceError as exc:
+            print(f"budget error: {exc}", file=sys.stderr)
+            return 1
+        print(f"budget set: {budget.category} = ${budget.limit:.2f}/{budget.period}")
         return 0
 
-    if args.habit_action == "add":
-        habit = add_habit(
-            store,
-            args.name,
-            category=args.category or "health",
-            frequency=args.frequency or "daily",
-            target_per_day=args.target or 1,
-            unit=args.unit or "",
-            notes=args.notes or "",
+    if args.finance_action == "add-expense":
+        try:
+            expense = add_expense(
+                store,
+                args.category,
+                args.amount,
+                description=args.description or "",
+                date=args.date,
+            )
+        except FinanceError as exc:
+            print(f"expense error: {exc}", file=sys.stderr)
+            return 1
+        print(f"expense logged: {expense.category} ${expense.amount:.2f} ({expense.date})")
+        return 0
+
+    if args.finance_action == "list":
+        snap = scan_finances(
+            store=store,
+            date=args.date,
+            budgets_only=args.budgets_only or False,
         )
-        print(f"added habit: {habit.name} (id={habit.id}, freq={habit.frequency})")
+        deliver_finances(snap, store=store)
+        print(f"Financial Awareness — {snap.date}")
+        print(f"  Budget: ${snap.total_budget:.2f} total")
+        print(f"  Spent:  ${snap.total_spent:.2f} total")
+        if snap.budgets:
+            print(f"  Budgets ({len(snap.budgets)}):")
+            for b in snap.budgets:
+                flag = " ⚠️ OVER" if b.overspent else " ✅" if b.remaining > 0 else ""
+                print(f"    {b.category:15s} ${b.spent:<8.2f} / ${b.limit:<8.2f}{flag}")
+        if snap.overspent_categories:
+            print(f"  ⚠️ Overspent: {', '.join(snap.overspent_categories)}")
+        if snap.by_category:
+            print(f"  By category ({len(snap.by_category)}):")
+            for cat, data in sorted(snap.by_category.items()):
+                print(f"    {cat:15s} ${data['total']:<8.2f} ({data['count']} txns, avg ${data['avg']:.2f})")
+        if not snap.budgets and not snap.expenses:
+            print("  (no financial data yet — add budgets and expenses)")
         return 0
 
-    if args.habit_action == "log":
-        habit = log_habit(store, args.habit_id, date=args.date, notes=args.notes or "")
-        if habit:
-            print(f"logged {habit.name} for {args.date or 'today'} (streak={habit.streak}d)")
-            return 0
-        print(f"(no habit with id {args.habit_id})", file=sys.stderr)
-        return 1
-
->>>>>>> 307648d (feat(phase3): habit tracking module (Cycle 29))
+>>>>>>> 2b681c9 (feat(phase3): financial awareness module (Cycle 30))
     return 2  # pragma: no cover
 
 
@@ -918,27 +942,25 @@ def build_parser() -> argparse.ArgumentParser:
     tri.set_defaults(func=_cmd_travel)
 >>>>>>> 6870f79 (feat(phase3): travel planning module (Cycle 27))
 =======
-    phb = sub.add_parser("habit", help="habit tracking (add, log, list habits)")
-    hbsub = phb.add_subparsers(dest="habit_action", required=True)
-    hba = hbsub.add_parser("add", help="add a new habit")
-    hba.add_argument("name", help="habit name (e.g. 'meditate')")
-    hba.add_argument("--category", default="health", choices=["health", "productivity", "learning", "social", "mindfulness", "finance", "custom"], help="habit category")
-    hba.add_argument("--frequency", default="daily", choices=["daily", "weekdays", "weekly", "monthly", "custom"], help="frequency")
-    hba.add_argument("--target", type=int, default=1, help="target completions per day")
-    hba.add_argument("--unit", help="tracking unit (minutes, pages, glasses)")
-    hba.add_argument("--notes", help="free-text notes")
-    hba.set_defaults(func=_cmd_habit)
-    hbl = hbsub.add_parser("list", help="list habits with streaks")
-    hbl.add_argument("--category", default=None, help="filter by category")
-    hbl.add_argument("--active-only", action="store_true", default=False, dest="active_only", help="only active habits")
-    hbl.add_argument("--due-today", action="store_true", default=False, dest="due_today", help="habits not yet done today")
-    hbl.set_defaults(func=_cmd_habit)
-    hbo = hbsub.add_parser("log", help="mark habit as done for a date")
-    hbo.add_argument("habit_id", help="habit identifier")
-    hbo.add_argument("--date", help="date YYYY-MM-DD (default: today)")
-    hbo.add_argument("--notes", help="note about this completion")
-    hbo.set_defaults(func=_cmd_habit)
->>>>>>> 307648d (feat(phase3): habit tracking module (Cycle 29))
+    pf = sub.add_parser("finance", help="financial awareness (budgets, expenses, spend analysis)")
+    fsub = pf.add_subparsers(dest="finance_action", required=True)
+    fba = fsub.add_parser("add-budget", help="add or update a budget category")
+    fba.add_argument("category", help="budget category (groceries, dining, transport, etc.)")
+    fba.add_argument("--limit", type=float, required=True, help="monthly/weekly budget limit in $")
+    fba.add_argument("--period", default="monthly", choices=["weekly", "monthly", "yearly"], help="budget period")
+    fba.set_defaults(func=_cmd_finance)
+    fea = fsub.add_parser("add-expense", help="log an expense")
+    fea.add_argument("category", help="expense category")
+    fea.add_argument("amount", type=float, help="amount spent in $")
+    fea.add_argument("--description", help="what the expense was for")
+    fea.add_argument("--date", help="date YYYY-MM-DD (default: today)")
+    fea.set_defaults(func=_cmd_finance)
+    fl_ = fsub.add_parser("list", help="show budgets vs spend, category breakdown")
+    fl_.add_argument("--date", help="month to view (YYYY-MM-DD, default: today)")
+    fl_.add_argument("--budgets-only", action="store_true", default=False, help="only show budgets")
+    fl_.set_defaults(func=_cmd_finance)
+
+>>>>>>> 2b681c9 (feat(phase3): financial awareness module (Cycle 30))
     return p
 
 
