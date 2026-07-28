@@ -231,11 +231,11 @@ def _cmd_calendar(args: argparse.Namespace) -> int:
 # crm
 # ---------------------------------------------------------------------------
 def _cmd_crm(args: argparse.Namespace) -> int:
+    from hermes_ctl.intelligence.relationships import Relationships
     store = _store()
     crm = ProductivityStore(store)
+    rel = Relationships(store)
     if args.crm_action == "list":
-        # list all entities via find by scanning (ProductivityStore has no list_all;
-        # iterate by searching known names is not feasible, so expose find + add)
         print("(use 'crm find <name>' to look up; entities stored on demand)")
         return 0
     if args.crm_action == "add":
@@ -251,6 +251,51 @@ def _cmd_crm(args: argparse.Namespace) -> int:
             print(json.dumps(ent.to_dict(), indent=2, ensure_ascii=False))
         else:
             print(f"(no entity named {args.name})")
+        return 0
+    if args.crm_action == "rel-add":
+        try:
+            r = rel.add(args.name, args.rel_type, notes=args.rel_notes or "")
+        except Exception as exc:  # noqa: BLE001
+            print(f"failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"relationship added: {r.person} ({r.relation})")
+        return 0
+    if args.crm_action == "rel-list":
+        items = rel.list(relation=getattr(args, "rel_filter", None))
+        if not items:
+            print("(no relationships)")
+            return 0
+        for r in items:
+            since = time.strftime("%Y-%m-%d", time.gmtime(r.since)) if r.since else "?"
+            print(f"  {r.person:20s} {r.relation:12s} since {since}  {r.notes}")
+            if r.important_dates:
+                for label, d in r.important_dates.items():
+                    print(f"    {label}: {d}")
+        return 0
+    if args.crm_action == "rel-log":
+        try:
+            i = rel.log_interaction(args.name, channel=args.rel_channel or "", summary=args.rel_summary or "")
+        except Exception as exc:  # noqa: BLE001
+            print(f"failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"interaction logged: {i.person} ({i.channel})")
+        return 0
+    if args.crm_action == "rel-recent":
+        items = rel.interactions(person=args.name, limit=args.rel_limit)
+        if not items:
+            print(f"(no interactions for {args.name})")
+            return 0
+        for i in items:
+            when = time.strftime("%Y-%m-%d %H:%M", time.gmtime(i.timestamp))
+            print(f"  [{when}] {i.channel or '?'}: {i.summary}")
+        return 0
+    if args.crm_action == "rel-dates":
+        items = rel.upcoming_dates(within_days=args.rel_within)
+        if not items:
+            print("(no upcoming dates)")
+            return 0
+        for d in items:
+            print(f"  {d['person']:20s} {d['label']:12s} {d['date']:15s} in {d['daysUntil']} day(s)")
         return 0
     return 2
 
@@ -459,6 +504,7 @@ def _cmd_remind(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
 # relationship
 # ---------------------------------------------------------------------------
 def _cmd_relationship(args: argparse.Namespace) -> int:
@@ -510,6 +556,70 @@ def _cmd_relationship(args: argparse.Namespace) -> int:
             relationship_type=args.rel_type,
         )
         print(f"recorded interaction: {rel.person_id} (count={rel.contact_count}, strength={rel.strength:.2f})")
+=======
+# shopping
+# ---------------------------------------------------------------------------
+def _cmd_shopping(args: argparse.Namespace) -> int:
+    store = _store()
+    from hermes_ctl.intelligence.shopping import (
+        ShoppingSnapshot,
+        add_item,
+        remove_item,
+        mark_purchased,
+        clear_purchased,
+        scan_shopping,
+    )
+
+    if args.shop_action == "list":
+        snap = scan_shopping(
+            store=store,
+            list_name=args.list,
+            active_only=args.active_only,
+        )
+        print(f"Shopping items ({snap.active_count} active, {snap.purchased_count} purchased, across {len(snap.by_list)} list(s)):")
+        print(f"  Categories: {json.dumps(snap.by_category)}")
+        for item in snap.items:
+            status = "✅" if item.purchased else "⬜"
+            qty = f"{item.quantity}{item.unit}" if item.unit else str(int(item.quantity) if item.quantity == int(item.quantity) else item.quantity)
+            print(f"  {status} {item.name:30s} {qty:8s} [{item.category:12s}] {item.list_name}")
+        return 0
+
+    if args.shop_action == "add":
+        item = add_item(
+            store,
+            args.name,
+            quantity=args.quantity,
+            unit=args.unit or "",
+            category=args.category or "general",
+            list_name=args.list or "main",
+            priority=args.priority or "medium",
+            store_name=args.store or "",
+            notes=args.notes or "",
+            added_by=args.added_by or "",
+        )
+        print(f"added: {item.name} (x{item.quantity}, {item.list_name})")
+        return 0
+
+    if args.shop_action == "remove":
+        ok = remove_item(store, args.name, list_name=args.list or "main")
+        if ok:
+            print(f"removed: {args.name}")
+            return 0
+        print(f"(no item named {args.name} in list {args.list or 'main'})", file=sys.stderr)
+        return 1
+
+    if args.shop_action == "buy":
+        ok = mark_purchased(store, args.name, list_name=args.list or "main", purchased=True)
+        if ok:
+            print(f"marked purchased: {args.name}")
+            return 0
+        print(f"(no item named {args.name})", file=sys.stderr)
+        return 1
+
+    if args.shop_action == "clear":
+        count = clear_purchased(store, list_name=args.list)
+        print(f"cleared {count} purchased item(s)")
+>>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
         return 0
 
     return 2  # pragma: no cover
@@ -558,11 +668,26 @@ def build_parser() -> argparse.ArgumentParser:
     cup = calsub.add_parser("upcoming"); cup.add_argument("--within", type=float, default=None); cup.set_defaults(func=_cmd_calendar)
     cap = calsub.add_parser("add"); cap.add_argument("title"); cap.add_argument("--in-days", type=float, default=1.0); cap.set_defaults(func=_cmd_calendar)
 
-    pr_ = sub.add_parser("crm", help="CRM entities")
+    pr_ = sub.add_parser("crm", help="CRM entities + relationships")
     crmsub = pr_.add_subparsers(dest="crm_action", required=True)
     crmsub.add_parser("list").set_defaults(func=_cmd_crm)
     cadd = crmsub.add_parser("add"); cadd.add_argument("name"); cadd.add_argument("--kind", default="person"); cadd.set_defaults(func=_cmd_crm)
     cfind = crmsub.add_parser("find"); cfind.add_argument("name"); cfind.set_defaults(func=_cmd_crm)
+    # Relationship subcommands
+    r_add = crmsub.add_parser("rel-add", help="add a relationship")
+    r_add.add_argument("name"); r_add.add_argument("rel_type"); r_add.add_argument("--notes", dest="rel_notes", default="")
+    r_add.set_defaults(func=_cmd_crm)
+    r_list = crmsub.add_parser("rel-list", help="list relationships")
+    r_list.add_argument("--type", dest="rel_filter", default=None); r_list.set_defaults(func=_cmd_crm)
+    r_log = crmsub.add_parser("rel-log", help="log an interaction")
+    r_log.add_argument("name"); r_log.add_argument("--channel", dest="rel_channel", default=""); r_log.add_argument("--summary", dest="rel_summary", default="")
+    r_log.set_defaults(func=_cmd_crm)
+    r_rec = crmsub.add_parser("rel-recent", help="show recent interactions")
+    r_rec.add_argument("name"); r_rec.add_argument("--limit", type=int, default=10, dest="rel_limit")
+    r_rec.set_defaults(func=_cmd_crm)
+    r_dates = crmsub.add_parser("rel-dates", help="show upcoming important dates")
+    r_dates.add_argument("--within", type=float, default=30, dest="rel_within")
+    r_dates.set_defaults(func=_cmd_crm)
 
     ps = sub.add_parser("send", help="OUTBOUND message (gated: secrets + egress)")
     ssub = ps.add_subparsers(dest="send_channel", required=True)
@@ -598,6 +723,7 @@ def build_parser() -> argparse.ArgumentParser:
     rmr = rmsub.add_parser("run", help="check plan items due, send pending reminders to Telegram")
     rmr.set_defaults(func=_cmd_remind)
 
+<<<<<<< HEAD
     prel = sub.add_parser("relationship", help="relationship management (track contacts, strength, interactions)")
     rsub = prel.add_subparsers(dest="rel_action", required=True)
     rl = rsub.add_parser("list", help="list all tracked relationships with type and strength")
@@ -620,6 +746,36 @@ def build_parser() -> argparse.ArgumentParser:
     ri.add_argument("--channel", help="channel this interaction came on (telegram, sms, email)")
     ri.add_argument("--type", dest="rel_type", help="relationship type")
     ri.set_defaults(func=_cmd_relationship)
+=======
+    psh = sub.add_parser("shopping", help="shopping list management (add, list, buy, clear)")
+    shsub = psh.add_subparsers(dest="shop_action", required=True)
+    shl = shsub.add_parser("list", help="list shopping items (active-only with --active)")
+    shl.add_argument("--list", dest="list", default=None, help="filter by list name")
+    shl.add_argument("--active-only", action="store_true", default=False, help="show only active (unpurchased) items")
+    shl.set_defaults(func=_cmd_shopping)
+    sha = shsub.add_parser("add", help="add an item to a shopping list")
+    sha.add_argument("name", help="item name (e.g. 'milk')")
+    sha.add_argument("--quantity", type=float, default=1.0, help="how many (default: 1)")
+    sha.add_argument("--unit", help="unit (L, kg, pack, loaf)")
+    sha.add_argument("--category", default="general", help="category (dairy, produce, meat, pantry, household)")
+    sha.add_argument("--list", dest="list", default="main", help="shopping list name (default: main)")
+    sha.add_argument("--priority", default="medium", choices=["low", "medium", "high"], help="priority")
+    sha.add_argument("--store", help="preferred store")
+    sha.add_argument("--notes", help="free-text notes")
+    sha.add_argument("--added-by", default="", help="who added this item")
+    sha.set_defaults(func=_cmd_shopping)
+    shr = shsub.add_parser("remove", help="remove an item from a shopping list")
+    shr.add_argument("name", help="item name to remove")
+    shr.add_argument("--list", dest="list", default="main", help="which list (default: main)")
+    shr.set_defaults(func=_cmd_shopping)
+    shb = shsub.add_parser("buy", help="mark an item as purchased")
+    shb.add_argument("name", help="item name to mark purchased")
+    shb.add_argument("--list", dest="list", default="main", help="which list (default: main)")
+    shb.set_defaults(func=_cmd_shopping)
+    shc = shsub.add_parser("clear", help="remove all purchased items")
+    shc.add_argument("--list", dest="list", default=None, help="which list (default: all lists)")
+    shc.set_defaults(func=_cmd_shopping)
+>>>>>>> 601ec47 (feat(phase3): shopping intelligence module (Cycle 26))
     return p
 
 

@@ -173,13 +173,13 @@ Enable proactive assistance.
 
 ## Features
 
-- Daily briefing ✅ (delivered, live via Telegram)
-- Planning ✅ (delivered, live via Telegram)
-- Smart reminders ✅ (live, checks plan items hourly)
-- Context awareness ✅ (Cycle 23: scan_context + deliver_context + CLI)
-- Long-term memory ✅ (Cycle 24: curation module — importance scoring, consolidation, CLI)
+- Daily briefing
+- Planning
+- Smart reminders
+- Context awareness
+- Long-term memory
 - Relationship management ✅ (Cycle 25: relationship tracking — contacts, strength, interactions, CLI)
-- Shopping intelligence
+- Shopping intelligence ✅ (Cycle 26: shopping lists — items, purchase tracking, categories, CLI)
 - Travel planning
 - Health tracking
 - Habit tracking
