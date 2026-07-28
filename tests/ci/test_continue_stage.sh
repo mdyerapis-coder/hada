@@ -46,6 +46,11 @@ chmod +x "$STUB/gh"
 # Make a throwaway bare mirror of HADA so --continue can push locally.
 REMOTE=$(mktemp -d)/bare.git
 git clone --bare "$HADA_ROOT" "$REMOTE" >/dev/null 2>&1
+# Ensure the bare remote has a 'main' branch even when the source checkout
+# (e.g. a PR merge commit in CI) lacks an origin/main ref. The hermetic
+# --continue test only needs a valid base ref to diff/branch from; without
+# this, `git checkout origin/main` fails with "pathspec 'origin/main'".
+git -C "$REMOTE" branch -f main HEAD >/dev/null 2>&1 || true
 
 cleanup() { rm -rf "$STUB" "${REMOTE%/*}" "$WT" "${WT2:-}" 2>/dev/null; }
 trap cleanup EXIT

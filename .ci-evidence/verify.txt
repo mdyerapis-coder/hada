@@ -1,0 +1,463 @@
+PASS: no operator-local absolute paths detected.
+== releases/v1/HADA-M1-gcp-candidate.zip.sha256 ==
+HADA-M1-gcp-candidate.zip: OK
+== releases/v2/HADA-M1-gcp-candidate-v2.zip.sha256 ==
+HADA-M1-gcp-candidate-v2.zip: OK
+== releases/v3/HADA-M1-gcp-candidate-v3.zip.sha256 ==
+HADA-M1-gcp-candidate-v3.zip: OK
+== releases/v4/HADA-M1-gcp-candidate-v4.zip.sha256 ==
+HADA-M1-gcp-candidate-v4.zip: OK
+== releases/v5/HADA-M1-gcp-candidate-v5.zip.sha256 ==
+HADA-M1-gcp-candidate-v5.zip: OK
+PASS: pipeline bootstrap scripts.
+PASS: release-manifest gate accepts valid releases/ tree
+PASS: release-manifest gate rejects corrupt checksum
+PASS: release-manifest gate rejects manifest for missing file
+----
+release-manifest tests: 3 passed, 0 failed
+SKIP: repair self-tests (--continue/--scan) during in-repair verification (recursion guard).
+
+==================================== ERRORS ====================================
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py:9: in <module>
+    from hada.audit.chain import AuditChain
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/test_governance.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/test_governance.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/test_governance.py:3: in <module>
+    from hada.governance.engine import GovernanceEngine, GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py:11: in <module>
+    from hada.cli import app
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py:16: in <module>
+    from hada.models import HadaConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py:5: in <module>
+    from hada.audit.chain import GENESIS_HASH, AuditChain, AuditVerificationError
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py:3: in <module>
+    from hada.orchestrator.lifecycle import InvalidTaskTransition, TaskRecord, TaskStatus
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py:5: in <module>
+    from hada.db.migrate import MigrationError, discover_migrations
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py:5: in <module>
+    from hada.governance.engine import GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py:3: in <module>
+    from hada.orchestrator.outbox import OutboxRecord
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_policy.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_policy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_policy.py:3: in <module>
+    from hada.models import ExecutionConfig, ToolRuleConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py:3: in <module>
+    from hada.queue.broker import DurableQueue, InMemoryStreamBackend, QueueMessage
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_runtime_state.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_runtime_state.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_runtime_state.py:4: in <module>
+    from hada.queue.broker import DurableQueue, InMemoryStreamBackend, QueueMessage
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py:6: in <module>
+    from hada.workspaces.manager import RepositoryPolicy, WorkspaceError, WorkspaceManager
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py:9: in <module>
+    from hada.audit.chain import AuditChain
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/test_governance.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/test_governance.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/test_governance.py:3: in <module>
+    from hada.governance.engine import GovernanceEngine, GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py:11: in <module>
+    from hada.cli import app
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py:16: in <module>
+    from hada.models import HadaConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py:5: in <module>
+    from hada.audit.chain import GENESIS_HASH, AuditChain, AuditVerificationError
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_dashboard_assets.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_dashboard_assets.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_dashboard_assets.py:5: in <module>
+    from hada.dashboard import dashboard_asset_path
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py:3: in <module>
+    from hada.orchestrator.lifecycle import InvalidTaskTransition, TaskRecord, TaskStatus
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py:5: in <module>
+    from hada.db.migrate import MigrationError, discover_migrations
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py:5: in <module>
+    from hada.governance.engine import GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py:3: in <module>
+    from hada.orchestrator.outbox import OutboxRecord
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_policy.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_policy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_policy.py:3: in <module>
+    from hada.models import ExecutionConfig, ToolRuleConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py:3: in <module>
+    from hada.queue.broker import DurableQueue, InMemoryStreamBackend, QueueMessage
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_valkey_durability.py _
+import file mismatch:
+imported module 'test_valkey_durability' has this __file__ attribute:
+  /tmp/hada-repair-7bNwyH/candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_valkey_durability.py
+which is not the same as the test file we want to collect:
+  /tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_valkey_durability.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_ ERROR collecting workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py:6: in <module>
+    from hada.workspaces.manager import RepositoryPolicy, WorkspaceError, WorkspaceManager
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py:9: in <module>
+    from hada.audit.chain import AuditChain
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/test_governance.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/test_governance.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/test_governance.py:3: in <module>
+    from hada.governance.engine import GovernanceEngine, GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py:11: in <module>
+    from hada.cli import app
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py:16: in <module>
+    from hada.models import HadaConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py:5: in <module>
+    from hada.audit.chain import GENESIS_HASH, AuditChain, AuditVerificationError
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py:3: in <module>
+    from hada.orchestrator.lifecycle import InvalidTaskTransition, TaskRecord, TaskStatus
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py:5: in <module>
+    from hada.db.migrate import MigrationError, discover_migrations
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py:5: in <module>
+    from hada.governance.engine import GovernanceViolation
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py:3: in <module>
+    from hada.orchestrator.outbox import OutboxRecord
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_policy.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_policy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_policy.py:3: in <module>
+    from hada.models import ExecutionConfig, ToolRuleConfig
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py:3: in <module>
+    from hada.queue.broker import DurableQueue, InMemoryStreamBackend, QueueMessage
+E   ModuleNotFoundError: No module named 'hada'
+_ ERROR collecting workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py _
+ImportError while importing test module '/tmp/hada-repair-7bNwyH/workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py:6: in <module>
+    from hada.workspaces.manager import RepositoryPolicy, WorkspaceError, WorkspaceManager
+E   ModuleNotFoundError: No module named 'hada'
+____ ERROR collecting workspace/tests/phase-b/test_valkey_durability_v4.py _____
+workspace/tests/phase-b/test_valkey_durability_v4.py:53: in <module>
+    base = load(root / "deploy/compose/compose.yaml")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+workspace/tests/phase-b/test_valkey_durability_v4.py:21: in load
+    with path.open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/m_dyer_apis_gmail_com/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/pathlib.py:1044: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/hada-repair-7bNwyH/-q/deploy/compose/compose.yaml'
+=========================== short test summary info ============================
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/test_governance.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_policy.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_runtime_state.py
+ERROR candidate/v5/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/test_governance.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_dashboard_assets.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_policy.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_valkey_durability.py
+ERROR workspace/deploy-v4/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/integration/test_control_plane.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/test_governance.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_cli_config_runtime.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_compose_files.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_crypto_evidence_audit.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_lifecycle.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_migrations.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_orchestrator.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_outbox.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_policy.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_queue_and_leases.py
+ERROR workspace/inspection/HADA-M1-durable-orchestrator/HADA-M1-durable-orchestrator/tests/unit/test_workspace.py
+ERROR workspace/tests/phase-b/test_valkey_durability_v4.py - FileNotFoundErro...
+!!!!!!!!!!!!!!!!!!! Interrupted: 40 errors during collection !!!!!!!!!!!!!!!!!!!
+40 errors in 0.88s
+pytest: no tests or skipped
+VERIFY OK

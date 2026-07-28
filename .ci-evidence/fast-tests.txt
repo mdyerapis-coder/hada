@@ -1,0 +1,7 @@
+PASS: pipeline bootstrap scripts.
+PASS: release-manifest gate accepts valid releases/ tree
+PASS: release-manifest gate rejects corrupt checksum
+PASS: release-manifest gate rejects manifest for missing file
+----
+release-manifest tests: 3 passed, 0 failed
+SKIP: repair self-tests (--continue/--scan) during in-repair verification (recursion guard).

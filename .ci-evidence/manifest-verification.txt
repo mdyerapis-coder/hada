@@ -1,0 +1,10 @@
+== releases/v1/HADA-M1-gcp-candidate.zip.sha256 ==
+HADA-M1-gcp-candidate.zip: OK
+== releases/v2/HADA-M1-gcp-candidate-v2.zip.sha256 ==
+HADA-M1-gcp-candidate-v2.zip: OK
+== releases/v3/HADA-M1-gcp-candidate-v3.zip.sha256 ==
+HADA-M1-gcp-candidate-v3.zip: OK
+== releases/v4/HADA-M1-gcp-candidate-v4.zip.sha256 ==
+HADA-M1-gcp-candidate-v4.zip: OK
+== releases/v5/HADA-M1-gcp-candidate-v5.zip.sha256 ==
+HADA-M1-gcp-candidate-v5.zip: OK
