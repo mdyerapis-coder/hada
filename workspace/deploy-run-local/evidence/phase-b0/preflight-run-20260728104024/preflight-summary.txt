@@ -1,0 +1,10 @@
+overall-result: FAIL
+failed-gate: none
+candidate-sha256: d5582879cba20d92881ba013c68c4b9df3f9e36a3d0ce22aaad0a53bd33856ac
+project: api-intergrations-501314
+zone: australia-southeast1-b
+vm: hada-control
+after-state-capture-succeeded: NO
+container-state-changed: UNKNOWN
+image-state-changed: UNKNOWN
+remote-cleanup-result: NOT_REQUIRED

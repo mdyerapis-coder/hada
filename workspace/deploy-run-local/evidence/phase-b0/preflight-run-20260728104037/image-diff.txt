@@ -1,0 +1,1 @@
+PASS: image list unchanged

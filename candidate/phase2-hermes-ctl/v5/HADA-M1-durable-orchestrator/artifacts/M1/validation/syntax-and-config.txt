@@ -1,0 +1,6 @@
+$ python -m compileall -q src tests scripts/verify-m1-evidence.py
+PASS compileall
+$ bash -n scripts/*.sh
+PASS shell syntax
+$ PYTHONPATH=src python -m hada.cli validate-config --config config/hada.yaml
+valid: HADA -> Hermesctl
