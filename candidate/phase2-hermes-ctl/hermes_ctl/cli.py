@@ -1,0 +1,152 @@
+"""Hermes CTL command-line interface (Phase 2 deployable surface).
+
+Exposes the built foundation subsystems as offline, no-secret commands:
+  hermesctl memory  <search|remember|forget>   # long-term + working memory
+  hermesctl inbox   <list|show>                 # inbound SMS/Email/Telegram
+  hermesctl identity <show|set-pref>            # profile + preferences
+  hermesctl tasks   <list|add>                  # productivity task store
+
+All state lives in the MemoryStore (JSON file). No network, no creds.
+This is the "operating surface" that makes the foundation usable day-to-day.
+
+Run:  python3 -m hermes_ctl.cli <subcommand> [args]
+Env:  HERMES_CTL_STORE (default: .comms/inbox.json is the inbox; the store path
+      is the same file — memory + inbox share one MemoryStore document).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from typing import Any
+
+from hermes_ctl.identity.profile import Identity
+from hermes_ctl.memory.store import MemoryStore
+from hermes_ctl.productivity.store import ProductivityStore, Task
+
+
+def _store() -> MemoryStore:
+    path = os.environ.get("HERMES_CTL_STORE", os.path.join(os.path.dirname(__file__), "..", ".comms", "inbox.json"))
+    path = os.path.abspath(path)
+    return MemoryStore(persist_path=path)
+
+
+# ---------------------------------------------------------------------------
+# memory
+# ---------------------------------------------------------------------------
+def _cmd_memory(args: argparse.Namespace) -> int:
+    store = _store()
+    if args.memory_action == "search":
+        facts = store.search(tag=args.tag) if args.tag else store.search()
+        for f in facts[-args.limit :]:
+            print(f"{f.id}\t{sorted(f.tags)}\t{json.dumps(f.value, ensure_ascii=False)[:120]}")
+        return 0
+    if args.memory_action == "remember":
+        store.remember(args.key, json.loads(args.value), tags=tuple(args.tag or []))
+        print(f"remembered {args.key}")
+        return 0
+    if args.memory_action == "forget":
+        store.forget(args.key)
+        print(f"forgot {args.key}")
+        return 0
+    return 2
+
+
+# ---------------------------------------------------------------------------
+# inbox
+# ---------------------------------------------------------------------------
+def _cmd_inbox(args: argparse.Namespace) -> int:
+    store = _store()
+    inbox = store.search(tag="inbox")
+    if args.channel:
+        inbox = [f for f in inbox if f.value.get("channel") == args.channel]
+    inbox = inbox[-args.limit :]
+    if args.inbox_action == "list":
+        for f in inbox:
+            v = f.value
+            print(f"[{v.get('channel')}] {v.get('sender')}: {v.get('body','')[:60]}")
+        return 0
+    if args.inbox_action == "show":
+        if not inbox:
+            print("(empty)")
+            return 0
+        print(json.dumps(inbox[-1].value, indent=2, ensure_ascii=False))
+        return 0
+    return 2
+
+
+# ---------------------------------------------------------------------------
+# identity
+# ---------------------------------------------------------------------------
+def _cmd_identity(args: argparse.Namespace) -> int:
+    store = _store()
+    ident = Identity(store)
+    if args.identity_action == "show":
+        out = {
+            "profile": ident.get_profile(),
+            "preferences": ident.all_preferences(),
+        }
+        print(json.dumps(out, indent=2, ensure_ascii=False))
+        return 0
+    if args.identity_action == "set-pref":
+        ident.set_preference(args.key, args.value)
+        print(f"pref {args.key} = {args.value}")
+        return 0
+    return 2
+
+
+# ---------------------------------------------------------------------------
+# tasks
+# ---------------------------------------------------------------------------
+def _cmd_tasks(args: argparse.Namespace) -> int:
+    store = _store()
+    tasks = ProductivityStore(store)
+    if args.task_action == "list":
+        for t in tasks.list_tasks(only_open=True):
+            print(f"{t.id}\t[{'x' if t.done else ' '}]\t{t.title}")
+        return 0
+    if args.task_action == "add":
+        import uuid
+        task = Task(id=uuid.uuid4().hex[:8], title=args.title)
+        tasks.add_task(task)
+        print(f"added task {task.id}: {task.title}")
+        return 0
+    return 2
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="hermesctl", description="Hermes CTL CLI (Phase 2 foundation surface)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    pm = sub.add_parser("memory", help="long-term + working memory")
+    msub = pm.add_subparsers(dest="memory_action", required=True)
+    sp = msub.add_parser("search"); sp.add_argument("--tag"); sp.add_argument("--limit", type=int, default=20); sp.set_defaults(func=_cmd_memory)
+    rp = msub.add_parser("remember"); rp.add_argument("key"); rp.add_argument("value"); rp.add_argument("--tag", action="append"); rp.set_defaults(func=_cmd_memory)
+    fp = msub.add_parser("forget"); fp.add_argument("key"); fp.set_defaults(func=_cmd_memory)
+
+    pi = sub.add_parser("inbox", help="inbound SMS/Email/Telegram")
+    isub = pi.add_subparsers(dest="inbox_action", required=True)
+    lp = isub.add_parser("list"); lp.add_argument("--channel"); lp.add_argument("--limit", type=int, default=20); lp.set_defaults(func=_cmd_inbox)
+    sp2 = isub.add_parser("show"); sp2.add_argument("--limit", type=int, default=1); sp2.add_argument("--channel"); sp2.set_defaults(func=_cmd_inbox)
+
+    pn = sub.add_parser("identity", help="profile + preferences")
+    nsub = pn.add_subparsers(dest="identity_action", required=True)
+    nsub.add_parser("show").set_defaults(func=_cmd_identity)
+    spp = nsub.add_parser("set-pref"); spp.add_argument("key"); spp.add_argument("value"); spp.set_defaults(func=_cmd_identity)
+
+    pt = sub.add_parser("tasks", help="productivity task store")
+    tsub = pt.add_subparsers(dest="task_action", required=True)
+    tsub.add_parser("list").set_defaults(func=_cmd_tasks)
+    tap = tsub.add_parser("add"); tap.add_argument("title"); tap.set_defaults(func=_cmd_tasks)
+    return p
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

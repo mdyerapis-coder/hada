@@ -22,10 +22,28 @@ deploy, secret/infra change, or governance bypass occurs.
 - Promoted `docs/adr/0001-governed-release-pipeline.md` Proposed → Accepted.
 - Recorded progress (this file).
 
+## Cycle 13 — Phase 2: Hermes CTL CLI (`hermesctl`)
+- Branch: `agent/phase2-hermes-ctl-cli` (draft PR)
+- Added `candidate/phase2-hermes-ctl/hermes_ctl/cli.py`: command-line surface
+  exposing the Phase 2 foundation as offline, no-secret commands:
+  - `hermesctl memory <search|remember|forget>` — long-term + working memory
+  - `hermesctl inbox <list|show>` — inbound SMS/Email/Telegram (reads the
+    MemoryStore inbox the contact daemon fills)
+  - `hermesctl identity <show|set-pref>` — profile + preferences
+  - `hermesctl tasks <list|add>` — productivity task store
+- Aligned all calls to the real subsystem APIs (MemoryStore.Fact.id,
+  Identity.get_profile/all_preferences/set_preference, ProductivityStore).
+- Added `candidate/phase2-hermes-ctl/tests/test_cli.py` (5 tests).
+- Verified: `pytest tests/` -> 57 passed. Live smoke: `inbox list` shows real
+  `[sms]` entries from the running daemon; `tasks add`+`list` works.
+- Run: `python3 -m hermes_ctl.cli <subcommand> [args]` (env `HERMES_CTL_STORE`).
+- Next: Phase 3 (Personal Intelligence) daily-briefing surface — needs live LLM
+  (gated: network + brains creds per Human Approval Boundary).
+
 ## Open / blocked
 - Phase B0 deployment: human authorization required (not automated).
-- PR #4 "merged" anomaly on `main`: PR #5 carries the full pipeline.
-- v3 B0 checksum-gate path-independence: deferred (edits deploy preflight script).
+- Phase 3+ requires live LLM routing (brains :8080/:8081) + (for Telegram/Email
+  send) creds — gated human work.
 
 ## Cycle 6 — Phase 2 start: Hermes CTL memory foundation
 - Branch: `agent/phase2-hermes-ctl-memory-foundation` (draft PR)
