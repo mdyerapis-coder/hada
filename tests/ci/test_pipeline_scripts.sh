@@ -27,3 +27,8 @@ fi
 if [[ -x tests/ci/test_continue_stage.sh ]]; then
   tests/ci/test_continue_stage.sh
 fi
+
+# Orchestrator --scan stage: hermetic (stubbed gh + git, no network).
+if [[ -x tests/ci/test_scan_stage.sh ]]; then
+  tests/ci/test_scan_stage.sh
+fi
