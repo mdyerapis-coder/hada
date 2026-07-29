@@ -265,3 +265,18 @@ deploy, secret/infra change, or governance bypass occurs.
 - **Test metric**: 294/294 pass (was 259 pass + 35 fail before fixes).
 - **Documentation**: Updated `MASTER_ROADMAP.md`: all 11 Phase 3 features now have ✅ marks + cycle references; added Phase 3 complete entry to Current Status; build loop transitions to Phase 4.
 - **Phase 3 is now fully documented as complete.** Build loop ready for Phase 4 (Home Hub Integration).
+
+## Cycle 32 — ADR 0004: Home Hub Integration Architecture (Phase 4 kickoff)
+- Branch: `agent/build-cycle-1785301930-1350f7e22b71` (PR #— draft)
+- **New**: `docs/adr/0004-home-hub-integration.md` (Proposed) — defines the
+  three-layer integration pattern for Phase 4: external service → adapter
+  (`hermes_ctl/integrations/`) → existing Hermes CTL seam (MemoryStore,
+  Channel, CLI, Intelligence).
+- **Updated**: `docs/MASTER_ROADMAP.md` — Architecture subsection added to
+  Phase 4; each integration annotated with foundation status (existing
+  foundation vs ⬜ planned vs ⬜ gated).
+- **Updated**: `docs/PROGRESS.md` — this entry.
+- **Rationale**: Phase 4 integrations are externally-gated (creds/infra).
+  ADR 0004 establishes the architecture pattern before any code work, so
+  subsequent cycles implement against a defined design.
+- **Next buildable**: Inventory module (stdlib, Phase 3 pattern, Cycle 33).
