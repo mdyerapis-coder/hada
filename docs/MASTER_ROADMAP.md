@@ -68,7 +68,7 @@ Build the governance framework that allows autonomous software engineering to oc
 - Evidence standards
 - Audit logging
 - Release governance
-- Project dashboard
+- Engineering admin dashboard (operator-only; not the primary user interface)
 
 ## Definition of Done
 
@@ -157,7 +157,7 @@ Build the personal AI operating environment.
 - Local LLM routing
 - Cloud fallback
 - Voice interface
-- Mobile interface
+- Mobile application API seam
 
 ## Definition of Done
 
@@ -209,12 +209,55 @@ Implementation remains external to HADA and is governed through review and evide
 - Smart home
 - Cameras
 - Notifications
-- Dashboards
+- Legacy web dashboards (admin/fallback only)
 - Household automation
+
+## Primary Product Surface — Android Application / APK
+
+The household and personal interface is a full Android application, not a
+pair of dashboard-first products. Existing dashboard capabilities remain
+available as operator/admin or browser fallback surfaces, but new end-user
+experience work targets the Android app first.
+
+### Dashboard consolidation
+
+- **HADA engineering dashboard:** retained for governed build, repair,
+  evidence, and infrastructure administration; operator-only.
+- **Home Hub dashboard:** its household controls and status views are absorbed
+  into the Android application; the web version becomes an optional fallback.
+- Both surfaces consume the same versioned Hermes CTL / Home Hub APIs so
+  behavior and authorization do not diverge between app and web clients.
+
+### Android application epic
+
+- Native Android client using Kotlin and Jetpack Compose
+- Authenticated, versioned Hermes CTL / Home Hub API
+- Chat and command interface
+- Household shopping, inventory, pantry, calendar, family tasks, smart-home,
+  camera, and notification views
+- Build/repair status, evidence links, and explicit approval prompts
+- Push notifications for reminders and requests requiring human input
+- Offline-first read cache and queued, idempotent actions
+- Android Keystore-backed credential/token storage; no embedded secrets
+- Role-aware adult and child experiences with consent and privacy controls
+- CI-built debug APK for continuous testing
+- Signed release APK/AAB only after explicit human approval and provision of
+  signing credentials through the approved secret-management boundary
+
+### Delivery stages
+
+1. API contract and authentication seam
+2. Compose application shell, navigation, accessibility, and design system
+3. Chat/control plus notification/approval workflow
+4. Household feature migration from the Home Hub dashboard
+5. Governed engineering status from the HADA dashboard
+6. Offline behavior, device security, end-to-end tests, and release packaging
 
 ## Definition of Done
 
-Home Hub integrates cleanly through governed interfaces.
+The Android APK is the primary household interface, both former dashboard
+surfaces are integrated through shared governed APIs, and web dashboards are
+limited to explicit admin/fallback use.
 
 ---
 
