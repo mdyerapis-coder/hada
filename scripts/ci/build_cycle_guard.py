@@ -505,11 +505,24 @@ def publish(args: argparse.Namespace) -> int:
                 raise RuntimeError("verification evidence hash mismatch")
             lease["status"] = "publishing"
             _write_json(lease_path, lease)
+            verified_head = str(lease["verified_head"])
+            remote_ref = f"refs/heads/{lease['branch']}"
             _run(
-                ["git", "push", "-u", "origin", lease["branch"]],
+                ["git", "push", "origin", f"{verified_head}:{remote_ref}"],
                 cwd=worktree,
                 timeout=args.command_timeout,
             )
+            remote_raw = _run(
+                ["git", "ls-remote", "--refs", "origin", remote_ref],
+                cwd=worktree,
+                timeout=args.command_timeout,
+            )
+            remote_lines = remote_raw.splitlines()
+            if (
+                len(remote_lines) != 1
+                or remote_lines[0].split() != [verified_head, remote_ref]
+            ):
+                raise RuntimeError("remote branch is not bound to the verified SHA")
             # Close the push-to-PR race before publication.
             _run(
                 [
@@ -527,7 +540,10 @@ def publish(args: argparse.Namespace) -> int:
                 raise RuntimeError("origin/main moved after push; draft PR creation blocked")
 
             existing_raw = _run(
-                ["gh", "pr", "list", "--state", "open", "--head", lease["branch"], "--json", "url,isDraft,headRefName,baseRefName"],
+                [
+                    "gh", "pr", "list", "--state", "open", "--head", lease["branch"],
+                    "--json", "url,isDraft,headRefName,baseRefName,headRefOid",
+                ],
                 cwd=worktree,
                 timeout=args.command_timeout,
             )
@@ -568,7 +584,10 @@ def publish(args: argparse.Namespace) -> int:
                     timeout=args.command_timeout,
                 )
                 view_raw = _run(
-                    ["gh", "pr", "view", pr_url, "--json", "url,isDraft,headRefName,baseRefName"],
+                    [
+                        "gh", "pr", "view", pr_url, "--json",
+                        "url,isDraft,headRefName,baseRefName,headRefOid",
+                    ],
                     cwd=worktree,
                     timeout=args.command_timeout,
                 )
@@ -579,6 +598,8 @@ def publish(args: argparse.Namespace) -> int:
                 raise RuntimeError("published pull request is not draft")
             if pr.get("headRefName") != lease["branch"] or pr.get("baseRefName") != "main":
                 raise RuntimeError("published pull request branch/base mismatch")
+            if pr.get("headRefOid") != verified_head:
+                raise RuntimeError("published pull request head is not the verified SHA")
         except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
             lease["status"] = "verified" if lease.get("verified_head") else "active"
             _quarantine(lease_path, lease, state_dir, str(exc))

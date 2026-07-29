@@ -110,8 +110,24 @@ import json, re, sys
 v=json.load(open(sys.argv[1])); assert v['status']=='verified'; assert re.fullmatch(r'[0-9a-f]{64}', v['gate_log_sha256'])
 PY
 
-# draft-only publication is verified and idempotently reuses an existing PR
+# draft-only publication is bound to the exact verified SHA and idempotently reuses an existing PR
 mkdir -p "$TMP/bin"
+verified_head=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["verified_head"])' "$STATE/lease.json")
+real_git=$(command -v git)
+cat >"$TMP/bin/git" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+branch=\$(cat "$TMP/current-branch")
+last=\${!#}
+# Reproduce a mutable-branch race immediately before a branch-name push.
+if [[ "\${1:-}" == push && "\$last" == "\$branch" ]]; then
+  printf 'unverified race\n' >> decorative.sh
+  "$real_git" add decorative.sh
+  "$real_git" -c user.name=Race -c user.email=race@example.invalid commit -qm race
+fi
+exec "$real_git" "\$@"
+EOF
+chmod +x "$TMP/bin/git"
 cat >"$TMP/bin/gh" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -120,7 +136,7 @@ branch=\$(cat "$TMP/current-branch")
 case "\$1 \$2" in
   'pr list')
     if [[ -f "$TMP/pr-created" ]]; then
-      printf '[{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main"}]\n' "\$branch"
+      printf '[{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main","headRefOid":"$verified_head"}]\n' "\$branch"
     else
       printf '[]\n'
     fi
@@ -130,7 +146,7 @@ case "\$1 \$2" in
     printf 'https://example.invalid/pr/1\n'
     ;;
   'pr view')
-    printf '{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main"}\n' "\$branch"
+    printf '{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main","headRefOid":"$verified_head"}\n' "\$branch"
     ;;
   *) exit 9 ;;
 esac
@@ -139,6 +155,8 @@ chmod +x "$TMP/bin/gh"
 printf 'body\n' >"$TMP/body.md"
 PATH="$TMP/bin:$PATH" python3 "$GUARD" publish --state-dir "$STATE" \
   --token "$token" --title 'bounded cycle' --body-file "$TMP/body.md" >/dev/null
+remote_head=$("$real_git" --git-dir="$REMOTE" rev-parse "refs/heads/$branch")
+[[ "$remote_head" == "$verified_head" ]]
 [[ "$(grep -c '^pr create ' "$TRACE")" == 1 ]]
 grep -q '^pr create --draft --base main --head agent/build-cycle-' "$TRACE"
 if grep -Eq 'merge|rebase|force' "$TRACE"; then
