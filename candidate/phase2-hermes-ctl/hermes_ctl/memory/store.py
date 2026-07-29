@@ -100,6 +100,12 @@ class MemoryError(Exception):
     """Base error for memory operations."""
 
 
+class PersistenceCommitError(MemoryError):
+    """The replacement is visible, but directory durability is uncertain."""
+
+    committed = True
+
+
 class MemoryStore:
     """Three-surface memory store with an optional JSON-file backend."""
 
@@ -158,6 +164,14 @@ class MemoryStore:
                     try:
                         if self._transaction_dirty:
                             self._save()
+                    except PersistenceCommitError:
+                        # os.replace() already made the serialized transaction
+                        # authoritative. Rolling live state back here would
+                        # create a known live/durable contradiction.
+                        self._transaction_snapshot = None
+                        self._transaction_dirty = False
+                        self._transaction_error = None
+                        raise
                     except BaseException:
                         self._restore_transaction_snapshot()
                         raise
@@ -376,11 +390,17 @@ class MemoryStore:
                 os.fsync(fh.fileno())
             os.replace(tmp, destination)
             tmp = ""
-            directory_fd = os.open(parent, os.O_RDONLY)
             try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
+                directory_fd = os.open(parent, os.O_RDONLY)
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
+            except OSError as exc:
+                raise PersistenceCommitError(
+                    "persistence replacement committed, but directory fsync failed; "
+                    "live and durable state retain the committed transaction"
+                ) from exc
         finally:
             if tmp:
                 try:
