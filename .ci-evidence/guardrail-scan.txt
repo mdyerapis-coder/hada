@@ -1,4 +1,4 @@
-Guardrail scan of /tmp/tmp.pAPnefWuQj/wt2 vs origin/main
+Guardrail scan of /tmp/tmp.71TkVqMHXv/wt2 vs origin/main
 FAIL: guardrail violation — repair touches out-of-scope files:
   policies/RELEASE_GOVERNANCE.md (matches ^policies/)
 
