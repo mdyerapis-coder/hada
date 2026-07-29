@@ -70,10 +70,12 @@ class AuditChain:
             "previous_hash": previous_hash,
         }
         event_hash = hashlib.sha256(canonical_json(unsigned)).hexdigest()
-        return AuditRecord(
-            **unsigned,
-            event_hash=event_hash,
-            signature=self.signer.sign(bytes.fromhex(event_hash)),
+        return AuditRecord.model_validate(
+            {
+                **unsigned,
+                "event_hash": event_hash,
+                "signature": self.signer.sign(bytes.fromhex(event_hash)),
+            }
         )
 
     @staticmethod

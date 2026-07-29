@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import signal
 import threading
 from http import HTTPStatus
@@ -9,9 +10,18 @@ from typing import Any
 from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest
 
 from hada.db.postgres import PostgresStore
-from hada.models import GovernanceConfig
+from hada.models import GovernanceConfig, MilestoneState
+from hada.orchestrator.lifecycle import TaskStatus
 from hada.orchestrator.publisher import OutboxPublisher
+from hada.orchestrator.self_healing import (
+    Incident,
+    RepairClass,
+    SelfHealingSupervisor,
+)
+from hada.orchestrator.service import OrchestratorService
 from hada.queue.broker import DurableQueue
+
+logger = logging.getLogger(__name__)
 
 
 class RuntimeHealth:
@@ -120,13 +130,17 @@ class ProbeServer:
                             "available": True,
                             "prohibit_self_approval": g.prohibit_self_approval,
                             "prohibit_scope_expansion": g.prohibit_scope_expansion,
-                            "maximum_agent_iterations_per_gate": g.maximum_agent_iterations_per_gate,
+                            "maximum_agent_iterations_per_gate": (
+                                g.maximum_agent_iterations_per_gate
+                            ),
                             "maximum_recovery_attempts": g.maximum_recovery_attempts,
                             "require_architecture_review": g.require_architecture_review,
                             "require_security_review": g.require_security_review,
                             "require_test_review": g.require_test_review,
                             "require_external_review": g.require_external_review,
-                            "stop_on_critical_security_finding": g.stop_on_critical_security_finding,
+                            "stop_on_critical_security_finding": (
+                                g.stop_on_critical_security_finding
+                            ),
                         }
                     else:
                         state["gates"] = {
@@ -185,6 +199,8 @@ class OrchestratorRuntime:
         probe_interval_seconds: int,
         unhealthy_exit_threshold: int,
         governance: GovernanceConfig | None = None,
+        healing_milestone_id: str | None = None,
+        healing_maximum_attempts: int = 3,
     ) -> None:
         self.store = store
         self.queue = queue
@@ -223,9 +239,65 @@ class OrchestratorRuntime:
         )
         self._stop = threading.Event()
 
+        # Wire self-healing supervisor when a milestone is configured.
+        self._supervisor: SelfHealingSupervisor | None = None
+        if healing_milestone_id is not None:
+            orchestrator_service = OrchestratorService(store)
+            # Ensure the healing milestone exists.
+            try:
+                orchestrator_service.store.get_milestone(healing_milestone_id)
+            except (KeyError, Exception):
+                orchestrator_service.create_milestone(
+                    MilestoneState(
+                        milestone_id=healing_milestone_id,
+                        title="Self-healing repairs",
+                        scope=["automatic safe repairs"],
+                        out_of_scope=["deploy", "secrets", "merge"],
+                    )
+                )
+            self._supervisor = SelfHealingSupervisor(
+                orchestrator_service,
+                healing_milestone_id,
+                maximum_attempts=healing_maximum_attempts,
+            )
+        else:
+            self._supervisor = None
+
     def _request_stop(self, signum: int, frame: object) -> None:
         del signum, frame
         self._stop.set()
+
+    def _check_failed_tasks(self) -> None:
+        """Scan for recently failed tasks and auto-flag as repair incidents."""
+        if self._supervisor is None:
+            return
+        try:
+            failed = self.store.list_tasks_by_status(TaskStatus.FAILED, limit=20)
+        except Exception:
+            logger.exception("failed to query failed tasks for self-healing")
+            return
+        for task in failed:
+            # Skip tasks that are already repair tasks — the supervisor
+            # handles repair-task retries via the attempt-loop internally.
+            if task.task_id.startswith("repair-"):
+                continue
+            incident = Incident(
+                source="orchestrator.runtime",
+                subject=task.task_id,
+                error_class="task.failed",
+                summary=task.title,
+                repair_class=RepairClass.SOURCE_CODE,
+                evidence=[
+                    f"task_id:{task.task_id}",
+                    f"milestone:{task.milestone_id}",
+                ],
+            )
+            try:
+                self._supervisor.flag_and_apply_worker(incident)
+            except Exception:
+                logger.exception(
+                    "self-healing flag failed for task %s", task.task_id
+                )
 
     def run(self) -> int:
         previous_sigterm = signal.getsignal(signal.SIGTERM)
@@ -247,6 +319,7 @@ class OrchestratorRuntime:
                     published, failed = self.publisher.publish_once()
                     self.outbox_published.inc(published)
                     self.outbox_failed.inc(failed)
+                    self._check_failed_tasks()
                 else:
                     consecutive_unhealthy += 1
                     if consecutive_unhealthy >= self.unhealthy_exit_threshold:

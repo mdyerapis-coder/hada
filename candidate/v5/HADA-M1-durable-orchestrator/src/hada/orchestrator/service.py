@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
+from uuid import uuid4
 
 from hada.governance.engine import GovernanceEngine, GovernanceResult, GovernanceViolation
 from hada.models import GateDecision, MilestoneState, StopReason
@@ -16,6 +17,10 @@ class OrchestratorStore(Protocol):
 
     def get_task(self, task_id: str) -> TaskRecord: ...
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]: ...
+
     def save_task_transition(
         self,
         before: TaskRecord,
@@ -23,6 +28,17 @@ class OrchestratorStore(Protocol):
         *,
         actor_party: int | None = None,
     ) -> None: ...
+
+    def save_task_transition_with_outbox(
+        self,
+        before: TaskRecord,
+        after: TaskRecord,
+        *,
+        queue_name: str,
+        message_kind: str,
+        payload: dict[str, Any],
+        actor_party: int | None = None,
+    ) -> str: ...
 
     def enqueue_outbox(
         self,
@@ -64,6 +80,8 @@ class OrchestratorService:
         description: str,
         acceptance_criteria: list[str],
         assigned_party: int = 1,
+        task_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> TaskRecord:
         milestone = self.store.get_milestone(milestone_id)
         if milestone.stop_reason != StopReason.NONE:
@@ -71,14 +89,47 @@ class OrchestratorService:
         if assigned_party == 3:
             raise GovernanceViolation("Party 3 may not receive internal execution tasks")
         task = TaskRecord(
+            task_id=task_id or str(uuid4()),
             milestone_id=milestone_id,
             title=title,
             description=description,
             assigned_party=assigned_party,
             acceptance_criteria=acceptance_criteria,
+            metadata=dict(metadata or {}),
         )
         self.store.create_task(task)
         return task
+
+    def ready_and_schedule_task(
+        self,
+        task_id: str,
+        *,
+        message_kind: str = "task.dispatch",
+        actor_party: int | None = None,
+    ) -> tuple[TaskRecord, str]:
+        """Atomically mark a proposed task ready and enqueue its dispatch."""
+        before = self.store.get_task(task_id)
+        milestone = self.store.get_milestone(before.milestone_id)
+        if milestone.stop_reason != StopReason.NONE:
+            raise GovernanceViolation(f"milestone is stopped: {milestone.stop_reason}")
+        if before.status != TaskStatus.PROPOSED:
+            raise GovernanceViolation("only proposed tasks may be atomically dispatched")
+        after = before.transition(TaskStatus.READY, expected_version=before.version)
+        payload: dict[str, Any] = {
+            "task_id": after.task_id,
+            "milestone_id": after.milestone_id,
+            "assigned_party": after.assigned_party,
+            "expected_version": after.version,
+        }
+        outbox_id = self.store.save_task_transition_with_outbox(
+            before,
+            after,
+            queue_name=f"party-{after.assigned_party}",
+            message_kind=message_kind,
+            payload=payload,
+            actor_party=actor_party,
+        )
+        return after, outbox_id
 
     def transition_task(
         self,

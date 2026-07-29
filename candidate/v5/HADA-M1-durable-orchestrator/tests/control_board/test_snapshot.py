@@ -39,7 +39,8 @@ Planned future work.
 Governance is operative: ADR framework and guardrails are in place and enforced.
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
-**Locally complete and verified.** The M1 appliance demonstrates the full Phase 1 Definition of Done.
+**Locally complete and verified.** The M1 appliance demonstrates the full
+Phase 1 Definition of Done.
 """
 
 

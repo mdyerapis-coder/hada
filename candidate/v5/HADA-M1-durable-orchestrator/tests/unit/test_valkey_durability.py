@@ -22,7 +22,11 @@ def _load(name: str) -> dict:
 def test_valkey_data_is_mounted_writable() -> None:
     valkey = _load("compose.yaml")["services"]["valkey"]
     assert "valkey-data:/data" in valkey["volumes"]
-    assert all(not str(mount).endswith(":ro") for mount in valkey["volumes"] if str(mount).startswith("valkey-data:"))
+    assert all(
+        not str(mount).endswith(":ro")
+        for mount in valkey["volumes"]
+        if str(mount).startswith("valkey-data:")
+    )
 
 
 def test_valkey_bind_definition_is_exact() -> None:

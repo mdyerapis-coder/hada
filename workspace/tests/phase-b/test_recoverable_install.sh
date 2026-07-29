@@ -173,7 +173,8 @@ if [[ -f "${SB_OPT}/Dockerfile" ]]; then
 else
     assert_fail "foreign tree removed despite marker belonging to another run"
 fi
-if mock_remote_decode_log | grep -q 'REFUSED: release marker belongs to a different run'; then
+decoded_log="$(mock_remote_decode_log)"
+if grep -Fq 'REFUSED: release marker belongs to a different run' <<<"${decoded_log}"; then
     assert_pass "remote guard explicitly refused on marker mismatch"
 else
     assert_fail "no explicit marker-mismatch refusal recorded"

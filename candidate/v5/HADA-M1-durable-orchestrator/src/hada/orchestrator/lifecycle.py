@@ -63,7 +63,7 @@ class TaskRecord(BaseModel):
         *,
         expected_version: int,
         workspace_id: str | None = None,
-    ) -> "TaskRecord":
+    ) -> TaskRecord:
         if expected_version != self.version:
             raise InvalidTaskTransition(
                 "optimistic concurrency conflict: "
