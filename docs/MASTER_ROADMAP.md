@@ -199,6 +199,12 @@ Integrate household services while maintaining project separation.
 
 Implementation remains external to HADA and is governed through review and evidence.
 
+## Architecture
+
+See ADR 0004 (Proposed) for the three-layer integration pattern:
+adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
+(MemoryStore/Channel/CLI) → external service.
+
 ## Integrations
 
 - Shopping
@@ -214,7 +220,8 @@ Implementation remains external to HADA and is governed through review and evide
 
 ## Definition of Done
 
-Home Hub integrates cleanly through governed interfaces.
+Home Hub integrates cleanly through governed interfaces. At least one
+Phase 4 adapter is delivered, verified, and reaches draft-PR state.
 
 ---
 

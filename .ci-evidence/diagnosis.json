@@ -1,0 +1,8 @@
+{
+  "pr": 40,
+  "head": "agent/build-cycle-1785302304-ffb99b944749",
+  "base": "main",
+  "failure_type": "unknown",
+  "worktree": "/tmp/hada-repair-LRnoRn",
+  "instruction": "Implement the smallest safe fix in the worktree, then run: scripts/ci/autonomous_repair.sh --continue /tmp/hada-repair-LRnoRn 40 main"
+}
