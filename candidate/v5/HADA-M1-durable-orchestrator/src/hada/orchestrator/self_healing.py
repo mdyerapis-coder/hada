@@ -53,6 +53,8 @@ class Incident(BaseModel):
             "subject": self.subject,
             "error_class": self.error_class,
             "repair_class": self.repair_class,
+            "summary": self.summary,
+            "evidence": self.evidence,
         }
         return hashlib.sha256(canonical_json(identity)).hexdigest()
 
@@ -64,9 +66,7 @@ class Incident(BaseModel):
 class RepairDisposition(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    status: Literal[
-        "dispatched", "already_active", "resolved", "human_required"
-    ]
+    status: Literal["dispatched", "already_active", "resolved", "human_required"]
     incident_fingerprint: str
     task_id: str
     attempt: int = Field(ge=1)
@@ -116,9 +116,7 @@ class SelfHealingSupervisor:
             task_id=task_id,
             title=f"Repair: {incident.subject}",
             description=(
-                f"Detector: {incident.source}\n"
-                f"Error: {incident.summary}\n"
-                f"Evidence:\n{evidence}"
+                f"Detector: {incident.source}\nError: {incident.summary}\nEvidence:\n{evidence}"
             ),
             acceptance_criteria=[
                 "reproduce the incident before modification",
@@ -132,9 +130,7 @@ class SelfHealingSupervisor:
 
     def _disposition(
         self,
-        status: Literal[
-            "dispatched", "already_active", "resolved", "human_required"
-        ],
+        status: Literal["dispatched", "already_active", "resolved", "human_required"],
         incident: Incident,
         task: TaskRecord,
         attempt: int,

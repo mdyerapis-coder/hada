@@ -32,6 +32,11 @@ class MemoryStore:
             raise KeyError(task_id)
         return self.tasks[task_id]
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]:
+        return [t for t in self.tasks.values() if t.status == status][:limit]
+
     def save_task_transition(
         self,
         before: TaskRecord,
@@ -195,9 +200,7 @@ def test_completed_repair_marks_repeat_detection_resolved() -> None:
     task = store.tasks[dispatched.task_id]
     leased = service.transition_task(task.task_id, TaskStatus.LEASED, actor_party=1)
     running = service.transition_task(leased.task_id, TaskStatus.RUNNING, actor_party=1)
-    review = service.transition_task(
-        running.task_id, TaskStatus.AWAITING_REVIEW, actor_party=1
-    )
+    review = service.transition_task(running.task_id, TaskStatus.AWAITING_REVIEW, actor_party=1)
     service.transition_task(review.task_id, TaskStatus.COMPLETED, actor_party=2)
 
     resolved = supervisor.flag_and_apply_worker(incident)
@@ -270,3 +273,43 @@ def test_concurrent_detector_insert_is_deduplicated_and_dispatched() -> None:
     assert result.reason == "recovered_unscheduled_flag"
     assert len(store.tasks) == 1
     assert len(store.outbox) == 1
+
+
+def test_fingerprint_collision_avoided_on_different_evidence() -> None:
+    """Two incidents with the same source/subject/error_class/repair_class but
+    different summary or evidence MUST produce distinct fingerprints."""
+    base = dict(
+        source="ci",
+        subject="unit-tests",
+        error_class="test_failure",
+    )
+    a = Incident(
+        **base,
+        repair_class=RepairClass.TEST,
+        summary="regression in module A",
+        evidence=["log:test_a"],
+    )
+    b = Incident(
+        **base,
+        repair_class=RepairClass.TEST,
+        summary="regression in module B",
+        evidence=["log:test_b"],
+    )
+    c = Incident(
+        **base,
+        repair_class=RepairClass.TEST,
+        summary="regression in module A",
+        evidence=["log:test_a", "extra"],
+    )
+
+    assert a.fingerprint != b.fingerprint, "different summary + evidence"
+    assert a.fingerprint != c.fingerprint, "different evidence length"
+    assert b.fingerprint != c.fingerprint, "different summary + evidence"
+    # Sanity: same inputs = same fingerprint
+    a2 = Incident(
+        **base,
+        repair_class=RepairClass.TEST,
+        summary="regression in module A",
+        evidence=["log:test_a"],
+    )
+    assert a.fingerprint == a2.fingerprint, "deterministic / idempotent"
