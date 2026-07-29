@@ -407,6 +407,12 @@ Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
 
+## Phase 4 — Home Hub Integration
+
+**First feature delivered ✅ — Inventory module (Cycle 33).** Household inventory tracking with item management, stock levels, location tracking, category grouping, and low-stock alerts. 22 new tests. CLI: `hermesctl inventory add|list|update|remove`.
+
+Next buildable: Pantry module following the same Phase 3 pattern.
+
 ## Phase 3 — Personal Intelligence
 
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
