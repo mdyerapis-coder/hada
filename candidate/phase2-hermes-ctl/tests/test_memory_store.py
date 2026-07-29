@@ -1,9 +1,20 @@
 """Unit tests for the Hermes CTL memory store (Phase 2 foundation)."""
 
+import json
 import os
 import tempfile
+import threading
 
-from hermes_ctl.memory.store import Edge, Fact, MemoryError, MemoryStore, Node
+import pytest
+
+from hermes_ctl.memory.store import (
+    Edge,
+    Fact,
+    MemoryError,
+    MemoryStore,
+    Node,
+    PersistenceCommitError,
+)
 
 
 def test_long_term_remember_recall_forget():
@@ -94,3 +105,149 @@ def test_edge_serialization_shape():
     e = Edge(source="a", target="b", relation="r")
     d = e.to_dict()
     assert Edge.from_dict(d) == e
+
+
+def test_set_relation_rolls_back_live_state_when_persistence_fails(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.add_node("person:@me", "person")
+    store.add_node("person:Alice", "person")
+    store.set_relation("person:@me", "partner", "person:Alice")
+
+    def fail_save():
+        raise OSError("injected save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(OSError, match="injected save failure"):
+        store.set_relation("person:@me", "friend", "person:Alice")
+
+    assert [(edge.relation, edge.target) for edge in store._edges] == [
+        ("partner", "person:Alice")
+    ]
+    reloaded = MemoryStore(persist_path=str(path))
+    assert [(edge.relation, edge.target) for edge in reloaded._edges] == [
+        ("partner", "person:Alice")
+    ]
+
+
+def test_caught_nested_write_failure_aborts_outer_transaction(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.add_node("person:@me", "person")
+    store.add_node("person:Alice", "person")
+    store.set_relation("person:@me", "partner", "person:Alice")
+    original_save = store._save
+
+    def fail_save():
+        raise OSError("injected nested failure")
+
+    with pytest.raises(MemoryError, match="nested failure"):
+        with store.transaction():
+            monkeypatch.setattr(store, "_save", fail_save)
+            try:
+                store.set_relation("person:@me", "friend", "person:Alice")
+            except OSError:
+                pass
+            finally:
+                monkeypatch.setattr(store, "_save", original_save)
+
+    assert [(edge.relation, edge.target) for edge in store._edges] == [
+        ("partner", "person:Alice")
+    ]
+
+
+def test_serialization_failure_removes_partial_temp_file(tmp_path):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+
+    with pytest.raises(TypeError):
+        store.remember("bad", object())
+
+    assert list(tmp_path.glob("memory.json.tmp*")) == []
+    assert store.recall("stable") == "value"
+    with pytest.raises(MemoryError):
+        store.recall("bad")
+
+
+def test_expiry_save_failure_rolls_back_live_cleanup(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("expired", "still durable", ttl=0)
+
+    def fail_save():
+        raise OSError("injected expiry save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(OSError, match="expiry save failure"):
+        store.recall("expired")
+
+    assert "expired" in store._facts
+    assert MemoryStore(persist_path=str(path))._facts["expired"].value == "still durable"
+
+
+def test_two_instances_do_not_lose_concurrent_writes(tmp_path):
+    path = tmp_path / "memory.json"
+    first = MemoryStore(persist_path=str(path))
+    second = MemoryStore(persist_path=str(path))
+    barrier = threading.Barrier(2)
+    errors = []
+
+    def write_many(store, prefix):
+        try:
+            barrier.wait()
+            for number in range(25):
+                store.remember(f"{prefix}:{number}", number)
+        except Exception as exc:  # pragma: no cover - assertion reports details
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=write_many, args=(first, "a")),
+        threading.Thread(target=write_many, args=(second, "b")),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    reloaded = MemoryStore(persist_path=str(path))
+    assert len(reloaded._facts) == 50
+
+
+def test_reload_failure_preserves_live_state(tmp_path):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+    path.write_text("{broken", encoding="utf-8")
+
+    with pytest.raises(json.JSONDecodeError):
+        store.has_fact("stable")
+    assert store._facts["stable"].value == "value"
+
+
+def test_directory_fsync_failure_keeps_committed_live_and_durable_state(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+    real_fsync = os.fsync
+    calls = 0
+
+    def fail_directory_fsync(fd):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected directory fsync failure")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", fail_directory_fsync)
+    with pytest.raises(PersistenceCommitError) as caught:
+        store.remember("new", "committed")
+
+    assert caught.value.committed is True
+    assert store.recall("new") == "committed"
+    reloaded = MemoryStore(persist_path=str(path))
+    assert reloaded.recall("new") == "committed"
+    assert set(store._facts) == set(reloaded._facts) == {"stable", "new"}

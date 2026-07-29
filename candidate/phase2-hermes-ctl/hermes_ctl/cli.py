@@ -563,6 +563,7 @@ def _cmd_relationship(args: argparse.Namespace) -> int:
             relationship_type=args.rel_type,
         )
         print(f"recorded interaction: {rel.person_id} (count={rel.contact_count}, strength={rel.strength:.2f})")
+        return 0
 # shopping
 # ---------------------------------------------------------------------------
 def _cmd_shopping(args: argparse.Namespace) -> int:
@@ -765,8 +766,6 @@ def build_parser() -> argparse.ArgumentParser:
     csol.add_argument("--threshold", type=float, default=0.7, dest="consolidate_threshold")
     csol.add_argument("--max-groups", type=int, default=10, dest="consolidate_max_groups")
     csol.set_defaults(func=_cmd_memory)
-    cu = msub.add_parser("curate", help="scan and rank facts by importance"); cu.set_defaults(func=_cmd_memory)
-    cmem = msub.add_parser("consolidate", help="find similar/duplicate facts"); cmem.add_argument("--threshold", type=float, default=0.5); cmem.set_defaults(func=_cmd_memory)
 
     pi = sub.add_parser("inbox", help="inbound SMS/Email/Telegram")
     isub = pi.add_subparsers(dest="inbox_action", required=True)
