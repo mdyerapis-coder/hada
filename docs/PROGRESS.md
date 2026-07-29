@@ -265,3 +265,19 @@ deploy, secret/infra change, or governance bypass occurs.
 - **Test metric**: 294/294 pass (was 259 pass + 35 fail before fixes).
 - **Documentation**: Updated `MASTER_ROADMAP.md`: all 11 Phase 3 features now have ✅ marks + cycle references; added Phase 3 complete entry to Current Status; build loop transitions to Phase 4.
 - **Phase 3 is now fully documented as complete.** Build loop ready for Phase 4 (Home Hub Integration).
+
+## Cycle 32 — Phase 3 regression certification + Phase 4 transition
+- Branch: `agent/build-cycle-1785303455-325e9862a10b` (this PR)
+- **Verified**: `origin/main` (SHA 76f38433) passes the full Phase 2 hermes-ctl suite:
+  - 326/326 tests passed (was 294 in cycle 31 — growth from test additions on main)
+  - CI fast tests: 13/13 pipeline self-tests passed
+  - Conflict-artifact scan: clean (zero markers in source code)
+  - Module imports: all verified (cli, relationships, brains, etc.)
+- **Regression certification**: Phase 3 is formally regression-certified. Repairs
+  from the conflict-artifact resolution commits (`204460b`, `ff1f4b8`) combined
+  with the full test suite confirm no regressions in the merged Phase 3 code.
+  PR #38 (autofix regression repair) is now superseded — its fixes are on main.
+- **Documentation**: Updated MASTER_ROADMAP.md Phase 3 status to reflect
+  326 tests and regression certification. Build loop advances to Phase 4.
+- **Phase 4 entry**: Next cycle will begin Phase 4 Home Hub Integration work
+  (ADR 0004 already drafted in PR #40; Phase 4 architecture design begins here).
