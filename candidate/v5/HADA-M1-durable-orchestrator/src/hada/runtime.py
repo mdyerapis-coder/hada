@@ -120,13 +120,17 @@ class ProbeServer:
                             "available": True,
                             "prohibit_self_approval": g.prohibit_self_approval,
                             "prohibit_scope_expansion": g.prohibit_scope_expansion,
-                            "maximum_agent_iterations_per_gate": g.maximum_agent_iterations_per_gate,
+                            "maximum_agent_iterations_per_gate": (
+                                g.maximum_agent_iterations_per_gate
+                            ),
                             "maximum_recovery_attempts": g.maximum_recovery_attempts,
                             "require_architecture_review": g.require_architecture_review,
                             "require_security_review": g.require_security_review,
                             "require_test_review": g.require_test_review,
                             "require_external_review": g.require_external_review,
-                            "stop_on_critical_security_finding": g.stop_on_critical_security_finding,
+                            "stop_on_critical_security_finding": (
+                                g.stop_on_critical_security_finding
+                            ),
                         }
                     else:
                         state["gates"] = {

@@ -39,10 +39,10 @@ class GovernanceEngine:
 
     @staticmethod
     def _internal_gates_approved(state: MilestoneState) -> bool:
+        decisions = (state.gates[gate] for gate in _INTERNAL_GATES)
         return all(
-            state.gates[gate] is not None
-            and state.gates[gate].status == GateStatus.APPROVED
-            for gate in _INTERNAL_GATES
+            decision is not None and decision.status == GateStatus.APPROVED
+            for decision in decisions
         )
 
     def record_decision(self, state: MilestoneState, decision: GateDecision) -> GovernanceResult:

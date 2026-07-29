@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = "mdyerapis-coder/hada"
@@ -144,8 +144,10 @@ def collect_repository() -> dict:
             "message": c["commit"]["message"].split("\n")[0][:120],
             "author": c["commit"]["author"].get("name", "unknown"),
         }
-    prs = gh_json("pr", "list", "--state", "all", "--limit", "20",
-                  "--json", "number,title,state,isDraft,headRefName,baseRefName,updatedAt,url") or []
+    prs = gh_json(
+        "pr", "list", "--state", "all", "--limit", "20", "--json",
+        "number,title,state,isDraft,headRefName,baseRefName,updatedAt,url",
+    ) or []
     open_prs = [p for p in prs if p["state"] == "OPEN"]
     draft_prs = [p for p in prs if p.get("isDraft")]
     return {
@@ -213,7 +215,7 @@ def is_stale(iso: str | None, max_age_seconds: int = 30 * 60) -> bool:
     if not iso:
         return True
     try:
-        age = (datetime.now(timezone.utc) - datetime.fromisoformat(iso)).total_seconds()
+        age = (datetime.now(UTC) - datetime.fromisoformat(iso)).total_seconds()
     except (ValueError, TypeError):
         return True
     return age > max_age_seconds
@@ -241,7 +243,7 @@ def main() -> int:
     roadmap_path = root / "docs" / "MASTER_ROADMAP.md"
     snapshot = {
         "schema_version": "1.0",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "is_fixture": False,
         "data_sources": {
             "github": "gh api (read-only)",
@@ -259,7 +261,8 @@ def main() -> int:
     print(f"snapshot written: {out} ({out.stat().st_size} bytes)")
     # quick integrity: every top-level section has 'available'
     for k, v in snapshot.items():
-        if isinstance(v, dict) and "available" not in v and k not in ("data_sources", "schema_version"):
+        exempt = ("data_sources", "schema_version")
+        if isinstance(v, dict) and "available" not in v and k not in exempt:
             print(f"WARN: section {k} missing 'available' flag", file=sys.stderr)
     return 0
 

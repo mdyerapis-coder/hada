@@ -193,6 +193,8 @@ class RedisStreamBackend:
             summary = self._client.xpending(stream, group)
             if isinstance(summary, dict):
                 value = summary.get("pending", summary.get(b"pending", 0))
+                if value is None:
+                    return 0
                 return int(value)
         except Exception:
             return 0

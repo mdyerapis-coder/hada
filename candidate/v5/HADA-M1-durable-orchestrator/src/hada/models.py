@@ -46,12 +46,16 @@ class GateDecision(BaseModel):
     findings: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def prevent_self_approval(self) -> "GateDecision":
+    def prevent_self_approval(self) -> GateDecision:
         if self.status == GateStatus.APPROVED and self.reviewer_party == self.subject_party:
             raise ValueError("an agent may not approve its own work")
         if self.status == GateStatus.APPROVED and not self.evidence:
             raise ValueError("an approval requires at least one evidence reference")
         return self
+
+
+def _empty_gate_decisions() -> dict[GateName, GateDecision | None]:
+    return {gate: None for gate in GateName}
 
 
 class MilestoneState(BaseModel):
@@ -62,9 +66,7 @@ class MilestoneState(BaseModel):
     scope: list[str]
     out_of_scope: list[str]
     implementation_party: Literal[1] = 1
-    gates: dict[GateName, GateDecision | None] = Field(
-        default_factory=lambda: {gate: None for gate in GateName}
-    )
+    gates: dict[GateName, GateDecision | None] = Field(default_factory=_empty_gate_decisions)
     recovery_attempts: int = 0
     stop_reason: StopReason = StopReason.NONE
 
@@ -218,7 +220,7 @@ class HadaConfig(BaseModel):
     security: SecurityConfig
 
     @model_validator(mode="after")
-    def validate_parties(self) -> "HadaConfig":
+    def validate_parties(self) -> HadaConfig:
         parties = [agent.party for agent in self.agents.values()]
         if len(parties) != len(set(parties)):
             raise ValueError("each configured agent must use a distinct party number")
