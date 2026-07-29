@@ -245,6 +245,16 @@ experience work targets the Android app first.
   verified webhooks, scoped/revocable tokens, rate-limit handling, audit trails,
   and explicit retention/privacy controls. No credential sharing, browser
   scraping, or direct Meta access from the Android client.
+- Replace the separate Android SMS-gateway application with an optional,
+  explicitly enabled device-bridge module inside the primary APK. Use Android's
+  supported SMS role/permissions and an audited foreground/background service
+  for authoritative receive/send delivery. A `NotificationListenerService` may
+  provide migration or best-effort inbound fallback only: notifications can be
+  disabled, duplicated, redacted as sensitive content, or suppressed by the SMS
+  app/OEM, and notification access cannot provide a reliable outbound gateway.
+  Keep SMS data scoped, encrypted, deduplicated, and visibly revocable; maintain
+  separate sideload/managed and Play-compatible build flavours if store policy
+  prevents SMS permissions in the public build.
 - CI-built debug APK for continuous testing
 - Signed release APK/AAB only after explicit human approval and provision of
   signing credentials through the approved secret-management boundary
@@ -254,10 +264,11 @@ experience work targets the Android app first.
 1. API contract and authentication seam
 2. Compose application shell, navigation, accessibility, and design system
 3. Chat/control plus notification/approval workflow
-4. Household feature migration from the Home Hub dashboard
-5. Governed engineering status from the HADA dashboard
-6. Offline behavior, device security, end-to-end tests, and release packaging
-7. Optional Facebook and Messenger channel adapter after Meta app review,
+4. Optional integrated SMS device bridge with notification-listener fallback
+5. Household feature migration from the Home Hub dashboard
+6. Governed engineering status from the HADA dashboard
+7. Offline behavior, device security, end-to-end tests, and release packaging
+8. Optional Facebook and Messenger channel adapter after Meta app review,
    privacy review, and explicit credential provisioning
 
 ## Definition of Done
