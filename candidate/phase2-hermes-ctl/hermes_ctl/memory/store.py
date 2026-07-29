@@ -109,6 +109,7 @@ class MemoryStore:
         self._persist_path = persist_path
         self._transaction_depth = 0
         self._transaction_dirty = False
+        self._transaction_error: BaseException | None = None
         self._transaction_snapshot: tuple[Any, ...] | None = None
         if persist_path:
             self._load()
@@ -123,17 +124,26 @@ class MemoryStore:
                     (self._facts, self._working, self._nodes, self._edges)
                 )
                 self._transaction_dirty = False
+                self._transaction_error = None
             self._transaction_depth += 1
             try:
                 yield
-            except BaseException:
+            except BaseException as exc:
                 self._transaction_depth -= 1
                 if outermost:
                     self._restore_transaction_snapshot()
+                else:
+                    self._transaction_error = exc
                 raise
             else:
                 self._transaction_depth -= 1
                 if outermost:
+                    if self._transaction_error is not None:
+                        error = self._transaction_error
+                        self._restore_transaction_snapshot()
+                        raise MemoryError(
+                            f"transaction aborted after nested failure: {error}"
+                        ) from error
                     try:
                         if self._transaction_dirty:
                             self._save()
@@ -150,6 +160,7 @@ class MemoryStore:
             )
         self._transaction_snapshot = None
         self._transaction_dirty = False
+        self._transaction_error = None
         self._transaction_depth = 0
 
     # ---- long-term memory ----
