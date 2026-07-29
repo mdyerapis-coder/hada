@@ -9,8 +9,8 @@ deploy, secret/infra change, or governance bypass occurs.
 - Added `tests/ci/test_repair_pipeline.sh` (guardrail allow/deny + orchestrator
   contract); wired into `run_fast_tests.sh`.
 - **Caught a critical guardrail bug**: the secret/merge content scan used
-  `grep -v '^\+\+\+'` to strip diff headers, but GNU grep ERE treats `\+` as
-  "1+", so `^\+\+\+` matched ANY `+` line — silently dropping secret/merge
+  `grep -v '^\\+\\+\\+'` to strip diff headers, but GNU grep ERE treats `\\+` as
+  "1+", so `^\\+\\+\\+` matched ANY `+` line — silently dropping secret/merge
   lines from the scan. Removed the filter. Secrets + `gh pr merge` now caught.
 - Also fixed earlier: `verify_release_manifests.sh` pattern + corrupt v2 manifest.
 - Verified: 7/7 repair tests pass; CI `Verify` + `E2E` green.
@@ -282,18 +282,12 @@ deploy, secret/infra change, or governance bypass occurs.
 - **Phase 4 entry**: Next cycle will begin Phase 4 Home Hub Integration work
   (ADR 0004 already drafted in PR #40; Phase 4 architecture design begins here).
 
-## Cycle 34 — Pantry stock management (Phase 4: Home Hub Integration)
-- Branch: `agent/build-cycle-1785309167-b1ea73dc92c2` (this PR — draft)
-- New module `hermes_ctl/intelligence/pantry.py`:
-  - `PantryItem` / `PantrySnapshot` dataclasses with to_dict/from_dict (camelCase API)
-  - `add_item()` — create or stock items (increments quantity on duplicate)
-  - `remove_item()` — delete by name
-  - `update_quantity()` — adjust stock by delta or set absolute, clamps to zero
-  - `scan_pantry()` — MemoryStore-backed scan with category, location, and low-stock filtering
-  - Low-stock detection: items with quantity &lt;= min_quantity flagged as ⚠️ LOW
-  - 14 pantry categories, 7 storage locations
-- CLI: `hermesctl pantry add|list|remove|update` with category/location/low-stock filters
-- 20 new tests in `tests/test_pantry.py`
+## Cycle 33 — Phase 4: Family Tasks module
+- Branch: `agent/build-cycle-1785314393-91da3821e76a`
+- Added `hermes_ctl/intelligence/family_tasks.py`: family task management — add, update, complete, remove, scan with category/assignee/overdue/due-today filters, snapshot delivery.
+- Added `tests/test_family_tasks.py` (20 tests).
+- Added CLI: `family-task list|add|complete|remove|update`.
+- Documentation: Phase 4 MASTER_ROADMAP.md updated with Family Tasks ✅ and Current Status.
 
 ## Cycle 36 — Calendar intelligence module (Phase 4: Home Hub Integration)
 - Branch: `agent/build-cycle-1785323954-2b9ac0802b42` (this PR)

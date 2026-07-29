@@ -1,4 +1,4 @@
-"""Lifestyle commands: shopping, travel, finance, relationship, pantry."""
+"""Lifestyle commands: shopping, travel, finance, relationship."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def build_parser(sub) -> None:
     _build_shopping_parser(sub)
     _build_travel_parser(sub)
     _build_finance_parser(sub)
-    _build_pantry_parser(sub)
+    _build_family_task_parser(sub)
 
 
 # ---------------------------------------------------------------------------
@@ -389,125 +389,133 @@ def _cmd_finance(args: argparse.Namespace) -> int:
             print("  (no financial data yet — add budgets and expenses)")
         return 0
 
-    return 2  # pragma: no cover
-
-
 # ---------------------------------------------------------------------------
-# pantry
+# family-task
 # ---------------------------------------------------------------------------
-def _build_pantry_parser(sub) -> None:
-    ppn = sub.add_parser("pantry", help="household pantry stock management (track inventory, low-stock alerts)")
-    pnsub = ppn.add_subparsers(dest="pantry_action", required=True)
-
-    pnl = pnsub.add_parser("list", help="list pantry items (filter by category/location/low-stock)")
-    pnl.add_argument("--category", help="filter by category (dry-goods, canned, spices, fridge, freezer, etc.)")
-    pnl.add_argument("--location", help="filter by storage location (pantry, cupboard, fridge, freezer)")
-    pnl.add_argument("--low-stock", action="store_true", default=False, help="show only low-stock items")
-    pnl.set_defaults(func=_cmd_pantry)
-
-    pna = pnsub.add_parser("add", help="add or stock a pantry item (increments quantity if exists)")
-    pna.add_argument("name", help="item name (e.g. 'rolled oats', 'tinned tomatoes')")
-    pna.add_argument("--quantity", type=float, default=1.0, help="stock quantity (default: 1)")
-    pna.add_argument("--unit", help="unit (kg, L, can, bottle)")
-    pna.add_argument("--category", default="dry-goods",
-                     choices=["dry-goods", "canned", "spices", "condiments", "baking",
-                              "beverages", "snacks", "breakfast", "pasta-rice",
-                              "sauces-oils", "fridge", "freezer", "produce", "other"],
-                     help="category (default: dry-goods)")
-    pna.add_argument("--location", default="pantry",
-                     choices=["pantry", "cupboard", "fridge", "freezer", "counter", "garage", "other"],
-                     help="storage location (default: pantry)")
-    pna.add_argument("--min-qty", type=float, default=0.0, dest="min_qty",
-                     help="low-stock threshold (0 = no alert)")
-    pna.add_argument("--notes", help="free-text notes")
-    pna.set_defaults(func=_cmd_pantry)
-
-    pnr = pnsub.add_parser("remove", help="remove an item from the pantry")
-    pnr.add_argument("name", help="item name to remove")
-    pnr.set_defaults(func=_cmd_pantry)
-
-    pnu = pnsub.add_parser("update", help="adjust an item's stock quantity")
-    pnu.add_argument("name", help="item name")
-    pnu.add_argument("--delta", type=float, default=0.0,
-                     help="signed change (e.g. -0.5 to consume, +2 to restock)")
-    pnu.add_argument("--set", type=float, dest="absolute", default=None,
-                     help="set exact quantity (overrides delta)")
-    pnu.set_defaults(func=_cmd_pantry)
 
 
-def _cmd_pantry(args: argparse.Namespace) -> int:
-    from hermes_ctl.intelligence.pantry import (
-        PantrySnapshot,
-        PantryError,
-        add_item,
-        remove_item,
-        update_quantity,
-        scan_pantry,
+def _build_family_task_parser(sub) -> None:
+    pft = sub.add_parser("family-task", help="family task management (list, add, complete, remove, update)")
+    ftsub = pft.add_subparsers(dest="family_task_action", required=True)
+
+    fl = ftsub.add_parser("list", help="list family tasks with optional filters")
+    fl.add_argument("--category", help="filter by category (chore, errand, appointment, reminder, other)")
+    fl.add_argument("--assignee", help="filter by assigned family member name")
+    fl.add_argument("--overdue", action="store_true", default=False, help="show only overdue tasks")
+    fl.add_argument("--due-today", action="store_true", default=False, help="show only tasks due today")
+    fl.set_defaults(func=_cmd_family_task)
+
+    fa = ftsub.add_parser("add", help="add a new family task")
+    fa.add_argument("title", help="task title (required)")
+    fa.add_argument("--desc", dest="description", help="longer description")
+    fa.add_argument("--assignee", help="family member assigned to this task")
+    fa.add_argument("--category", default="other", choices=["chore", "errand", "appointment", "reminder", "other"], help="task category")
+    fa.add_argument("--priority", type=int, default=3, help="priority 1–5 (default: 3)")
+    fa.add_argument("--due", type=int, default=0, help="due date as Unix timestamp")
+    fa.add_argument("--recur", default="none", choices=["daily", "weekly", "monthly", "none"], help="recurrence pattern")
+    fa.add_argument("--tag", action="append", help="tag (repeatable)")
+    fa.set_defaults(func=_cmd_family_task)
+
+    fc = ftsub.add_parser("complete", help="mark a family task as completed")
+    fc.add_argument("task_id", help="task id to complete")
+    fc.set_defaults(func=_cmd_family_task)
+
+    fr = ftsub.add_parser("remove", help="delete a family task")
+    fr.add_argument("task_id", help="task id to remove")
+    fr.set_defaults(func=_cmd_family_task)
+
+    fu = ftsub.add_parser("update", help="update fields on a family task")
+    fu.add_argument("task_id", help="task id to update")
+    fu.add_argument("--title", help="new title")
+    fu.add_argument("--desc", dest="description", help="new description")
+    fu.add_argument("--assignee", help="new assignee")
+    fu.add_argument("--category", choices=["chore", "errand", "appointment", "reminder", "other"], help="new category")
+    fu.add_argument("--priority", type=int, help="new priority 1–5")
+    fu.add_argument("--due", type=int, help="new due date as Unix timestamp")
+    fu.add_argument("--recur", choices=["daily", "weekly", "monthly", "none"], help="new recurrence pattern")
+    fu.set_defaults(func=_cmd_family_task)
+
+
+def _cmd_family_task(args: argparse.Namespace) -> int:
+    from hermes_ctl.intelligence.family_tasks import (
+        add_task,
+        complete_task,
+        deliver_family_tasks,
+        remove_task,
+        scan_family_tasks,
+        update_task,
     )
 
     store = _store()
+    action = args.family_task_action
 
-    if args.pantry_action == "list":
-        snap = scan_pantry(
+    if action == "list":
+        snap = scan_family_tasks(
             store=store,
             category=args.category,
-            location=args.location,
-            low_stock_only=args.low_stock,
+            assignee=args.assignee,
+            overdue_only=args.overdue or False,
+            due_today_only=args.due_today or False,
         )
-        flag = " ⚠️ LOW-STOCK" if snap.low_stock_count > 0 else ""
-        print(f"Pantry items ({snap.total_count} total, {snap.low_stock_count} low-stock{flag}):")
-        print(f"  Categories: {json.dumps(snap.by_category)}")
-        print(f"  Locations:  {json.dumps(snap.by_location)}")
-        for item in snap.items:
-            stock_flag = " ⚠️" if item.is_low_stock else "  "
-            qty = f"{item.quantity}{item.unit}" if item.unit else str(int(item.quantity) if item.quantity == int(item.quantity) else item.quantity)
-            print(f"  {stock_flag} {item.name:30s} {qty:10s} [{item.category:15s}] {item.location}")
+        print(f"Family tasks ({snap.total_count} total, {snap.overdue_count} overdue, {snap.due_today_count} due today):")
+        print(f"  By category: {json.dumps(snap.by_category)}")
+        print(f"  By assignee: {json.dumps(snap.by_assignee)}")
+        print(f"  Completion rate: {snap.completion_rate:.0%}")
+        for t in snap.tasks:
+            status = "✅" if t.completed else "⬜"
+            due = time.strftime("%Y-%m-%d", time.gmtime(t.due_date)) if t.due_date else "no date"
+            assigned = f"  [{t.assigned_to}]" if t.assigned_to else ""
+            print(f"  {status} {t.title:30s} pri={t.priority}  due={due}{assigned}  [{t.category}]")
         return 0
 
-    if args.pantry_action == "add":
-        try:
-            item = add_item(
-                store,
-                args.name,
-                quantity=args.quantity,
-                unit=args.unit or "",
-                category=args.category or "dry-goods",
-                location=args.location or "pantry",
-                min_quantity=args.min_qty or 0.0,
-                notes=args.notes or "",
-            )
-        except PantryError as exc:
-            print(f"pantry error: {exc}", file=__import__("sys").stderr)
-            return 1
-        qty = f"{item.quantity}{item.unit}" if item.unit else str(int(item.quantity) if item.quantity == int(item.quantity) else item.quantity)
-        print(f"added: {item.name} ({qty}, {item.location})")
+    if action == "add":
+        task = add_task(
+            store,
+            args.title,
+            description=args.description or "",
+            assigned_to=args.assignee or "",
+            category=args.category or "other",
+            priority=args.priority or 3,
+            due_date=args.due or 0,
+            recurrence=args.recur or "none",
+            tags=args.tag or [],
+        )
+        print(f"added family task: {task.title} (id={task.id})")
         return 0
 
-    if args.pantry_action == "remove":
-        ok = remove_item(store, args.name)
-        if ok:
-            print(f"removed: {args.name}")
+    if action == "complete":
+        task = complete_task(store, args.task_id)
+        if task:
+            print(f"completed: {task.title}")
             return 0
-        print(f"(no item named {args.name} in pantry)", file=__import__("sys").stderr)
+        print(f"(no task with id {args.task_id})", file=__import__("sys").stderr)
         return 1
 
-    if args.pantry_action == "update":
-        try:
-            item = update_quantity(
-                store,
-                args.name,
-                delta=args.delta or 0.0,
-                absolute=args.absolute,
-            )
-        except PantryError as exc:
-            print(f"pantry error: {exc}", file=__import__("sys").stderr)
-            return 1
-        if item is None:
-            print(f"(no item named {args.name})", file=__import__("sys").stderr)
-            return 1
-        qty = f"{item.quantity}{item.unit}" if item.unit else str(int(item.quantity) if item.quantity == int(item.quantity) else item.quantity)
-        flag = " ⚠️ LOW" if item.is_low_stock else ""
-        print(f"updated: {item.name} → {qty}{flag}")
-        return 0
+    if action == "remove":
+        ok = remove_task(store, args.task_id)
+        if ok:
+            print(f"removed task: {args.task_id}")
+            return 0
+        print(f"(no task with id {args.task_id})", file=__import__("sys").stderr)
+        return 1
 
-    return 2
+    if action == "update":
+        kwargs = {}
+        for key, attr in [("title", "title"), ("description", "description"),
+                          ("assignee", "assigned_to"), ("category", "category"),
+                          ("priority", "priority"), ("due", "due_date"),
+                          ("recur", "recurrence")]:
+            val = getattr(args, key, None)
+            if val is not None:
+                kwargs[attr] = val
+        if not kwargs:
+            print("(no fields to update — pass at least one --flag)", file=__import__("sys").stderr)
+            return 1
+        task = update_task(store, args.task_id, **kwargs)
+        if task:
+            print(f"updated: {task.title} (id={task.id})")
+            return 0
+        print(f"(no task with id {args.task_id})", file=__import__("sys").stderr)
+        return 1
+
+    return 2  # pragma: no cover
