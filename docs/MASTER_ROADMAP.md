@@ -246,15 +246,15 @@ experience work targets the Android app first.
   and explicit retention/privacy controls. No credential sharing, browser
   scraping, or direct Meta access from the Android client.
 - Replace the separate Android SMS-gateway application with an optional,
-  explicitly enabled device-bridge module inside the primary APK. Use Android's
-  supported SMS role/permissions and an audited foreground/background service
-  for authoritative receive/send delivery. A `NotificationListenerService` may
-  provide migration or best-effort inbound fallback only: notifications can be
-  disabled, duplicated, redacted as sensitive content, or suppressed by the SMS
-  app/OEM, and notification access cannot provide a reliable outbound gateway.
-  Keep SMS data scoped, encrypted, deduplicated, and visibly revocable; maintain
-  separate sideload/managed and Play-compatible build flavours if store policy
-  prevents SMS permissions in the public build.
+  explicitly enabled **inbound-only notification forwarder** inside the primary
+  APK. A `NotificationListenerService` captures permitted SMS notifications,
+  deduplicates and encrypts them, then forwards a minimal event through the
+  authenticated Hermes CTL ingestion seam for governed HADA processing. It does
+  not read the SMS database, request `SEND_SMS`, reply, or originate messages;
+  HADA remains a worker rather than the personal contact receiver. Treat this as
+  best-effort input: notifications can be disabled, duplicated, redacted as
+  sensitive content, or suppressed by the SMS app/OEM. Show forwarding health
+  and failures explicitly, and make access visibly revocable.
 - CI-built debug APK for continuous testing
 - Signed release APK/AAB only after explicit human approval and provision of
   signing credentials through the approved secret-management boundary
@@ -264,7 +264,7 @@ experience work targets the Android app first.
 1. API contract and authentication seam
 2. Compose application shell, navigation, accessibility, and design system
 3. Chat/control plus notification/approval workflow
-4. Optional integrated SMS device bridge with notification-listener fallback
+4. Optional inbound-only SMS notification forwarder to Hermes CTL/HADA
 5. Household feature migration from the Home Hub dashboard
 6. Governed engineering status from the HADA dashboard
 7. Offline behavior, device security, end-to-end tests, and release packaging
