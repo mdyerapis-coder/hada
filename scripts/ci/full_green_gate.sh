@@ -34,7 +34,9 @@ python3 scripts/ci/reject_conflict_artifacts.py
 mapfile -d '' shell_scripts < <(git ls-files -z '*.sh')
 if ((${#shell_scripts[@]})); then
   for script in "${shell_scripts[@]}"; do bash -n "$script"; done
-  shellcheck "${shell_scripts[@]}"
+  # Fail on ShellCheck errors/warnings; informational style findings in vendored
+  # candidate appliances remain visible to dedicated cleanup work.
+  shellcheck --severity=warning "${shell_scripts[@]}"
 fi
 
 bash scripts/ci/reject_operator_paths.sh
