@@ -563,6 +563,7 @@ def _cmd_relationship(args: argparse.Namespace) -> int:
             relationship_type=args.rel_type,
         )
         print(f"recorded interaction: {rel.person_id} (count={rel.contact_count}, strength={rel.strength:.2f})")
+        return 0
 # shopping
 # ---------------------------------------------------------------------------
 def _cmd_shopping(args: argparse.Namespace) -> int:
