@@ -43,10 +43,10 @@
 
 | Surface | Audience | Purpose | Long-term role |
 |---|---|---|---|
-| **Android APK** | Household users | Chat, household tools, notifications and approvals | **Primary interface** |
-| **HADA Command Centre** | Operator/admin | Builds, repairs, evidence and governance | Admin only |
-| **Home Hub web UI** | Household/admin | Browser compatibility and recovery | Fallback only |
-| **Grafana** | Infrastructure operator | Metrics and operational observability | Admin only |
+| **Android APK** | Household users | Chat, household tools and notifications | **Primary client; read-only foundation first** |
+| **HADA Command Centre** | Operator/admin | Read-only build, repair, evidence and governance status | Read-only admin view |
+| **Home Hub web UI** | Household/admin | Independent browser client for household backend | Fallback client |
+| **Grafana** | Infrastructure operator | Separate metrics and operational observability | Admin only |
 
 ### Delivery path
 
@@ -261,30 +261,36 @@ Implementation remains external to HADA and is governed through review and evide
 
 ### What goes where
 
-| Capability | Primary surface | Notes |
+| Capability | Primary surface | Authority boundary |
 |---|---|---|
-| Chat, commands, reminders and approvals | Android APK | Main everyday experience |
-| Shopping, inventory, pantry and calendar | Android APK | Migrated from Home Hub APIs |
-| Family tasks, smart home, cameras and notifications | Android APK | Role-aware adult/child views |
-| Build, repair and evidence status | HADA Command Centre | Operator/admin; selected status may appear read-only in APK |
-| Infrastructure metrics | Grafana | Operator/admin only |
-| Browser household controls | Home Hub web UI | Optional fallback |
+| Chat, commands and reminders | Android APK | Hermes CTL owns the authenticated personal API |
+| Shopping, inventory, pantry and calendar | Android APK | Home Hub remains the independently owned backend |
+| Family tasks, smart home, cameras and notifications | Android APK | Role-aware Home Hub / Hermes CTL contracts |
+| Build, repair and evidence status | HADA Command Centre | Read-only snapshots and probes; never approves or mutates |
+| Infrastructure metrics | Grafana | Separate governed observability surface |
+| Builds, repairs, approvals and infrastructure changes | Existing authenticated pipelines | Not performed by Command Centre, Grafana or offline APK actions |
+| Browser household controls | Home Hub web UI | Independently deployed fallback client |
 
-All clients use versioned Hermes CTL / Home Hub APIs so authorization and
-behaviour cannot silently diverge between app and web.
+Only **client UX capabilities** move into Android. Home Hub remains a separate
+project with its own repository, data, runtime, credentials, deployment and
+release boundaries. HADA governs proposed changes through review and evidence;
+it does not absorb or directly operate the Home Hub backend.
 
-### Android MVP
+### Bounded first Android milestone — read-only foundation
 
-- Kotlin + Jetpack Compose application
-- Authenticated Hermes CTL / Home Hub API
-- Chat, commands, reminders and explicit approval prompts
-- Household views and governed engineering status
-- Push notifications
-- Offline read cache and idempotent queued actions
-- Android Keystore-backed token storage; no embedded secrets
-- Accessible, role-aware adult and child experiences
-- CI-built debug APK
-- Human-authorized signing for release APK/AAB
+| Item | Decision |
+|---|---|
+| Ownership | Separate Android client repository and release identity |
+| Prerequisites | Versioned read-only HADA snapshot contract; versioned Hermes CTL / Home Hub APIs; documented authentication and adult/child roles |
+| Deliverable | Kotlin + Compose shell, authenticated sign-in, navigation, accessibility, read-only household views, read-only HADA status, push-notification plumbing and CI-built debug APK |
+| Offline policy | Cached reads only; no queued approvals, messages, infrastructure operations or other high-impact mutations |
+| Security | Android Keystore-backed token storage; no embedded secrets; revocable scoped credentials |
+| Acceptance gates | Contract tests, role/authorization tests, offline-denial tests, accessibility checks, E2E smoke test and human review of the debug APK |
+| Non-goals | HADA mutations, release signing, SMS, Meta channels, automatic replies and broad household write controls |
+
+Release APK/AAB signing remains human-authorized. Write-capable household
+workflows and explicit approval prompts become separately bounded milestones
+after the read-only foundation is certified.
 
 ### Later integrations — not part of the initial APK
 
@@ -319,21 +325,22 @@ behaviour cannot silently diverge between app and web.
 
 | Stage | Deliverable | Release band |
 |---:|---|:---:|
-| 1 | API contract and authentication seam | MVP |
-| 2 | Compose shell, navigation, accessibility and design system | MVP |
-| 3 | Chat, controls, notifications and approval workflow | MVP |
-| 4 | Household feature migration from Home Hub | MVP |
-| 5 | Governed HADA engineering status | MVP |
-| 6 | Offline behaviour, device security, E2E tests and packaging | MVP |
-| 7 | Inbound-only SMS notification forwarder | Later |
-| 8 | Facebook and Messenger adapter | Later |
+| 1 | Versioned read-only contracts, authentication and role model | Foundation |
+| 2 | Separate Compose client shell, navigation, accessibility and design system | Foundation |
+| 3 | Read-only household views, HADA status and push plumbing | Foundation |
+| 4 | Contract, role, offline-denial and E2E certification | Foundation |
+| 5 | Separately bounded household write workflows | Later |
+| 6 | Explicit online approval workflow using existing authenticated pipelines | Later |
+| 7 | Inbound-only SMS notification forwarder | Optional epic |
+| 8 | Facebook and Messenger adapter | Optional epic |
 | 9 | SMS reply drafts, then separately authorized automation | Deferred |
 
 ## Definition of Done
 
-The Android APK is the primary household interface, both former dashboard
-surfaces are integrated through shared governed APIs, and web dashboards are
-limited to explicit admin/fallback use.
+The Android APK is the primary household client while Home Hub, Hermes CTL,
+HADA Command Centre and Grafana retain distinct ownership and authority. The
+first milestone is certified read-only; web surfaces remain available for their
+explicit operational, observability and fallback roles.
 
 ---
 
