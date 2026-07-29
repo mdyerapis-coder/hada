@@ -119,3 +119,29 @@ def test_set_relation_rolls_back_live_state_when_persistence_fails(tmp_path, mon
     assert [(edge.relation, edge.target) for edge in reloaded._edges] == [
         ("partner", "person:Alice")
     ]
+
+
+def test_caught_nested_write_failure_aborts_outer_transaction(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.add_node("person:@me", "person")
+    store.add_node("person:Alice", "person")
+    store.set_relation("person:@me", "partner", "person:Alice")
+    original_save = store._save
+
+    def fail_save():
+        raise OSError("injected nested failure")
+
+    with pytest.raises(MemoryError, match="nested failure"):
+        with store.transaction():
+            monkeypatch.setattr(store, "_save", fail_save)
+            try:
+                store.set_relation("person:@me", "friend", "person:Alice")
+            except OSError:
+                pass
+            finally:
+                monkeypatch.setattr(store, "_save", original_save)
+
+    assert [(edge.relation, edge.target) for edge in store._edges] == [
+        ("partner", "person:Alice")
+    ]
