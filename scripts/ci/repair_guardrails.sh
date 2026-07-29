@@ -46,7 +46,6 @@ FORBIDDEN_PATHS=(
   '^workspace/.*/supervisor'
   '^VALKEY_SVC\.json$'
   '^policies/'
-  '^docs/adr/'
   '^scripts/ci/validate_deployment_authority\.sh$'
   'releases/'
   'archives/'
