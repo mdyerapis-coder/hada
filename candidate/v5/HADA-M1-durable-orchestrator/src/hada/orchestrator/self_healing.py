@@ -161,24 +161,14 @@ class SelfHealingSupervisor:
                     task = self._find_task(task_id)
                     if task is None:
                         raise
-            if created:
-                if not incident.auto_repairable:
-                    return self._disposition(
-                        "human_required",
-                        incident,
-                        task,
-                        attempt,
-                        "governance_boundary",
-                    )
-                ready, _ = self.orchestrator.ready_and_schedule_task(
-                    task.task_id,
-                    message_kind="repair.dispatch",
-                )
-                return self._disposition(
-                    "dispatched", incident, ready, attempt, "repair_worker_applied"
-                )
 
             last_task = task
+
+            # Re-entrant dispatch: handle the task based on authoritative
+            # status. This covers freshly-created flags, recovered flags
+            # after a concurrent race, and flags whose transition to READY
+            # conflicted (StateConflict from a concurrent detector).
+
             if task.status == TaskStatus.COMPLETED:
                 return self._disposition(
                     "resolved", incident, task, attempt, "verified_repair_completed"
@@ -188,13 +178,26 @@ class SelfHealingSupervisor:
                     "human_required", incident, task, attempt, "governance_boundary"
                 )
             if task.status == TaskStatus.PROPOSED:
-                ready, _ = self.orchestrator.ready_and_schedule_task(
-                    task.task_id,
-                    message_kind="repair.dispatch",
-                )
-                return self._disposition(
-                    "dispatched", incident, ready, attempt, "recovered_unscheduled_flag"
-                )
+                try:
+                    ready, _ = self.orchestrator.ready_and_schedule_task(
+                        task.task_id,
+                        message_kind="repair.dispatch",
+                    )
+                except Exception:
+                    # A concurrent detector already dispatched this flag.
+                    # Re-read the authoritative state and handle it below.
+                    task = self._find_task(task_id)
+                    if task is None:
+                        raise
+                else:
+                    reason = (
+                        "repair_worker_applied"
+                        if created
+                        else "recovered_unscheduled_flag"
+                    )
+                    return self._disposition(
+                        "dispatched", incident, ready, attempt, reason
+                    )
             if task.status in {
                 TaskStatus.READY,
                 TaskStatus.LEASED,

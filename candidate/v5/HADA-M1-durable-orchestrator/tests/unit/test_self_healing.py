@@ -275,6 +275,130 @@ def test_concurrent_detector_insert_is_deduplicated_and_dispatched() -> None:
     assert len(store.outbox) == 1
 
 
+def test_concurrent_dispatch_race_returns_already_active() -> None:
+    """A detector that lost the ready_and_schedule_task race gets
+    'already_active' instead of an unhandled StateConflict error."""
+
+    class RacingTransitionStore(MemoryStore):
+        def save_task_transition_with_outbox(
+            self,
+            before: TaskRecord,
+            after: TaskRecord,
+            *,
+            queue_name: str,
+            message_kind: str,
+            payload: dict[str, object],
+            actor_party: int | None = None,
+        ) -> str:
+            # Simulate a concurrent detector that already dispatched:
+            # increment the version so the version-assert fails.
+            self.tasks[before.task_id] = before.model_copy(
+                update={
+                    "status": TaskStatus.READY,
+                    "version": before.version + 1,
+                }
+            )
+            raise ValueError("simulated StateConflict: version changed concurrently")
+
+    store = RacingTransitionStore()
+    service = OrchestratorService(store)
+    service.create_milestone(
+        MilestoneState(
+            milestone_id="M-repair",
+            title="Self-healing",
+            scope=["automatic safe repairs"],
+            out_of_scope=[],
+        )
+    )
+    supervisor = SelfHealingSupervisor(service, "M-repair")
+    incident = Incident(
+        source="ci",
+        subject="unit tests",
+        error_class="test_failure",
+        summary="a regression was detected",
+        repair_class=RepairClass.TEST,
+        evidence=["test.log:9"],
+    )
+
+    result = supervisor.flag_and_apply_worker(incident)
+
+    assert result.status == "already_active"
+    assert result.reason == "repair_in_progress"
+    assert len(store.tasks) == 1
+    # The outbox entry from the simulated concurrent dispatch is there
+    assert len(store.outbox) == 0
+    task = store.tasks[result.task_id]
+    assert task.status == TaskStatus.READY
+
+
+def test_concurrent_dispatch_race_from_created_flag() -> None:
+    """A detector that created the flag but lost the dispatch race returns
+    'already_active' instead of an unhandled StateConflict."""
+
+    class LateRacingStore(MemoryStore):
+        _dispatch_raced = False
+
+        def save_task_transition_with_outbox(
+            self,
+            before: TaskRecord,
+            after: TaskRecord,
+            *,
+            queue_name: str,
+            message_kind: str,
+            payload: dict[str, object],
+            actor_party: int | None = None,
+        ) -> str:
+            # Only race on the first dispatch attempt (the freshly-created flag)
+            if not self._dispatch_raced:
+                self._dispatch_raced = True
+                self.tasks[before.task_id] = before.model_copy(
+                    update={
+                        "status": TaskStatus.READY,
+                        "version": before.version + 1,
+                    }
+                )
+                raise ValueError(
+                    "simulated StateConflict: another detector dispatched first"
+                )
+            return super().save_task_transition_with_outbox(
+                before=before,
+                after=after,
+                queue_name=queue_name,
+                message_kind=message_kind,
+                payload=payload,
+                actor_party=actor_party,
+            )
+
+    store = LateRacingStore()
+    service = OrchestratorService(store)
+    service.create_milestone(
+        MilestoneState(
+            milestone_id="M-repair",
+            title="Self-healing",
+            scope=["automatic safe repairs"],
+            out_of_scope=[],
+        )
+    )
+    supervisor = SelfHealingSupervisor(service, "M-repair")
+    incident = Incident(
+        source="ci",
+        subject="unit tests",
+        error_class="test_failure",
+        summary="a regression was detected",
+        repair_class=RepairClass.TEST,
+        evidence=["test.log:9"],
+    )
+
+    result = supervisor.flag_and_apply_worker(incident)
+
+    # The flag was created but dispatch lost the race
+    assert result.status == "already_active"
+    assert result.reason == "repair_in_progress"
+    assert len(store.tasks) == 1
+    task = store.tasks[result.task_id]
+    assert task.status == TaskStatus.READY
+
+
 def test_fingerprint_collision_avoided_on_different_evidence() -> None:
     """Two incidents with the same source/subject/error_class/repair_class but
     different summary or evidence MUST produce distinct fingerprints."""

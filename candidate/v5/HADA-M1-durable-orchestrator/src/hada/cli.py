@@ -202,7 +202,14 @@ def workspace_create(
 
 
 @orchestrator_app.command("run")
-def orchestrator_run(config: Path = typer.Option(..., exists=True, readable=True)) -> None:
+def orchestrator_run(
+    config: Path = typer.Option(..., exists=True, readable=True),
+    healing_milestone_id: str | None = typer.Option(
+        "M-repair",
+        "--healing-milestone-id",
+        help="Milestone id for self-healing repair tasks (omit to disable)",
+    ),
+) -> None:
     store, loaded = _store(config)
     queue_url = _required_environment(loaded.queue.url_environment_variable)
     queue = DurableQueue(
@@ -229,6 +236,7 @@ def orchestrator_run(config: Path = typer.Option(..., exists=True, readable=True
         probe_interval_seconds=loaded.monitoring.dependency_probe_interval_seconds,
         unhealthy_exit_threshold=loaded.monitoring.unhealthy_exit_threshold,
         governance=loaded.governance,
+        healing_milestone_id=healing_milestone_id,
     )
     raise typer.Exit(code=runtime.run())
 
