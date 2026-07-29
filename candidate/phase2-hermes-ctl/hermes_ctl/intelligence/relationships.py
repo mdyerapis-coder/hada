@@ -106,11 +106,13 @@ class Relationship:
         # Keep person_id and relationship_type in sync with modern fields
         if not self.person_id and self.person:
             self.person_id = self.person
-        if not self.relationship_type and self.relation:
-            self.relationship_type = self.relation
         if not self.person and self.person_id:
             self.person = self.person_id
-        if not self.relation and self.relationship_type:
+        # relation was explicitly provided → sync to relationship_type
+        if self.relation and self.relationship_type == "acquaintance":
+            self.relationship_type = self.relation
+        # relationship_type was explicitly provided → sync to relation
+        if self.relationship_type and not self.relation:
             self.relation = self.relationship_type
 
     def to_dict(self) -> dict[str, Any]:
