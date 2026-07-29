@@ -77,6 +77,26 @@ def test_add_relationship(tmp_path):
     assert fetched.notes == "wife"
 
 
+def test_add_updates_legacy_fact_without_creating_conflict(tmp_path):
+    """Manager updates preserve the historical key instead of forking state."""
+    path = tmp_path / "mem.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember(
+        "relationship:Alice",
+        Relationship(person="Alice", relation="friend", notes="legacy").to_dict(),
+        tags={"relationship", "person:Alice", "friend"},
+    )
+
+    Relationships(store).add("Alice", "partner")
+
+    reloaded = MemoryStore(persist_path=str(path))
+    facts = [fact for fact in reloaded.search(tag="relationship") if fact.value.get("person") == "Alice"]
+    assert [fact.id for fact in facts] == ["relationship:Alice"]
+    relationship = Relationship.from_dict(facts[0].value)
+    assert relationship.relation == "partner"
+    assert relationship.notes == "legacy"
+
+
 def test_add_relationship_creates_graph_nodes(tmp_path):
     """Adding a relationship creates person nodes in the knowledge graph."""
     store = _make_store(tmp_path)
@@ -254,6 +274,24 @@ def test_add_creates_me_to_person_edge(tmp_path):
         and edge.relation == "child"
         for edge in store._edges
     )
+
+
+def test_add_is_idempotent_and_replaces_relationship_edge(tmp_path):
+    path = tmp_path / "mem.json"
+    store = MemoryStore(persist_path=str(path))
+    manager = Relationships(store)
+
+    manager.add("Alice", "partner")
+    manager.add("Alice", "partner")
+    manager.add("Alice", "friend")
+
+    reloaded = MemoryStore(persist_path=str(path))
+    edges = [
+        edge
+        for edge in reloaded._edges
+        if edge.source == "person:@me" and edge.target == "person:Alice"
+    ]
+    assert [(edge.relation, edge.target) for edge in edges] == [("friend", "person:Alice")]
 
 
 def test_log_interaction_preserves_existing_metadata(tmp_path):

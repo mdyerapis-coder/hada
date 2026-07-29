@@ -235,7 +235,7 @@ def test_record_interaction_creates_new(tmp_path):
     rel = record_interaction(store, "courtney", name="Courtney", channel="telegram")
     assert rel.contact_count == 1
     assert rel.channels == ["telegram"]
-    assert rel.strength > 0
+    assert rel.strength == 0.1
 
 
 def test_record_interaction_increments_count(tmp_path):
@@ -269,6 +269,11 @@ def test_compute_strength_increases_with_contacts():
     s1 = _compute_strength(1, time.time())
     s5 = _compute_strength(5, time.time())
     assert s5 > s1
+
+
+def test_compute_strength_preserves_historical_formula(monkeypatch):
+    monkeypatch.setattr("hermes_ctl.intelligence.relationships.time.time", lambda: 1_000_000.0)
+    assert _compute_strength(1, 1_000_000.0) == pytest.approx(0.28)
 
 
 def test_compute_strength_decays_with_age():
