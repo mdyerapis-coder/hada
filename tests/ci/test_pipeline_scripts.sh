@@ -37,6 +37,11 @@ if [[ -z "${HADA_REPAIR_VERIFY:-}" ]]; then
   if [[ -x tests/ci/test_scan_stage.sh ]]; then
     tests/ci/test_scan_stage.sh
   fi
+
+  # Build-loop guard: isolated worktree, immutable base, bounded lease, draft PR.
+  if [[ -x tests/ci/test_build_cycle_guard.sh ]]; then
+    tests/ci/test_build_cycle_guard.sh
+  fi
 else
   echo "SKIP: repair self-tests (--continue/--scan) during in-repair verification (recursion guard)."
 fi
