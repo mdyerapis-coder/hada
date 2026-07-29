@@ -328,8 +328,9 @@ def run_briefing(
     prescriptions: list[Prescription] = []
     for cat in VALID_CATEGORIES:
         tone = CATEGORY_TONES[cat]
-        prompt = _build_prompt(cat, tone, signals)
-        raw = router.complete(RUN_ROLE, prompt, max_tokens=300)
+        prompt = "/no_think\n" + _build_prompt(cat, tone, signals)
+        complete_json = getattr(router, "complete_json", router.complete)
+        raw = complete_json(RUN_ROLE, prompt, max_tokens=1024)
         prescriptions.append(_parse_prescription(cat, raw, date))
 
     briefing = generate_briefing(prescriptions, date=date, model=model)

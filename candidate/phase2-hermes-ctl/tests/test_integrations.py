@@ -70,6 +70,23 @@ def test_http_router_selects_and_completes(monkeypatch):
     assert captured["headers"].get("X-Hermes-Fast-Key") == "KEY"
 
 
+def test_http_router_complete_json_requests_json_object(monkeypatch):
+    captured = {}
+
+    def fake_post(self, brain, payload):
+        captured.update(payload)
+        return {"choices": [{"message": {"content": '{"ok": true}'}}]}
+
+    monkeypatch.setattr(HttpRouter, "_post", fake_post)
+    router = HttpRouter(default_brains(), token_resolver=lambda h: None)
+
+    out = router.complete_json("fast", "return JSON")
+
+    assert out == '{"ok": true}'
+    assert captured["response_format"] == {"type": "json_object"}
+    assert captured["max_tokens"] == 1024
+
+
 def test_http_router_injects_no_secret_when_unresolved(monkeypatch):
     captured = {}
 
