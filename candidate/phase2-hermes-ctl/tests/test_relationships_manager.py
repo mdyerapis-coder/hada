@@ -10,6 +10,8 @@ from hermes_ctl.intelligence.relationships import (
     Relationship,
     RelationshipError,
     Relationships,
+    record_interaction,
+    update_relationship,
 )
 from hermes_ctl.memory.store import MemoryStore
 
@@ -77,8 +79,8 @@ def test_add_relationship(tmp_path):
     assert fetched.notes == "wife"
 
 
-def test_add_updates_legacy_fact_without_creating_conflict(tmp_path):
-    """Manager updates preserve the historical key instead of forking state."""
+def test_add_migrates_legacy_fact_without_creating_conflict(tmp_path):
+    """Manager updates atomically converge the historical key to one canonical fact."""
     path = tmp_path / "mem.json"
     store = MemoryStore(persist_path=str(path))
     store.remember(
@@ -91,10 +93,35 @@ def test_add_updates_legacy_fact_without_creating_conflict(tmp_path):
 
     reloaded = MemoryStore(persist_path=str(path))
     facts = [fact for fact in reloaded.search(tag="relationship") if fact.value.get("person") == "Alice"]
-    assert [fact.id for fact in facts] == ["relationship:Alice"]
+    assert [fact.id for fact in facts] == ["rel:Alice"]
     relationship = Relationship.from_dict(facts[0].value)
     assert relationship.relation == "partner"
     assert relationship.notes == "legacy"
+
+
+def test_add_reconciles_preexisting_dual_keys(tmp_path):
+    path = tmp_path / "mem.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember(
+        "rel:Alice",
+        Relationship(person="Alice", relation="partner").to_dict(),
+        tags={"relationship"},
+    )
+    store.remember(
+        "relationship:Alice",
+        Relationship(person="Alice", relation="friend").to_dict(),
+        tags={"relationship"},
+    )
+
+    manager = Relationships(store)
+    assert manager.get("Alice").relation == "partner"
+    assert manager.list()[0].relation == "partner"
+    manager.add("Alice", "colleague")
+
+    reloaded = MemoryStore(persist_path=str(path))
+    facts = [fact for fact in reloaded.search(tag="relationship") if fact.value.get("person") == "Alice"]
+    assert [fact.id for fact in facts] == ["rel:Alice"]
+    assert Relationships(reloaded).get("Alice").relation == "colleague"
 
 
 def test_add_relationship_creates_graph_nodes(tmp_path):
@@ -252,6 +279,35 @@ def test_set_important_date_nonexistent(tmp_path):
     assert r.set_important_date("Nobody", "birthday", "2000-01-01") is False
 
 
+def test_failed_important_date_write_rolls_back_and_raises(tmp_path, monkeypatch):
+    store = _make_store(tmp_path)
+    manager = Relationships(store)
+    manager.add("Courtney", "partner")
+
+    def fail_save():
+        raise OSError("injected save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(RelationshipError, match="failed to set important date"):
+        manager.set_important_date("Courtney", "birthday", "1990-06-15")
+    assert manager.get("Courtney").important_dates == {}
+
+
+def test_failed_remove_rolls_back_and_raises(tmp_path, monkeypatch):
+    store = _make_store(tmp_path)
+    manager = Relationships(store)
+    manager.add("Courtney", "partner")
+
+    def fail_save():
+        raise OSError("injected save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(RelationshipError, match="failed to remove relationship"):
+        manager.remove("Courtney")
+    assert manager.get("Courtney") is not None
+    assert "person:Courtney" in store._nodes
+
+
 # =======================================================================
 # RELATIONSHIP_TYPES constant
 # =======================================================================
@@ -292,6 +348,62 @@ def test_add_is_idempotent_and_replaces_relationship_edge(tmp_path):
         if edge.source == "person:@me" and edge.target == "person:Alice"
     ]
     assert [(edge.relation, edge.target) for edge in edges] == [("friend", "person:Alice")]
+
+
+def test_free_api_update_keeps_graph_consistent_and_remove_cleans_it(tmp_path):
+    path = tmp_path / "mem.json"
+    store = MemoryStore(persist_path=str(path))
+    manager = Relationships(store)
+    manager.add("Alice", "partner")
+
+    update_relationship(store, "Alice", relationship_type="friend")
+    reloaded = MemoryStore(persist_path=str(path))
+    assert Relationships(reloaded).get("Alice").relation == "friend"
+    assert [(edge.relation, edge.target) for edge in reloaded._edges] == [
+        ("friend", "person:Alice")
+    ]
+
+    assert Relationships(reloaded).remove("Alice") is True
+    final = MemoryStore(persist_path=str(path))
+    assert Relationships(final).get("Alice") is None
+    assert "person:Alice" not in final._nodes
+    assert not final._edges
+
+
+def test_add_rolls_back_graph_when_fact_write_fails(tmp_path):
+    class FailingFactStore(MemoryStore):
+        def remember(self, fact_id, value, tags=(), ttl=None):
+            if "relationship" in tags:
+                raise RuntimeError("injected fact failure")
+            return super().remember(fact_id, value, tags, ttl)
+
+    path = tmp_path / "mem.json"
+    store = FailingFactStore(persist_path=str(path))
+    with pytest.raises(RelationshipError, match="failed to add relationship"):
+        Relationships(store).add("Alice", "friend")
+
+    reloaded = MemoryStore(persist_path=str(path))
+    assert not reloaded._facts
+    assert not reloaded._nodes
+    assert not reloaded._edges
+
+
+def test_record_interaction_rolls_back_relationship_when_history_write_fails(tmp_path):
+    class FailingInteractionStore(MemoryStore):
+        def remember(self, fact_id, value, tags=(), ttl=None):
+            if "interaction" in tags:
+                raise RuntimeError("injected interaction failure")
+            return super().remember(fact_id, value, tags, ttl)
+
+    path = tmp_path / "mem.json"
+    store = FailingInteractionStore(persist_path=str(path))
+    update_relationship(store, "Alice", relationship_type="friend", contact_count=0)
+    with pytest.raises(RelationshipError, match="failed to record interaction"):
+        record_interaction(store, "Alice", summary="lost")
+
+    reloaded = MemoryStore(persist_path=str(path))
+    assert Relationships(reloaded).get("Alice").contact_count == 0
+    assert not reloaded.search(tag="interaction")
 
 
 def test_log_interaction_preserves_existing_metadata(tmp_path):

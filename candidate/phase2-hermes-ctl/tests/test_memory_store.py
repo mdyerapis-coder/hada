@@ -3,6 +3,8 @@
 import os
 import tempfile
 
+import pytest
+
 from hermes_ctl.memory.store import Edge, Fact, MemoryError, MemoryStore, Node
 
 
@@ -94,3 +96,26 @@ def test_edge_serialization_shape():
     e = Edge(source="a", target="b", relation="r")
     d = e.to_dict()
     assert Edge.from_dict(d) == e
+
+
+def test_set_relation_rolls_back_live_state_when_persistence_fails(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.add_node("person:@me", "person")
+    store.add_node("person:Alice", "person")
+    store.set_relation("person:@me", "partner", "person:Alice")
+
+    def fail_save():
+        raise OSError("injected save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(OSError, match="injected save failure"):
+        store.set_relation("person:@me", "friend", "person:Alice")
+
+    assert [(edge.relation, edge.target) for edge in store._edges] == [
+        ("partner", "person:Alice")
+    ]
+    reloaded = MemoryStore(persist_path=str(path))
+    assert [(edge.relation, edge.target) for edge in reloaded._edges] == [
+        ("partner", "person:Alice")
+    ]
