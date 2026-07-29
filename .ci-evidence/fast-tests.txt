@@ -4,6 +4,8 @@ PASS: release-manifest gate rejects corrupt checksum
 PASS: release-manifest gate rejects manifest for missing file
 ----
 release-manifest tests: 3 passed, 0 failed
+PASS: missing tools fail closed and required full-gate surfaces are present
+PASS: anchored conflict markers are rejected without separator false positives
 PASS: happy path: --continue exits 0
 PASS: happy path opened a draft PR (gh pr create)
 PASS: happy path never called gh pr merge
@@ -18,3 +20,6 @@ PASS: scan never called gh pr create
 PASS: scan never called gh pr merge
 ----
 scan-stage tests: 5 passed, 0 failed
+PASS: token lease, live-owner protection, heartbeat, and recovery
+PASS: mirror-isolated immutable worktree, stale-base and marker rejection
+PASS: hashed verification, draft-only idempotent publication, safe quarantine
