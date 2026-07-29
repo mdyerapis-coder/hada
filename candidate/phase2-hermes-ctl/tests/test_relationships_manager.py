@@ -441,3 +441,36 @@ def test_upcoming_dates(tmp_path):
     result = manager.upcoming_dates(within_days=1)
     assert result
     assert result[0]["person"] == "Courtney"
+
+
+def test_legacy_read_failure_aborts_canonical_migration(tmp_path):
+    class FailingLegacyReadStore(MemoryStore):
+        fail_legacy_read = False
+
+        def recall(self, fact_id, now=None):
+            if self.fail_legacy_read and fact_id == "relationship:Alice":
+                raise OSError("injected legacy read failure")
+            return super().recall(fact_id, now)
+
+    path = tmp_path / "mem.json"
+    store = FailingLegacyReadStore(persist_path=str(path))
+    store.remember(
+        "rel:Alice",
+        Relationship(person="Alice", relation="partner").to_dict(),
+        tags={"relationship", "person:Alice", "partner"},
+    )
+    store.remember(
+        "relationship:Alice",
+        Relationship(person="Alice", relation="friend").to_dict(),
+        tags={"relationship", "person:Alice", "friend"},
+    )
+    before = path.read_bytes()
+    store.fail_legacy_read = True
+
+    with pytest.raises(RelationshipError, match="legacy read failure"):
+        Relationships(store).add("Alice", "family")
+
+    assert path.read_bytes() == before
+    reloaded = MemoryStore(persist_path=str(path))
+    assert reloaded.recall("rel:Alice")["relation"] == "partner"
+    assert reloaded.recall("relationship:Alice")["relation"] == "friend"

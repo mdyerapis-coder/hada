@@ -308,3 +308,25 @@ def test_record_interaction_ids_do_not_collide(tmp_path, monkeypatch):
     record_interaction(store, "courtney", channel="sms")
     record_interaction(store, "courtney", channel="telegram")
     assert len(list(store.search(tag="interaction"))) == 2
+
+
+def test_legacy_positional_calls_and_mapping_returns(tmp_path):
+    store = MemoryStore(persist_path=str(tmp_path / "store.json"))
+    updated = update_relationship(
+        store, "courtney", name="Courtney", relationship_type="partner"
+    )
+    assert isinstance(updated, dict)
+    assert updated.get("relationship_type") == "partner"
+    assert updated.person_id == "courtney"
+
+    scanned = scan_relationships(store)
+    assert isinstance(scanned, list)
+    assert scanned.total_count == 1
+    assert scanned[0]["relationship_type"] == "partner"
+
+    recorded = record_interaction(store, "courtney", "sms", "hello")
+    assert isinstance(recorded, dict)
+    assert recorded["person"] == "courtney"
+    assert recorded["channel"] == "sms"
+    assert recorded["summary"] == "hello"
+    assert recorded.contact_count == 1

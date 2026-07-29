@@ -1,7 +1,9 @@
 """Unit tests for the Hermes CTL memory store (Phase 2 foundation)."""
 
+import json
 import os
 import tempfile
+import threading
 
 import pytest
 
@@ -145,3 +147,74 @@ def test_caught_nested_write_failure_aborts_outer_transaction(tmp_path, monkeypa
     assert [(edge.relation, edge.target) for edge in store._edges] == [
         ("partner", "person:Alice")
     ]
+
+
+def test_serialization_failure_removes_partial_temp_file(tmp_path):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+
+    with pytest.raises(TypeError):
+        store.remember("bad", object())
+
+    assert list(tmp_path.glob("memory.json.tmp*")) == []
+    assert store.recall("stable") == "value"
+    with pytest.raises(MemoryError):
+        store.recall("bad")
+
+
+def test_expiry_save_failure_rolls_back_live_cleanup(tmp_path, monkeypatch):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("expired", "still durable", ttl=0)
+
+    def fail_save():
+        raise OSError("injected expiry save failure")
+
+    monkeypatch.setattr(store, "_save", fail_save)
+    with pytest.raises(OSError, match="expiry save failure"):
+        store.recall("expired")
+
+    assert "expired" in store._facts
+    assert MemoryStore(persist_path=str(path))._facts["expired"].value == "still durable"
+
+
+def test_two_instances_do_not_lose_concurrent_writes(tmp_path):
+    path = tmp_path / "memory.json"
+    first = MemoryStore(persist_path=str(path))
+    second = MemoryStore(persist_path=str(path))
+    barrier = threading.Barrier(2)
+    errors = []
+
+    def write_many(store, prefix):
+        try:
+            barrier.wait()
+            for number in range(25):
+                store.remember(f"{prefix}:{number}", number)
+        except Exception as exc:  # pragma: no cover - assertion reports details
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=write_many, args=(first, "a")),
+        threading.Thread(target=write_many, args=(second, "b")),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    reloaded = MemoryStore(persist_path=str(path))
+    assert len(reloaded._facts) == 50
+
+
+def test_reload_failure_preserves_live_state(tmp_path):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+    path.write_text("{broken", encoding="utf-8")
+
+    with pytest.raises(json.JSONDecodeError):
+        store.has_fact("stable")
+
+    assert store._facts["stable"].value == "value"

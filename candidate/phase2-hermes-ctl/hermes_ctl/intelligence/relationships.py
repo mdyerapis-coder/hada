@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+from hermes_ctl.memory.store import MemoryError as StoreMemoryError
+
 
 class RelationshipError(Exception):
     """Raised when relationship operations fail."""
@@ -193,15 +195,25 @@ class Relationship:
         )
 
 
-@dataclass
-class RelationshipSnapshot:
-    """Collection and aggregate data for tracked relationships."""
+class RelationshipSnapshot(list[dict[str, Any]]):
+    """Legacy list result with modern aggregate snapshot attributes."""
 
-    relationships: list[Relationship] = field(default_factory=list)
-    total_count: int = 0
-    by_type: dict[str, int] = field(default_factory=dict)
-    recent_contacts: list[Relationship] = field(default_factory=list)
-    timestamp: str = ""
+    def __init__(
+        self,
+        relationships: list[Relationship] | None = None,
+        total_count: int = 0,
+        by_type: dict[str, int] | None = None,
+        recent_contacts: list[Relationship] | None = None,
+        timestamp: str = "",
+    ) -> None:
+        self.relationships = list(relationships or [])
+        self.total_count = total_count
+        self.by_type = dict(by_type or {})
+        self.recent_contacts = list(recent_contacts or [])
+        self.timestamp = timestamp
+        super().__init__(
+            [dict(RelationshipResult(item)) for item in self.relationships]
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -228,13 +240,55 @@ class RelationshipSnapshot:
         )
 
 
+class RelationshipResult(dict[str, Any]):
+    """Historical mapping return with modern relationship attributes."""
+
+    def __init__(self, relationship: Relationship) -> None:
+        self.relationship = relationship
+        super().__init__(
+            person_id=relationship.person_id,
+            name=relationship.name,
+            relationship_type=relationship.relationship_type,
+            strength=relationship.strength,
+            contact_count=relationship.contact_count,
+            last_contacted=relationship.last_contacted,
+            channels=list(relationship.channels),
+            notes=relationship.notes,
+            tags=list(relationship.tags),
+            updated_at=relationship.updated_at,
+            since=relationship.since,
+            important_dates=dict(relationship.important_dates),
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.relationship, name)
+
+
+class InteractionResult(dict[str, Any]):
+    """Historical interaction mapping with modern relationship attributes."""
+
+    def __init__(self, interaction: Interaction, relationship: Relationship) -> None:
+        self.relationship = relationship
+        super().__init__(interaction.to_dict())
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.relationship, name)
+
+
+def _recall_if_present(store: Any, key: str) -> Any:
+    has_fact = getattr(store, "has_fact", None)
+    if callable(has_fact) and not has_fact(key):
+        return None
+    try:
+        return store.recall(key)
+    except StoreMemoryError:
+        return None
+
+
 def _fact_key_and_value(store: Any, person_id: str) -> tuple[str, Any]:
     """Return the existing relationship key/value, preferring the canonical key."""
     for key in (f"rel:{person_id}", f"relationship:{person_id}"):
-        try:
-            value = store.recall(key)
-        except Exception:
-            value = None
+        value = _recall_if_present(store, key)
         if value is not None:
             return key, value
     return f"rel:{person_id}", None
@@ -263,9 +317,7 @@ def _persist_canonical_relationship(store: Any, relationship: Relationship) -> N
     canonical = f"rel:{relationship.person_id}"
     legacy = f"relationship:{relationship.person_id}"
     _persist_relationship(store, canonical, relationship)
-    try:
-        store.recall(legacy)
-    except Exception:
+    if _recall_if_present(store, legacy) is None:
         return
     try:
         store.forget(legacy)
@@ -286,7 +338,7 @@ def _sync_relationship_graph(store: Any, relationship: Relationship) -> None:
     )
 
 
-def scan_relationships(*, store: Any = None) -> RelationshipSnapshot:
+def scan_relationships(store: Any = None) -> RelationshipSnapshot:
     """Read all relationship records and return aggregate snapshot data."""
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     if store is None:
@@ -346,7 +398,7 @@ def update_relationship(
     channels: list[str] | None = None,
     notes: str | None = None,
     tags: list[str] | None = None,
-) -> Relationship:
+) -> RelationshipResult:
     """Create or update a relationship without discarding omitted fields."""
     if not person_id:
         raise RelationshipError("person_id is required")
@@ -377,7 +429,7 @@ def update_relationship(
         relationship.updated_at = time.time()
         _sync_relationship_graph(store, relationship)
         _persist_canonical_relationship(store, relationship)
-    return relationship
+    return RelationshipResult(relationship)
 
 
 def _compute_strength(contact_count: int, last_contacted: float) -> float:
@@ -393,12 +445,12 @@ def _compute_strength(contact_count: int, last_contacted: float) -> float:
 def record_interaction(
     store: Any,
     person_id: str,
+    channel: str = "",
+    summary: str = "",
     *,
     name: str = "",
-    channel: str = "",
     relationship_type: str | None = None,
-    summary: str = "",
-) -> Relationship:
+) -> InteractionResult:
     """Record an interaction and preserve accumulated relationship metadata."""
     if not person_id:
         raise RelationshipError("person_id is required")
@@ -444,7 +496,7 @@ def record_interaction(
             )
         except Exception as exc:
             raise RelationshipError(f"failed to record interaction: {exc}") from exc
-    return relationship
+    return InteractionResult(interaction, relationship)
 
 
 class Relationships:
@@ -468,19 +520,18 @@ class Relationships:
             raise RelationshipError(
                 f"unknown relationship type '{relation}'; valid: {sorted(RELATIONSHIP_TYPES)}"
             )
-        existing = self.get(person)
-        relationship = existing or Relationship(person=person, relation=relation)
-        relationship.person = person
-        relationship.name = relationship.name or person
-        relationship.relation = relation
-        relationship.since = since if since is not None else relationship.since
-        relationship.notes = notes if notes else relationship.notes
-        if important_dates is not None:
-            relationship.important_dates = dict(important_dates)
-        relationship.updated_at = time.time()
-
         try:
             with _store_transaction(self._store):
+                existing = self.get(person)
+                relationship = existing or Relationship(person=person, relation=relation)
+                relationship.person = person
+                relationship.name = relationship.name or person
+                relationship.relation = relation
+                relationship.since = since if since is not None else relationship.since
+                relationship.notes = notes if notes else relationship.notes
+                if important_dates is not None:
+                    relationship.important_dates = dict(important_dates)
+                relationship.updated_at = time.time()
                 _sync_relationship_graph(self._store, relationship)
                 _persist_canonical_relationship(self._store, relationship)
         except Exception as exc:
@@ -503,14 +554,12 @@ class Relationships:
         return sorted(relationships, key=lambda item: item.person.lower())
 
     def remove(self, person: str) -> bool:
-        if self.get(person) is None:
-            return False
         try:
             with _store_transaction(self._store):
+                if self.get(person) is None:
+                    return False
                 for key in (f"rel:{person}", f"relationship:{person}"):
-                    try:
-                        self._store.recall(key)
-                    except Exception:
+                    if _recall_if_present(self._store, key) is None:
                         continue
                     self._store.forget(key)
                 self._store.remove_node(f"person:{person}")
@@ -564,13 +613,13 @@ class Relationships:
         return interactions[0] if interactions else None
 
     def set_important_date(self, person: str, label: str, value: str) -> bool:
-        relationship = self.get(person)
-        if relationship is None:
-            return False
-        relationship.important_dates[label] = value
-        relationship.updated_at = time.time()
         try:
             with _store_transaction(self._store):
+                relationship = self.get(person)
+                if relationship is None:
+                    return False
+                relationship.important_dates[label] = value
+                relationship.updated_at = time.time()
                 _persist_canonical_relationship(self._store, relationship)
         except Exception as exc:
             raise RelationshipError(f"failed to set important date: {exc}") from exc
