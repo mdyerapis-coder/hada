@@ -8,6 +8,7 @@ import time
 import pytest
 
 from hermes_ctl.intelligence.relationships import (
+    Interaction,
     Relationship,
     RelationshipError,
     RelationshipSnapshot,
@@ -32,6 +33,17 @@ def test_relationship_defaults():
     assert r.contact_count == 0
     assert r.channels == []
     assert r.notes == ""
+
+
+def test_relationship_historical_positional_constructor():
+    dates = {"birthday": "1990-01-01"}
+    relationship = Relationship("Alice", "friend", 123.0, "legacy notes", dates)
+
+    assert relationship.person == "Alice"
+    assert relationship.relation == "friend"
+    assert relationship.since == 123.0
+    assert relationship.notes == "legacy notes"
+    assert relationship.important_dates == dates
 
 
 def test_relationship_to_dict_roundtrip():
@@ -105,6 +117,20 @@ def test_snapshot_to_dict_roundtrip():
     assert s2.total_count == 1
     assert s2.by_type["friend"] == 1
     assert len(s2.relationships) == 1
+
+
+def test_snapshot_historical_positional_constructor():
+    interaction = Interaction("Alice", "sms", "hello", 123.0)
+    relationship = Relationship("Alice", "friend")
+
+    snapshot = RelationshipSnapshot([interaction], [relationship])
+
+    assert snapshot.recent_contacts == [interaction]
+    assert snapshot.relationships == [relationship]
+    assert snapshot[0]["relationship_type"] == "friend"
+    restored = RelationshipSnapshot.from_dict(snapshot.to_dict())
+    assert isinstance(restored.recent_contacts[0], Interaction)
+    assert restored.recent_contacts[0].summary == "hello"
 
 
 # ---------------------------------------------------------------------------

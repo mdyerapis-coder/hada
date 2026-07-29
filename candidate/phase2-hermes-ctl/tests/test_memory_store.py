@@ -7,7 +7,14 @@ import threading
 
 import pytest
 
-from hermes_ctl.memory.store import Edge, Fact, MemoryError, MemoryStore, Node
+from hermes_ctl.memory.store import (
+    Edge,
+    Fact,
+    MemoryError,
+    MemoryStore,
+    Node,
+    PersistenceCommitError,
+)
 
 
 def test_long_term_remember_recall_forget():
@@ -216,5 +223,31 @@ def test_reload_failure_preserves_live_state(tmp_path):
 
     with pytest.raises(json.JSONDecodeError):
         store.has_fact("stable")
-
     assert store._facts["stable"].value == "value"
+
+
+def test_directory_fsync_failure_keeps_committed_live_and_durable_state(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "memory.json"
+    store = MemoryStore(persist_path=str(path))
+    store.remember("stable", "value")
+    real_fsync = os.fsync
+    calls = 0
+
+    def fail_directory_fsync(fd):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected directory fsync failure")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", fail_directory_fsync)
+    with pytest.raises(PersistenceCommitError) as caught:
+        store.remember("new", "committed")
+
+    assert caught.value.committed is True
+    assert store.recall("new") == "committed"
+    reloaded = MemoryStore(persist_path=str(path))
+    assert reloaded.recall("new") == "committed"
+    assert set(store._facts) == set(reloaded._facts) == {"stable", "new"}

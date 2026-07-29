@@ -16,7 +16,7 @@ import time
 from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, Iterable
 
 from hermes_ctl.memory.store import MemoryError as StoreMemoryError
 
@@ -103,25 +103,27 @@ class Relationship:
 
     def __init__(
         self,
-        person_id: str = "",
+        person: str = "",
+        relation: str = "acquaintance",
+        since: float | None = None,
+        notes: str = "",
+        important_dates: dict[str, str] | None = None,
+        *,
+        person_id: str | None = None,
         name: str = "",
-        relationship_type: str = "acquaintance",
+        relationship_type: str | None = None,
         strength: float = 0.0,
         contact_count: int = 0,
         last_contacted: float = 0.0,
         channels: list[str] | None = None,
-        notes: str = "",
         tags: list[str] | None = None,
         updated_at: float | None = None,
-        *,
-        person: str | None = None,
-        relation: str | None = None,
-        since: float | None = None,
-        important_dates: dict[str, str] | None = None,
     ) -> None:
-        self.person_id = person if person is not None else person_id
+        self.person_id = person if person_id is None else person_id
         self.name = name or self.person_id
-        self.relationship_type = relation if relation is not None else relationship_type
+        self.relationship_type = (
+            relation if relationship_type is None else relationship_type
+        )
         self.strength = float(strength)
         self.contact_count = int(contact_count)
         self.last_contacted = float(last_contacted)
@@ -200,10 +202,11 @@ class RelationshipSnapshot(list[dict[str, Any]]):
 
     def __init__(
         self,
+        recent_contacts: Iterable[Interaction | Relationship] | None = None,
         relationships: list[Relationship] | None = None,
+        *,
         total_count: int = 0,
         by_type: dict[str, int] | None = None,
-        recent_contacts: list[Relationship] | None = None,
         timestamp: str = "",
     ) -> None:
         self.relationships = list(relationships or [])
@@ -233,7 +236,9 @@ class RelationshipSnapshot(list[dict[str, Any]]):
             total_count=int(data.get("totalCount", data.get("total_count", 0))),
             by_type=dict(data.get("byType", data.get("by_type", {}))),
             recent_contacts=[
-                Relationship.from_dict(item)
+                Interaction.from_dict(item)
+                if "channel" in item or "summary" in item
+                else Relationship.from_dict(item)
                 for item in data.get("recentContacts", data.get("recent_contacts", []))
             ],
             timestamp=str(data.get("timestamp", "")),
