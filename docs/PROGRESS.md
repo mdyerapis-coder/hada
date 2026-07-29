@@ -254,3 +254,14 @@ deploy, secret/infra change, or governance bypass occurs.
 - 22 new tests in `tests/test_finance.py`; 155 suite total.
 - Fixed pre-existing env-var test pollution in `test_brains.py`.
 - Phase 3 features all delivered ✅ (briefing, planning, reminders, context, long-term memory, relationship, shopping, travel, health, habit, financial awareness)
+
+## Cycle 31 — Phase 3 cleanup: fix test relationships + duplicate parsers (Phase 4 transition)
+- Branch: `agent/phase3-cleanup-cycle31` (this PR)
+- **Bug fix**: `record_interaction()` passed `channel=` (singular) to `update_relationship()` which expects `channels=` (plural). Fixed.
+- **Bug fix**: `update_relationship()` assumed `store.recall()` returns `None` for missing facts, but `MemoryStore.recall()` raises `MemoryError`. Wrapped in try/except.
+- **Bug fix**: Duplicate `curate` and `consolidate` subparser registrations in `cli.py` caused `ArgumentError: conflicting subparser`. Removed duplicate lines 768-769.
+- **Same-millisecond nonce**: Added `random.randint(0, 9999)` to interaction fact keys in both `record_interaction()` and `Relationships.log_interaction()` to prevent same-millisecond key collisions (per skill pattern).
+- **Test fix**: Rewrote `test_relationships.py` to match the current `Relationships` class API + free-function behavior. Removed old tests written against a stale interface.
+- **Test metric**: 294/294 pass (was 259 pass + 35 fail before fixes).
+- **Documentation**: Updated `MASTER_ROADMAP.md`: all 11 Phase 3 features now have ✅ marks + cycle references; added Phase 3 complete entry to Current Status; build loop transitions to Phase 4.
+- **Phase 3 is now fully documented as complete.** Build loop ready for Phase 4 (Home Hub Integration).
