@@ -281,3 +281,17 @@ deploy, secret/infra change, or governance bypass occurs.
   326 tests and regression certification. Build loop advances to Phase 4.
 - **Phase 4 entry**: Next cycle will begin Phase 4 Home Hub Integration work
   (ADR 0004 already drafted in PR #40; Phase 4 architecture design begins here).
+
+## Cycle 36 — Calendar intelligence module (Phase 4: Home Hub Integration)
+- Branch: `agent/build-cycle-1785323954-2b9ac0802b42` (this PR)
+- New module `hermes_ctl/intelligence/calendar.py` — household calendar event management:
+  - `CalendarEvent` dataclass with title, description, start/end time, all-day, location,
+    category (10 types), recurrence (daily/weekly/monthly/yearly), completion tracking
+  - `CalendarSnapshot` with total_count, by_category, upcoming/today/missed counts, completion rate
+  - `add_event()` / `update_event()` / `complete_event()` / `remove_event()` via MemoryStore
+  - `scan_events()` with filters: category, completion status, upcoming, today, missed, tag
+  - `deliver_calendar()` persists snapshot to MemoryStore
+- Added 20 tests in `tests/test_calendar.py` — dataclass roundtrip, CRUD, scan filters, snapshot
+- CLI: `hermesctl calendar list|add|complete|remove|update` with all flags
+- Documentation: Updated MASTER_ROADMAP.md Phase 4 integrations (Calendar 🔄) and Current Status
+- Verification gate: full build-cycle gate passed on origin/main `1240d33`.
