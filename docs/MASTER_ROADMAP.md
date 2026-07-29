@@ -403,7 +403,8 @@ Build loop continues with gated integration cycles as authorized.
 ## Phase 3 — Personal Intelligence
 
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
-294 unit tests passing. Build loop now advances to Phase 4.**
+Regression-certified (326 unit tests passing, clean conflict-artifact scan,
+build loop verification gate green). Build loop now advances to Phase 4.**
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
