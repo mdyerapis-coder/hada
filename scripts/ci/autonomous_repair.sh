@@ -178,30 +178,12 @@ Linked to #$PR" )
   echo "Worktree: $WT"
 }
 
-# Verification inside a worktree (mirrors verify.yml gates).
+# Verification inside a worktree uses the same complete fail-closed gate as CI.
 verify_in_worktree() {
   local wt="$1"
   (
     cd "$wt"
-    # ShellCheck on all shell scripts
-    if command -v shellcheck >/dev/null 2>&1; then
-      mapfile -t scripts < <(find workspace scripts tests .github -type f -name '*.sh' 2>/dev/null || true)
-      if ((${#scripts[@]})); then shellcheck "${scripts[@]}"; fi
-    else
-      echo "shellcheck not installed; skipping (warn)"
-    fi
-    # Reject operator-local paths
-    bash scripts/ci/reject_operator_paths.sh
-    # Release manifests
-    bash scripts/ci/verify_release_manifests.sh
-    # Fast tests (falls back to pipeline-script tests)
-    # Guard against recursion: the pipeline self-tests re-invoke --continue/--scan,
-    # which would loop if run during a repair's own verification.
-    HADA_REPAIR_VERIFY=1 bash scripts/ci/run_fast_tests.sh
-    # Any repo python tests present
-    if [[ -f pytest.ini || -f pyproject.toml || -d tests ]] && command -v pytest >/dev/null 2>&1; then
-      pytest -q 2>/dev/null || echo "pytest: no tests or skipped"
-    fi
+    HADA_REPAIR_VERIFY=1 bash scripts/ci/full_green_gate.sh
     echo "VERIFY OK"
   )
 }
