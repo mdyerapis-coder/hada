@@ -36,6 +36,26 @@ class MemoryStore:
         del before, actor_party
         self.tasks[after.task_id] = after
 
+    def save_task_transition_with_outbox(
+        self,
+        before: TaskRecord,
+        after: TaskRecord,
+        *,
+        queue_name: str,
+        message_kind: str,
+        payload: dict[str, Any],
+        actor_party: int | None = None,
+    ) -> str:
+        self.save_task_transition(before, after, actor_party=actor_party)
+        self.outbox.append(
+            {
+                "queue_name": queue_name,
+                "message_kind": message_kind,
+                "payload": payload,
+            }
+        )
+        return "outbox-atomic-1"
+
     def enqueue_outbox(
         self,
         *,

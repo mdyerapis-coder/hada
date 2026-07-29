@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import socket
 from pathlib import Path
@@ -15,6 +16,8 @@ from hada.db.postgres import PostgresStore
 from hada.evidence.store import EvidenceStore
 from hada.models import HadaConfig
 from hada.orchestrator.publisher import OutboxPublisher
+from hada.orchestrator.self_healing import Incident, RepairClass, SelfHealingSupervisor
+from hada.orchestrator.service import OrchestratorService
 from hada.queue.broker import DurableQueue, RedisStreamBackend
 from hada.runtime import OrchestratorRuntime
 from hada.workspaces.manager import GitRunner, RepositoryPolicy, WorkspaceManager
@@ -228,6 +231,33 @@ def orchestrator_run(config: Path = typer.Option(..., exists=True, readable=True
         governance=loaded.governance,
     )
     raise typer.Exit(code=runtime.run())
+
+
+@orchestrator_app.command("flag-incident")
+def orchestrator_flag_incident(
+    milestone_id: str,
+    source: str,
+    subject: str,
+    error_class: str,
+    summary: str,
+    evidence: list[str] = typer.Option(..., "--evidence"),
+    repair_class: RepairClass = typer.Option(RepairClass.UNKNOWN),
+    config: Path = typer.Option(..., exists=True, readable=True),
+) -> None:
+    """Flag an error and atomically apply a bounded repair worker when safe."""
+    store, _ = _store(config)
+    supervisor = SelfHealingSupervisor(OrchestratorService(store), milestone_id)
+    disposition = supervisor.flag_and_apply_worker(
+        Incident(
+            source=source,
+            subject=subject,
+            error_class=error_class,
+            summary=summary,
+            repair_class=repair_class,
+            evidence=evidence,
+        )
+    )
+    console.print_json(json.dumps(disposition.model_dump(mode="json")))
 
 
 if __name__ == "__main__":

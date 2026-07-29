@@ -106,6 +106,40 @@ Generated `.ci-evidence` files are restored before the clean-worktree check.
 The build guard hashes the resulting gate log and verifies that hash immediately
 before publication.
 
+## Error detection and automatic repair assignment
+
+Detection is a first-class control-plane input, not a reason to repeatedly ask
+an operator what to do. Deterministic detectors and post-action verifiers emit an
+`Incident` containing a stable fingerprint, error class and concrete evidence.
+`SelfHealingSupervisor.flag_and_apply_worker()` then:
+
+1. persists one deterministic incident task (duplicate detections do not create
+   duplicate work);
+2. atomically moves a safe repair to `ready` and writes its `repair.dispatch`
+   outbox event in the same database transaction;
+3. recovers a flag left `proposed` by an interrupted detector;
+4. routes the repair to Party 1 and requires Party 2 review before completion;
+5. treats a failed/rejected worker as evidence and assigns a fresh bounded
+   attempt, up to three attempts;
+6. marks repeat detection resolved after an independently completed repair;
+7. stops at the human boundary for secrets, security, infrastructure,
+   deployment, governance and unknown/ambiguous changes.
+
+The live orchestrator exposes the same path through `flag-incident`:
+
+```bash
+hada orchestrator flag-incident M-repair \
+  post_action_verifier published-sha identity_mismatch \
+  'remote ref differs from verified head' \
+  --repair-class source_code \
+  --evidence 'expected:<sha> actual:<sha>' \
+  --config config/hada.yaml
+```
+
+Every repair still inherits the immutable SHA and explicit path allowlist of its
+build-cycle lease. Automatic assignment does not authorize merge, deploy,
+secret, infrastructure or governance mutation.
+
 ## Publication boundary
 
 `publish` is the only stage that may push or call `gh pr create`. It:
