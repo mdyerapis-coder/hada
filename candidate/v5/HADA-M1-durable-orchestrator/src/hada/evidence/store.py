@@ -106,9 +106,11 @@ class EvidenceStore:
             "logical_name": logical_name,
             "metadata": metadata or {},
         }
-        manifest = EvidenceManifest(
-            **unsigned,
-            signature=self.signer.sign(canonical_json(unsigned)),
+        manifest = EvidenceManifest.model_validate(
+            {
+                **unsigned,
+                "signature": self.signer.sign(canonical_json(unsigned)),
+            }
         )
         encoded = canonical_json(manifest) + b"\n"
 

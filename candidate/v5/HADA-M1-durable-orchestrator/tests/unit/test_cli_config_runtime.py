@@ -12,7 +12,6 @@ from hada.cli import app
 from hada.config import load_config
 from hada.runtime import ProbeServer, RuntimeHealth
 
-
 runner = CliRunner()
 
 

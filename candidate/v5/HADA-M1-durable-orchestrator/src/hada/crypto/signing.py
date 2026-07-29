@@ -61,11 +61,11 @@ class Ed25519Signer:
         self.key_id = _public_key_id(self._public_key)
 
     @classmethod
-    def generate(cls) -> "Ed25519Signer":
+    def generate(cls) -> Ed25519Signer:
         return cls(Ed25519PrivateKey.generate())
 
     @classmethod
-    def load(cls, path: Path, password: bytes | None = None) -> "Ed25519Signer":
+    def load(cls, path: Path, password: bytes | None = None) -> Ed25519Signer:
         if path.is_symlink():
             raise SignatureError("private key path may not be a symlink")
         data = path.read_bytes()
@@ -99,7 +99,7 @@ class Ed25519Signer:
             signature_b64=base64.b64encode(signature).decode("ascii"),
         )
 
-    def verifier(self) -> "Ed25519Verifier":
+    def verifier(self) -> Ed25519Verifier:
         return Ed25519Verifier(self._public_key)
 
 
@@ -109,7 +109,7 @@ class Ed25519Verifier:
         self.key_id = _public_key_id(public_key)
 
     @classmethod
-    def load(cls, path: Path) -> "Ed25519Verifier":
+    def load(cls, path: Path) -> Ed25519Verifier:
         if path.is_symlink():
             raise SignatureError("public key path may not be a symlink")
         key = serialization.load_pem_public_key(path.read_bytes())

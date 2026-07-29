@@ -26,6 +26,11 @@ class MemoryStore:
     def get_task(self, task_id: str) -> TaskRecord:
         return self.tasks[task_id]
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]:
+        return [t for t in self.tasks.values() if t.status == status][:limit]
+
     def save_task_transition(
         self,
         before: TaskRecord,
@@ -35,6 +40,26 @@ class MemoryStore:
     ) -> None:
         del before, actor_party
         self.tasks[after.task_id] = after
+
+    def save_task_transition_with_outbox(
+        self,
+        before: TaskRecord,
+        after: TaskRecord,
+        *,
+        queue_name: str,
+        message_kind: str,
+        payload: dict[str, Any],
+        actor_party: int | None = None,
+    ) -> str:
+        self.save_task_transition(before, after, actor_party=actor_party)
+        self.outbox.append(
+            {
+                "queue_name": queue_name,
+                "message_kind": message_kind,
+                "payload": payload,
+            }
+        )
+        return "outbox-atomic-1"
 
     def enqueue_outbox(
         self,
