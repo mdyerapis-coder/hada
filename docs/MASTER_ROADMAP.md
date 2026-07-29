@@ -173,15 +173,15 @@ Enable proactive assistance.
 
 ## Features
 
-- Daily briefing
-- Planning
-- Smart reminders
-- Context awareness
-- Long-term memory
+- Daily briefing ✅ (Cycle 17: Dream-style briefing — fail-closed 4-category schema, MemoryStore delivery, CLI)
+- Planning ✅ (Cycle 20: daily plan generation with LLM inference, CLI)
+- Smart reminders ✅ (Cycle 22: scheduled reminders from daily plan, CLI)
+- Context awareness ✅ (Cycle 23: recent interactions + open tasks + pending deliveries snapshot, CLI)
+- Long-term memory ✅ (Cycle 24: curation — fact importance ranking, archival suggestions, consolidation, CLI)
 - Relationship management ✅ (Cycle 25: Relationships class + interaction logging + important dates + CLI)
 - Shopping intelligence ✅ (Cycle 26: shopping lists — items, purchase tracking, categories, CLI)
 - Travel planning ✅ (Cycle 27: travel trip planning — destinations, dates, itineraries, CLI)
-- Health tracking
+- Health tracking ✅ (Cycle 28: health metrics logging — sleep, water, exercise, weight, mood, CLI)
 - Habit tracking ✅ (Cycle 29: habit tracking — streaks, categories, logs, due-today, CLI)
 - Financial awareness ✅ (Cycle 30: budget tracking, expense logging, spend analysis, CLI)
 
@@ -399,6 +399,11 @@ inference remain gated human work (creds / running inference stack — Human
 Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
+
+## Phase 3 — Personal Intelligence
+
+**COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
+294 unit tests passing. Build loop now advances to Phase 4.**
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 

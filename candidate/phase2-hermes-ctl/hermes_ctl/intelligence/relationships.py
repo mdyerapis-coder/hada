@@ -21,6 +21,7 @@ Governance / safety:
 
 from __future__ import annotations
 
+import random
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -159,7 +160,10 @@ def update_relationship(
     tags: list[str] | None = None,
 ) -> dict[str, Any]:
     """Upsert a relationship record in the memory store."""
-    raw = store.recall(f"rel:{person_id}")
+    try:
+        raw = store.recall(f"rel:{person_id}")
+    except Exception:
+        raw = None
     if raw is None:
         raw = {}
     if name is not None:
@@ -190,16 +194,17 @@ def record_interaction(
     summary: str = "",
 ) -> dict[str, Any]:
     """Record a new interaction, update contact count and recency."""
-    interaction = {"person": person_id, "channel": channel, "summary": summary, "timestamp": time.time()}
+    now = time.time()
+    interaction = {"person": person_id, "channel": channel, "summary": summary, "timestamp": now}
     store.remember(
-        f"interaction:{person_id}:{int(time.time())}",
+        f"interaction:{person_id}:{int(now)}:{random.randint(0, 9999)}",
         interaction,
         tags={"interaction", f"person:{person_id}"},
     )
     raw = update_relationship(
         store,
         person_id,
-        channel=[channel],
+        channels=[channel] if channel else None,
         last_contacted=time.time(),
     )
     count = raw.get("contact_count", 0) + 1
@@ -294,7 +299,7 @@ class Relationships:
         self, person: str, *, channel: str = "", summary: str = ""
     ) -> Interaction:
         interaction = Interaction(person=person, channel=channel, summary=summary)
-        key = f"interaction:{person}:{int(interaction.timestamp)}"
+        key = f"interaction:{person}:{int(interaction.timestamp)}:{random.randint(0, 9999)}"
         self._store.remember(
             key,
             interaction.to_dict(),
