@@ -202,10 +202,10 @@ Implementation remains external to HADA and is governed through review and evide
 ## Integrations
 
 - Shopping
-- Inventory
-- Pantry
-- Calendar
-- Family tasks
+- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
+- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
+- Calendar 🔄 (Cycle 36 — active, household calendar module)
+- Family tasks ✅ (Cycle 35 — PR #46, family task management)
 - Smart home
 - Cameras
 - Notifications
@@ -405,6 +405,20 @@ Build loop continues with gated integration cycles as authorized.
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
 Regression-certified (326 unit tests passing, clean conflict-artifact scan,
 build loop verification gate green). Build loop now advances to Phase 4.**
+
+## Phase 4 — Home Hub Integration
+
+**In progress — Phase 4 integrations under development (Cycles 33–36).**
+Foundation ADR 0004 accepted. Three draft PRs open for review:
+
+- ✅ Inventory (Cycle 33, PR #43) — household inventory tracking module
+- ✅ Pantry (Cycle 34, PR #44) — household pantry stock management
+- ✅ Family tasks (Cycle 35, PR #46) — family task assignment and tracking
+- 🔄 Calendar (Cycle 36, this PR) — household calendar event management
+
+Remaining integrations (smart home, cameras, notifications, dashboards,
+household automation) deferred — require hardware or infrastructure not yet
+available in the build environment.
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
