@@ -1,2 +1,4 @@
-Guardrail scan of /tmp/hada-repair-7bNwyH vs main
-PASS: no guardrail violation.
+Guardrail scan of /tmp/tmp.71TkVqMHXv/wt2 vs origin/main
+FAIL: guardrail violation — repair touches out-of-scope files:
+  policies/RELEASE_GOVERNANCE.md (matches ^policies/)
+
