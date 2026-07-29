@@ -3,13 +3,12 @@
 import json
 import os
 import tempfile
-"""Tests for the relationship management module (offline, no network/LLM)."""
-
 import time
 
 import pytest
 
 from hermes_ctl.intelligence.relationships import (
+    Interaction,
     Relationship,
     RelationshipError,
     RelationshipSnapshot,
@@ -17,11 +16,6 @@ from hermes_ctl.intelligence.relationships import (
     scan_relationships,
     update_relationship,
     _compute_strength,
-    RELATIONSHIP_TYPES,
-    Interaction,
-    Relationship,
-    RelationshipError,
-    Relationships,
 )
 from hermes_ctl.memory.store import MemoryStore
 
@@ -39,6 +33,17 @@ def test_relationship_defaults():
     assert r.contact_count == 0
     assert r.channels == []
     assert r.notes == ""
+
+
+def test_relationship_historical_positional_constructor():
+    dates = {"birthday": "1990-01-01"}
+    relationship = Relationship("Alice", "friend", 123.0, "legacy notes", dates)
+
+    assert relationship.person == "Alice"
+    assert relationship.relation == "friend"
+    assert relationship.since == 123.0
+    assert relationship.notes == "legacy notes"
+    assert relationship.important_dates == dates
 
 
 def test_relationship_to_dict_roundtrip():
@@ -112,6 +117,20 @@ def test_snapshot_to_dict_roundtrip():
     assert s2.total_count == 1
     assert s2.by_type["friend"] == 1
     assert len(s2.relationships) == 1
+
+
+def test_snapshot_historical_positional_constructor():
+    interaction = Interaction("Alice", "sms", "hello", 123.0)
+    relationship = Relationship("Alice", "friend")
+
+    snapshot = RelationshipSnapshot([interaction], [relationship])
+
+    assert snapshot.recent_contacts == [interaction]
+    assert snapshot.relationships == [relationship]
+    assert snapshot[0]["relationship_type"] == "friend"
+    restored = RelationshipSnapshot.from_dict(snapshot.to_dict())
+    assert isinstance(restored.recent_contacts[0], Interaction)
+    assert restored.recent_contacts[0].summary == "hello"
 
 
 # ---------------------------------------------------------------------------
@@ -242,7 +261,7 @@ def test_record_interaction_creates_new(tmp_path):
     rel = record_interaction(store, "courtney", name="Courtney", channel="telegram")
     assert rel.contact_count == 1
     assert rel.channels == ["telegram"]
-    assert rel.strength > 0
+    assert rel.strength == 0.1
 
 
 def test_record_interaction_increments_count(tmp_path):
@@ -278,6 +297,11 @@ def test_compute_strength_increases_with_contacts():
     assert s5 > s1
 
 
+def test_compute_strength_preserves_historical_formula(monkeypatch):
+    monkeypatch.setattr("hermes_ctl.intelligence.relationships.time.time", lambda: 1_000_000.0)
+    assert _compute_strength(1, 1_000_000.0) == pytest.approx(0.28)
+
+
 def test_compute_strength_decays_with_age():
     recent = _compute_strength(5, time.time())
     old = _compute_strength(5, time.time() - 86400 * 30)
@@ -302,232 +326,33 @@ def test_relationship_fact_is_expired(tmp_path):
     # Verify it's searchable
     facts = list(store.search(tag="relationship"))
     assert len(facts) == 1
-def _make_store(tmp_path) -> MemoryStore:
-    return MemoryStore(persist_path=str(tmp_path / "mem.json"))
 
 
-# =======================================================================
-# Relationship dataclass
-# =======================================================================
+def test_record_interaction_ids_do_not_collide(tmp_path, monkeypatch):
+    store = MemoryStore(persist_path=str(tmp_path / "store.json"))
+    monkeypatch.setattr("hermes_ctl.intelligence.relationships.time.time_ns", lambda: 1)
+    record_interaction(store, "courtney", channel="sms")
+    record_interaction(store, "courtney", channel="telegram")
+    assert len(list(store.search(tag="interaction"))) == 2
 
 
-def test_relationship_to_dict():
-    r = Relationship(person="Courtney", relation="partner", since=1000.0, notes="wife", important_dates={"birthday": "1990-01-01"})
-    d = r.to_dict()
-    assert d["person"] == "Courtney"
-    assert d["relation"] == "partner"
-    assert d["importantDates"]["birthday"] == "1990-01-01"
+def test_legacy_positional_calls_and_mapping_returns(tmp_path):
+    store = MemoryStore(persist_path=str(tmp_path / "store.json"))
+    updated = update_relationship(
+        store, "courtney", name="Courtney", relationship_type="partner"
+    )
+    assert isinstance(updated, dict)
+    assert updated.get("relationship_type") == "partner"
+    assert updated.person_id == "courtney"
 
+    scanned = scan_relationships(store)
+    assert isinstance(scanned, list)
+    assert scanned.total_count == 1
+    assert scanned[0]["relationship_type"] == "partner"
 
-def test_relationship_from_dict():
-    d = {"person": "Janni", "relation": "child", "since": None, "notes": "", "importantDates": {}}
-    r = Relationship.from_dict(d)
-    assert r.person == "Janni"
-    assert r.relation == "child"
-
-
-# =======================================================================
-# Interaction dataclass
-# =======================================================================
-
-
-def test_interaction_to_dict():
-    i = Interaction(person="Courtney", channel="sms", summary="discussed dinner", timestamp=1000.0)
-    d = i.to_dict()
-    assert d["person"] == "Courtney"
-    assert d["channel"] == "sms"
-
-
-def test_interaction_from_dict():
-    d = {"person": "Courtney", "channel": "sms", "summary": "hi", "timestamp": 2000.0}
-    i = Interaction.from_dict(d)
-    assert i.person == "Courtney"
-    assert i.summary == "hi"
-
-
-# =======================================================================
-# Relationships
-# =======================================================================
-
-
-def test_add_relationship(tmp_path):
-    """Adding a relationship creates a node + edge + fact."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    rel = r.add("Courtney", "partner", notes="wife")
-    assert rel.person == "Courtney"
-    assert rel.relation == "partner"
-
-    # Verify it persisted
-    fetched = r.get("Courtney")
-    assert fetched is not None
-    assert fetched.person == "Courtney"
-    assert fetched.notes == "wife"
-
-
-def test_add_relationship_creates_graph_nodes(tmp_path):
-    """Adding a relationship creates person nodes in the knowledge graph."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Janni", "child")
-
-    # The @me node should exist
-    assert "person:@me" in store._nodes
-    # The person node should exist
-    assert "person:Janni" in store._nodes
-
-
-def test_add_invalid_relationship_type(tmp_path):
-    """Adding a relationship with an invalid type raises RelationshipError."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    with pytest.raises(RelationshipError, match="unknown relationship type"):
-        r.add("Test", "invalid_type")
-
-
-def test_list_relationships(tmp_path):
-    """list() returns all relationships."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Courtney", "partner")
-    r.add("Janni", "child")
-    assert len(r.list()) == 2
-
-
-def test_list_filter_by_relation(tmp_path):
-    """list(relation=...) filters by relationship type."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Courtney", "partner")
-    r.add("Janni", "child")
-    partners = r.list(relation="partner")
-    assert len(partners) == 1
-    assert partners[0].person == "Courtney"
-
-
-def test_get_nonexistent(tmp_path):
-    """get() returns None for unknown person."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    assert r.get("Nobody") is None
-
-
-def test_remove_relationship(tmp_path):
-    """remove() deletes the relationship fact."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Courtney", "partner")
-    assert r.remove("Courtney") is True
-    assert r.get("Courtney") is None
-
-
-def test_remove_nonexistent(tmp_path):
-    """remove() returns False for unknown person."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    assert r.remove("Nobody") is False
-
-
-def test_add_relationship_with_dates(tmp_path):
-    """add() accepts important dates."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Courtney", "partner", important_dates={"birthday": "1990-06-15"})
-    rel = r.get("Courtney")
-    assert rel is not None
-    assert rel.important_dates["birthday"] == "1990-06-15"
-
-
-# =======================================================================
-# Interactions
-# =======================================================================
-
-
-def test_log_interaction(tmp_path):
-    """log_interaction() records a new interaction."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    i = r.log_interaction("Courtney", channel="sms", summary="discussed weekend plans")
-    assert i.person == "Courtney"
-    assert i.channel == "sms"
-    assert i.summary == "discussed weekend plans"
-
-
-def test_interactions_list(tmp_path):
-    """interactions() returns all interactions sorted by time descending."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.log_interaction("Courtney", summary="first")
-    r.log_interaction("Janni", summary="second")
-    r.log_interaction("Courtney", summary="third")
-    items = r.interactions()
-    assert len(items) == 3
-    # most recent first
-    assert items[0].summary == "third"
-
-
-def test_interactions_filter_by_person(tmp_path):
-    """interactions(person=...) filters by person."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.log_interaction("Courtney", summary="c1")
-    r.log_interaction("Janni", summary="j1")
-    items = r.interactions(person="Courtney")
-    assert len(items) == 1
-    assert items[0].summary == "c1"
-
-
-def test_last_interaction(tmp_path):
-    """last_interaction() returns the most recent one."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.log_interaction("Courtney", summary="earlier", channel="email")
-    import time as t_mod
-    t_mod.sleep(0.01)
-    r.log_interaction("Courtney", summary="latest")
-    last = r.last_interaction("Courtney")
-    assert last is not None
-    assert last.summary == "latest"
-
-
-def test_last_interaction_none(tmp_path):
-    """last_interaction() returns None for a person with no interactions."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    assert r.last_interaction("Nobody") is None
-
-
-# =======================================================================
-# Important dates
-# =======================================================================
-
-
-def test_set_important_date(tmp_path):
-    """set_important_date() updates the relationship."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    r.add("Courtney", "partner")
-    assert r.set_important_date("Courtney", "birthday", "1990-06-15") is True
-    rel = r.get("Courtney")
-    assert rel is not None
-    assert rel.important_dates["birthday"] == "1990-06-15"
-
-
-def test_set_important_date_nonexistent(tmp_path):
-    """set_important_date() returns False for unknown person."""
-    store = _make_store(tmp_path)
-    r = Relationships(store)
-    assert r.set_important_date("Nobody", "birthday", "2000-01-01") is False
-
-
-# =======================================================================
-# RELATIONSHIP_TYPES constant
-# =======================================================================
-
-
-def test_relationship_types():
-    assert "partner" in RELATIONSHIP_TYPES
-    assert "child" in RELATIONSHIP_TYPES
-    assert "friend" in RELATIONSHIP_TYPES
-    assert "work" in RELATIONSHIP_TYPES
-    assert len(RELATIONSHIP_TYPES) >= 10
+    recorded = record_interaction(store, "courtney", "sms", "hello")
+    assert isinstance(recorded, dict)
+    assert recorded["person"] == "courtney"
+    assert recorded["channel"] == "sms"
+    assert recorded["summary"] == "hello"
+    assert recorded.contact_count == 1

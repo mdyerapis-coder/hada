@@ -208,3 +208,24 @@ def test_memory_consolidate_with_similar(tmp_path):
     assert "Consolidation suggestions" in out
     assert "msg:" in out
 
+
+def test_relationship_cli_update_list_and_interact(tmp_path, capsys):
+    _env(tmp_path)
+    assert main([
+        "relationship", "update", "courtney", "--name", "Courtney",
+        "--type", "partner", "--channel", "sms",
+    ]) == 0
+    assert "updated relationship: courtney" in capsys.readouterr().out
+
+    assert main(["relationship", "list"]) == 0
+    listed = capsys.readouterr().out
+    assert "Relationships (1 total" in listed
+    assert "courtney" in listed
+
+    assert main([
+        "relationship", "interact", "courtney", "--name", "Courtney",
+        "--channel", "telegram", "--type", "partner",
+    ]) == 0
+    interacted = capsys.readouterr().out
+    assert "count=1" in interacted
+
