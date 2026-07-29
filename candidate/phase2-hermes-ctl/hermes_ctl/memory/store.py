@@ -20,8 +20,10 @@ from __future__ import annotations
 import json
 import threading
 import time
+from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 
 @dataclass
@@ -105,12 +107,54 @@ class MemoryStore:
         self._nodes: dict[str, Node] = {}
         self._edges: list[Edge] = []
         self._persist_path = persist_path
+        self._transaction_depth = 0
+        self._transaction_dirty = False
+        self._transaction_snapshot: tuple[Any, ...] | None = None
         if persist_path:
             self._load()
 
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Apply related mutations atomically in memory and on disk."""
+        with self._lock:
+            outermost = self._transaction_depth == 0
+            if outermost:
+                self._transaction_snapshot = deepcopy(
+                    (self._facts, self._working, self._nodes, self._edges)
+                )
+                self._transaction_dirty = False
+            self._transaction_depth += 1
+            try:
+                yield
+            except BaseException:
+                self._transaction_depth -= 1
+                if outermost:
+                    self._restore_transaction_snapshot()
+                raise
+            else:
+                self._transaction_depth -= 1
+                if outermost:
+                    try:
+                        if self._transaction_dirty:
+                            self._save()
+                    except BaseException:
+                        self._restore_transaction_snapshot()
+                        raise
+                    self._transaction_snapshot = None
+                    self._transaction_dirty = False
+
+    def _restore_transaction_snapshot(self) -> None:
+        if self._transaction_snapshot is not None:
+            self._facts, self._working, self._nodes, self._edges = (
+                self._transaction_snapshot
+            )
+        self._transaction_snapshot = None
+        self._transaction_dirty = False
+        self._transaction_depth = 0
+
     # ---- long-term memory ----
     def remember(self, fact_id: str, value: Any, tags: Iterable[str] = (), ttl: float | None = None) -> Fact:
-        with self._lock:
+        with self.transaction():
             fact = Fact(
                 id=fact_id,
                 value=value,
@@ -133,7 +177,7 @@ class MemoryStore:
             return fact.value
 
     def forget(self, fact_id: str) -> None:
-        with self._lock:
+        with self.transaction():
             if self._facts.pop(fact_id, None) is None:
                 raise MemoryError(f"unknown fact: {fact_id}")
             self._save()
@@ -172,14 +216,14 @@ class MemoryStore:
 
     # ---- knowledge graph ----
     def add_node(self, node_id: str, kind: str, props: dict[str, Any] | None = None) -> Node:
-        with self._lock:
+        with self.transaction():
             node = Node(id=node_id, kind=kind, props=props or {})
             self._nodes[node_id] = node
             self._save()
             return node
 
     def relate(self, source: str, relation: str, target: str) -> Edge:
-        with self._lock:
+        with self.transaction():
             if source not in self._nodes:
                 raise MemoryError(f"unknown source node: {source}")
             if target not in self._nodes:
@@ -191,7 +235,7 @@ class MemoryStore:
 
     def set_relation(self, source: str, relation: str, target: str) -> Edge:
         """Set exactly one current edge for a source/target pair."""
-        with self._lock:
+        with self.transaction():
             if source not in self._nodes:
                 raise MemoryError(f"unknown source node: {source}")
             if target not in self._nodes:
@@ -206,6 +250,19 @@ class MemoryStore:
             self._save()
             return edge
 
+    def remove_node(self, node_id: str) -> bool:
+        """Remove a node and every connected edge as one durable mutation."""
+        with self.transaction():
+            removed = self._nodes.pop(node_id, None) is not None
+            if removed:
+                self._edges = [
+                    edge
+                    for edge in self._edges
+                    if edge.source != node_id and edge.target != node_id
+                ]
+                self._save()
+            return removed
+
     def neighbors(self, node_id: str, relation: str | None = None) -> list[Edge]:
         with self._lock:
             return [
@@ -216,6 +273,9 @@ class MemoryStore:
 
     # ---- persistence ----
     def _save(self) -> None:
+        if self._transaction_depth > 0:
+            self._transaction_dirty = True
+            return
         if not self._persist_path:
             return
         snapshot = {
