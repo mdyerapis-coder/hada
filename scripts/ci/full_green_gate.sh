@@ -50,7 +50,10 @@ fi
 bash scripts/ci/repair_guardrails.sh "$ROOT" "$base_ref"
 bash scripts/ci/verify_release_manifests.sh
 HADA_REPAIR_VERIFY=1 bash scripts/ci/run_fast_tests.sh
-bash workspace/tests/phase-b/run_all.sh
+ORCH="$ROOT/candidate/v5/HADA-M1-durable-orchestrator"
+# Phase B's YAML probes run in the pinned orchestrator environment rather than
+# relying on whichever host Python happens to be active.
+uv run --project "$ORCH" --python 3.12 bash workspace/tests/phase-b/run_all.sh
 
 CTL="$ROOT/candidate/phase2-hermes-ctl"
 python3 -m compileall -q "$CTL/hermes_ctl"
@@ -59,7 +62,6 @@ python3 -m compileall -q "$CTL/hermes_ctl"
   PYTHONPATH="$CTL" python3 -m pytest -q tests
 )
 
-ORCH="$ROOT/candidate/v5/HADA-M1-durable-orchestrator"
 (
   cd "$ORCH"
   uv run --python 3.12 --extra dev ruff check src tests
