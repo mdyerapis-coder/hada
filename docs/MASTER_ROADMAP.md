@@ -207,16 +207,16 @@ adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
 
 ## Integrations
 
-- Shopping (foundation in Phase 3 shopping module)
-- Inventory ⬜ — stdlib module (Phase 3 pattern), planned Cycle 32
-- Pantry ⬜ — stdlib module (Phase 3 pattern), planned Cycle 33
-- Calendar (foundation in Phase 2 Productivity calendar)
-- Family tasks (foundation in Phase 2 Productivity tasks)
-- Smart home ⬜ — adapter, gated on creds/infra
-- Cameras ⬜ — adapter, gated on creds/infra
-- Notifications (foundation in Phase 2 Communications channels)
-- Dashboards (foundation in deployed Command Centre)
-- Household automation ⬜ — rules engine, gated on adapters
+- Shopping
+- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
+- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
+- Calendar 🔄 (Cycle 36 — active, household calendar module)
+- Family tasks ✅ (Cycle 35 — PR #46, family task management)
+- Smart home
+- Cameras
+- Notifications
+- Dashboards
+- Household automation
 
 ## Definition of Done
 
@@ -415,8 +415,17 @@ build loop verification gate green). Build loop now advances to Phase 4.**
 
 ## Phase 4 — Home Hub Integration
 
-**Phase 4 architecture defined (ADR 0004 Proposed). Next: Inventory module
-(Cycle 33).** External integrations gated on secrets/infra authorization.
+**In progress — Phase 4 integrations under development (Cycles 33–36).**
+Foundation ADR 0004 accepted. Three draft PRs open for review:
+
+- ✅ Inventory (Cycle 33, PR #43) — household inventory tracking module
+- ✅ Pantry (Cycle 34, PR #44) — household pantry stock management
+- ✅ Family tasks (Cycle 35, PR #46) — family task assignment and tracking
+- 🔄 Calendar (Cycle 36, this PR) — household calendar event management
+
+Remaining integrations (smart home, cameras, notifications, dashboards,
+household automation) deferred — require hardware or infrastructure not yet
+available in the build environment.
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 

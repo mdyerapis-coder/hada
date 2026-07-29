@@ -70,3 +70,24 @@ class HttpRouter(Router):
             return result["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as e:  # pragma: no cover
             raise RuntimeError(f"unexpected model response: {result}") from e
+
+    def complete_json(self, role: BrainRole, prompt: str, *, max_tokens: int = 1024) -> str:
+        """Complete a prompt using the OpenAI JSON-object response contract.
+
+        Structured HADA jobs use this path so local models cannot return prose
+        or code fences. Plain-text callers continue to use ``complete``.
+        """
+        brain = self.select(role)
+        result = self._post(
+            brain,
+            {
+                "model": brain.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": max_tokens,
+                "response_format": {"type": "json_object"},
+            },
+        )
+        try:
+            return result["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as e:  # pragma: no cover
+            raise RuntimeError(f"unexpected model response: {result}") from e
