@@ -240,6 +240,11 @@ experience work targets the Android app first.
 - Offline-first read cache and queued, idempotent actions
 - Android Keystore-backed credential/token storage; no embedded secrets
 - Role-aware adult and child experiences with consent and privacy controls
+- Future opt-in Facebook and Facebook Messenger integration through official
+  Meta APIs and a separately governed Hermes CTL channel adapter; include OAuth,
+  verified webhooks, scoped/revocable tokens, rate-limit handling, audit trails,
+  and explicit retention/privacy controls. No credential sharing, browser
+  scraping, or direct Meta access from the Android client.
 - CI-built debug APK for continuous testing
 - Signed release APK/AAB only after explicit human approval and provision of
   signing credentials through the approved secret-management boundary
@@ -252,6 +257,8 @@ experience work targets the Android app first.
 4. Household feature migration from the Home Hub dashboard
 5. Governed engineering status from the HADA dashboard
 6. Offline behavior, device security, end-to-end tests, and release packaging
+7. Optional Facebook and Messenger channel adapter after Meta app review,
+   privacy review, and explicit credential provisioning
 
 ## Definition of Done
 
