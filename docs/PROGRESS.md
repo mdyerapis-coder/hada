@@ -295,3 +295,17 @@ deploy, secret/infra change, or governance bypass occurs.
 - CLI: `hermesctl calendar list|add|complete|remove|update` with all flags
 - Documentation: Updated MASTER_ROADMAP.md Phase 4 integrations (Calendar 🔄) and Current Status
 - Verification gate: full build-cycle gate passed on origin/main `1240d33`.
+
+## Cycle 37 — Android kickoff baseline repair
+- Branch: `agent/build-cycle-1785348213-1104f8049ce2` (this PR)
+- Android work was correctly stopped when the pinned `origin/main` local full gate
+  failed on `hada-control`: the hermetic clean-host rollback fixture observed the
+  live `/opt/hada` installation and reported two false failures.
+- Repaired only the test transport: production commands remain unchanged and are
+  still logged verbatim, while execution rewrites `/opt/hada` to a private
+  fixture path.
+- TDD evidence: targeted test failed at 13 passed / 2 failed before the change,
+  then passed at 15 passed / 0 failed; `git diff --check` and ShellCheck passed.
+- No Android source, production runtime, deployment, infrastructure, secrets, or
+  signing configuration changed. Next governed cycle: Android Stage 1 versioned
+  read-only API/authentication/role contract foundation.

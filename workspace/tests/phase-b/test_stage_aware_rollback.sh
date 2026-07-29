@@ -107,13 +107,17 @@ EOF
 chmod +x "${MOCK_BIN}/findmnt"
 
 # Executing mock SSH: logs one base64 record per command, then executes the
-# exact generated command with the shims on PATH.
+# generated command with the shims on PATH. Rewrite the production install
+# root only for execution so a live /opt/hada on the test host cannot make the
+# hermetic "clean host" fixture fail; the original command remains in the audit
+# log and assertions.
 MOCK_SSH_EXEC="${TEMP_DIR}/mock-ssh-exec"
 cat > "${MOCK_SSH_EXEC}" <<'EOF'
 #!/usr/bin/env bash
 cmd="${@: -1}"
 printf '%s\n' "$(printf '%s' "${cmd}" | base64 -w0)" >> "${HADA_MOCK_SSH_LOG:?}"
-PATH="${HADA_MOCK_BIN:?}:${PATH}" exec bash -c "${cmd}"
+exec_cmd="${cmd//\/opt\/hada/${HADA_MOCK_OPT_HADA:?}}"
+PATH="${HADA_MOCK_BIN:?}:${PATH}" exec bash -c "${exec_cmd}"
 EOF
 chmod +x "${MOCK_SSH_EXEC}"
 
@@ -129,6 +133,7 @@ chmod +x "${MOCK_SSH_LOG_ONLY}"
 
 export HADA_MOCK_SSH_LOG="${TEMP_DIR}/ssh-commands.log"
 export HADA_MOCK_BIN="${MOCK_BIN}"
+export HADA_MOCK_OPT_HADA="${TEMP_DIR}/mock-opt/hada"
 # Rollback tests audit the exact generated commands; use the log-only mock
 # SSH so every remote command is captured (base64) without executing.
 export HADA_PHASE_B_MOCK_SSH="${MOCK_SSH_LOG_ONLY}"
