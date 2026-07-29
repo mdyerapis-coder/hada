@@ -255,6 +255,14 @@ experience work targets the Android app first.
   best-effort input: notifications can be disabled, duplicated, redacted as
   sensitive content, or suppressed by the SMS app/OEM. Show forwarding health
   and failures explicitly, and make access visibly revocable.
+- Automatic SMS replies are a deferred capability only after the complete APK,
+  inbound forwarding, identity resolution, and audit path are stable in
+  production. Begin with suggested drafts requiring approval. Any later
+  autonomous mode requires a separate accepted ADR and explicit authorization,
+  recipient allowlists, confidence thresholds, rate limits, duplicate/loop
+  prevention, quiet-hours policy, immutable audit records, and an immediate kill
+  switch. OTPs, financial/legal/medical content, emergencies, unknown senders,
+  and ambiguous intent must never receive an automatic reply.
 - CI-built debug APK for continuous testing
 - Signed release APK/AAB only after explicit human approval and provision of
   signing credentials through the approved secret-management boundary
@@ -270,6 +278,8 @@ experience work targets the Android app first.
 7. Offline behavior, device security, end-to-end tests, and release packaging
 8. Optional Facebook and Messenger channel adapter after Meta app review,
    privacy review, and explicit credential provisioning
+9. Deferred SMS reply drafts, followed by separately authorized automatic
+   replies only after production safety evidence and an accepted ADR
 
 ## Definition of Done
 
