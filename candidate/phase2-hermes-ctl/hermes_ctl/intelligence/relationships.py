@@ -1,59 +1,53 @@
-"""Hermes CTL — relationship management (Phase 3: Personal Intelligence).
+"""Relationship management for Hermes CTL.
 
-Tracks relationships with contacts, their type, strength, contact frequency,
-and context. Builds on the Directory (contacts) and MemoryStore for persistence.
+This module preserves both public Phase 3 surfaces:
 
-Governance / safety (mirrors context.py, curation.py):
-- Pure data model + store operations (no network, no LLM at module level).
-- ``scan_relationships()`` reads relationship facts from MemoryStore — read-only.
-- ``update_relationship()`` and ``record_interaction()`` upsert to MemoryStore.
-- Every field has a safe default — no crashes on empty or missing stores.
-Models personal relationships and interaction history on top of the
-MemoryStore knowledge graph and inbox store. Supports tracking relationship
-types, logging interactions, and querying relationship context.
+* snapshot/update/record free functions used by ``hermesctl relationship``; and
+* the ``Relationships`` graph facade used by CRM and personal intelligence.
 
-Governance / safety:
-- Pure data model (no network, no LLM at module level).
-- Wraps the existing knowledge graph (Node/Edge) for relationship structure.
-- Interaction history stored as MemoryStore facts (tagged ``interaction``).
-- Every operation has safe defaults — no crashes on empty stores.
+All operations are local and deterministic. Persistence errors fail visibly on
+writes; read-only queries return safe empty values.
 """
 
 from __future__ import annotations
 
-import random
+import calendar
+import math
 import time
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
-
-
-# ---------------------------------------------------------------------------
-# Errors
-# ---------------------------------------------------------------------------
 
 
 class RelationshipError(Exception):
     """Raised when relationship operations fail."""
 
 
-# ---------------------------------------------------------------------------
-# Data model (modern API — used by Relationships class)
-# ---------------------------------------------------------------------------
-
 RELATIONSHIP_TYPES = {
-    "partner",
-    "spouse",
+    "acquaintance",
     "child",
-    "parent",
-    "sibling",
+    "colleague",
     "family",
     "friend",
-    "work",
-    "colleague",
     "neighbour",
-    "professional",
     "other",
+    "parent",
+    "partner",
+    "professional",
+    "service",
+    "sibling",
+    "spouse",
+    "work",
 }
+
+_interaction_counter = 0
+
+
+def _next_interaction_id(person: str) -> str:
+    """Return a process-unique interaction id even when clocks repeat."""
+    global _interaction_counter
+    _interaction_counter += 1
+    return f"interaction:{person}:{time.time_ns()}:{_interaction_counter}"
 
 
 @dataclass
@@ -61,7 +55,7 @@ class Interaction:
     """A single recorded interaction with a person."""
 
     person: str
-    channel: str = ""  # "in-person" | "sms" | "email" | "telegram" | "call"
+    channel: str = ""
     summary: str = ""
     timestamp: float = field(default_factory=time.time)
 
@@ -74,76 +68,233 @@ class Interaction:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Interaction":
-        return cls(**d)
+    def from_dict(cls, data: dict[str, Any]) -> "Interaction":
+        return cls(
+            person=str(data.get("person", "")),
+            channel=str(data.get("channel", "")),
+            summary=str(data.get("summary", "")),
+            timestamp=float(data.get("timestamp", time.time())),
+        )
 
 
-@dataclass
+@dataclass(init=False)
 class Relationship:
-    """A relationship with a person, stored as a knowledge graph edge."""
+    """Compatibility model for relationship records and graph metadata.
 
-    person: str
-    relation: str  # one of RELATIONSHIP_TYPES
-    since: float | None = None
-    notes: str = ""
-    important_dates: dict[str, str] = field(default_factory=dict)
+    ``person``/``relation`` are aliases for the historical
+    ``person_id``/``relationship_type`` fields. Keeping one model prevents the
+    CLI and graph facade from silently drifting into incompatible contracts.
+    """
+
+    person_id: str
+    name: str
+    relationship_type: str
+    strength: float
+    contact_count: int
+    last_contacted: float
+    channels: list[str]
+    notes: str
+    tags: list[str]
+    updated_at: float
+    since: float | None
+    important_dates: dict[str, str]
+
+    def __init__(
+        self,
+        person_id: str = "",
+        name: str = "",
+        relationship_type: str = "acquaintance",
+        strength: float = 0.0,
+        contact_count: int = 0,
+        last_contacted: float = 0.0,
+        channels: list[str] | None = None,
+        notes: str = "",
+        tags: list[str] | None = None,
+        updated_at: float | None = None,
+        *,
+        person: str | None = None,
+        relation: str | None = None,
+        since: float | None = None,
+        important_dates: dict[str, str] | None = None,
+    ) -> None:
+        self.person_id = person if person is not None else person_id
+        self.name = name or self.person_id
+        self.relationship_type = relation if relation is not None else relationship_type
+        self.strength = float(strength)
+        self.contact_count = int(contact_count)
+        self.last_contacted = float(last_contacted)
+        self.channels = list(channels or [])
+        self.notes = notes
+        self.tags = list(tags or [])
+        self.updated_at = time.time() if updated_at is None else float(updated_at)
+        self.since = since
+        self.important_dates = dict(important_dates or {})
+
+    @property
+    def person(self) -> str:
+        return self.person_id
+
+    @person.setter
+    def person(self, value: str) -> None:
+        self.person_id = value
+
+    @property
+    def relation(self) -> str:
+        return self.relationship_type
+
+    @relation.setter
+    def relation(self, value: str) -> None:
+        self.relationship_type = value
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "person": self.person,
-            "relation": self.relation,
-            "since": self.since,
+            "personId": self.person_id,
+            "person": self.person_id,
+            "name": self.name,
+            "relationshipType": self.relationship_type,
+            "relation": self.relationship_type,
+            "strength": self.strength,
+            "contactCount": self.contact_count,
+            "lastContacted": self.last_contacted,
+            "channels": list(self.channels),
             "notes": self.notes,
+            "tags": list(self.tags),
+            "updatedAt": self.updated_at,
+            "since": self.since,
             "importantDates": dict(self.important_dates),
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Relationship":
+    def from_dict(cls, data: dict[str, Any]) -> "Relationship":
         return cls(
-            person=d.get("person", ""),
-            relation=d.get("relation", d.get("relationship_type", "other")),
-            since=d.get("since", None),
-            notes=d.get("notes", ""),
-            important_dates=d.get("important_dates", d.get("importantDates", {})),
+            person_id=str(
+                data.get("personId", data.get("person_id", data.get("person", "")))
+            ),
+            name=str(data.get("name", "")),
+            relationship_type=str(
+                data.get(
+                    "relationshipType",
+                    data.get("relationship_type", data.get("relation", "acquaintance")),
+                )
+            ),
+            strength=float(data.get("strength", 0.0)),
+            contact_count=int(data.get("contactCount", data.get("contact_count", 0))),
+            last_contacted=float(
+                data.get("lastContacted", data.get("last_contacted", 0.0))
+            ),
+            channels=list(data.get("channels", [])),
+            notes=str(data.get("notes", "")),
+            tags=list(data.get("tags", [])),
+            updated_at=float(data.get("updatedAt", data.get("updated_at", time.time()))),
+            since=data.get("since"),
+            important_dates=dict(
+                data.get("importantDates", data.get("important_dates", {}))
+            ),
         )
 
 
 @dataclass
 class RelationshipSnapshot:
-    """Collection of all tracked relationships at a point in time."""
+    """Collection and aggregate data for tracked relationships."""
 
-    recent_contacts: list[Interaction] = field(default_factory=list)
     relationships: list[Relationship] = field(default_factory=list)
+    total_count: int = 0
+    by_type: dict[str, int] = field(default_factory=dict)
+    recent_contacts: list[Relationship] = field(default_factory=list)
+    timestamp: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "recentContacts": [r.to_dict() for r in self.recent_contacts],
-            "relationships": [r.to_dict() for r in self.relationships],
+            "totalCount": self.total_count,
+            "byType": dict(self.by_type),
+            "recentContacts": [item.to_dict() for item in self.recent_contacts],
+            "relationships": [item.to_dict() for item in self.relationships],
+            "timestamp": self.timestamp,
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "RelationshipSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> "RelationshipSnapshot":
         return cls(
-            recent_contacts=[
-                Interaction.from_dict(r) for r in d.get("recentContacts", [])
-            ],
             relationships=[
-                Relationship.from_dict(r) for r in d.get("relationships", [])
+                Relationship.from_dict(item) for item in data.get("relationships", [])
             ],
+            total_count=int(data.get("totalCount", data.get("total_count", 0))),
+            by_type=dict(data.get("byType", data.get("by_type", {}))),
+            recent_contacts=[
+                Relationship.from_dict(item)
+                for item in data.get("recentContacts", data.get("recent_contacts", []))
+            ],
+            timestamp=str(data.get("timestamp", "")),
         )
 
 
-# ---------------------------------------------------------------------------
-# Free functions (legacy API)
-# ---------------------------------------------------------------------------
+def _fact_key_and_value(store: Any, person_id: str) -> tuple[str, Any]:
+    """Return the existing relationship key/value, preferring the canonical key."""
+    for key in (f"rel:{person_id}", f"relationship:{person_id}"):
+        try:
+            value = store.recall(key)
+        except Exception:
+            value = None
+        if value is not None:
+            return key, value
+    return f"rel:{person_id}", None
 
 
-def scan_relationships(store: Any) -> list[dict[str, Any]]:
-    """Return all relationship facts from the memory store (read-only)."""
+def _persist_relationship(store: Any, key: str, relationship: Relationship) -> None:
+    tags = {
+        "relationship",
+        f"person:{relationship.person_id}",
+        relationship.relationship_type,
+        *relationship.tags,
+    }
     try:
-        return [fact.value for fact in store.search(tag="relationship")]
+        store.remember(key, relationship.to_dict(), tags=tags)
+    except Exception as exc:
+        raise RelationshipError(f"failed to persist relationship: {exc}") from exc
+
+
+def scan_relationships(*, store: Any = None) -> RelationshipSnapshot:
+    """Read all relationship records and return aggregate snapshot data."""
+    timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    if store is None:
+        return RelationshipSnapshot(timestamp=timestamp)
+    try:
+        facts = list(store.search(tag="relationship"))
     except Exception:
-        return []
+        return RelationshipSnapshot(timestamp=timestamp)
+
+    by_person: dict[str, Relationship] = {}
+    for fact in facts:
+        value = fact.value if hasattr(fact, "value") else None
+        if not isinstance(value, dict):
+            continue
+        try:
+            relationship = Relationship.from_dict(value)
+        except (TypeError, ValueError):
+            continue
+        if not relationship.person_id:
+            fact_id = str(getattr(fact, "id", ""))
+            for prefix in ("rel:", "relationship:"):
+                if fact_id.startswith(prefix):
+                    relationship.person_id = fact_id[len(prefix) :]
+                    break
+        if relationship.person_id:
+            by_person[relationship.person_id] = relationship
+
+    relationships = sorted(
+        by_person.values(), key=lambda item: item.last_contacted, reverse=True
+    )
+    by_type: dict[str, int] = {}
+    for relationship in relationships:
+        kind = relationship.relationship_type
+        by_type[kind] = by_type.get(kind, 0) + 1
+    return RelationshipSnapshot(
+        relationships=relationships,
+        total_count=len(relationships),
+        by_type=by_type,
+        recent_contacts=relationships[:5],
+        timestamp=timestamp,
+    )
 
 
 def update_relationship(
@@ -158,80 +309,103 @@ def update_relationship(
     channels: list[str] | None = None,
     notes: str | None = None,
     tags: list[str] | None = None,
-) -> dict[str, Any]:
-    """Upsert a relationship record in the memory store."""
-    try:
-        raw = store.recall(f"rel:{person_id}")
-    except Exception:
-        raw = None
-    if raw is None:
-        raw = {}
-    if name is not None:
-        raw["name"] = name
+) -> Relationship:
+    """Create or update a relationship without discarding omitted fields."""
+    if not person_id:
+        raise RelationshipError("person_id is required")
+    key, raw = _fact_key_and_value(store, person_id)
+    relationship = (
+        Relationship.from_dict(raw)
+        if isinstance(raw, dict)
+        else Relationship(person_id=person_id)
+    )
+    relationship.person_id = person_id
+    if name is not None and name:
+        relationship.name = name
     if relationship_type is not None:
-        raw["relationship_type"] = relationship_type
+        relationship.relationship_type = relationship_type
     if strength is not None:
-        raw["strength"] = strength
+        relationship.strength = strength
     if contact_count is not None:
-        raw["contact_count"] = contact_count
+        relationship.contact_count = contact_count
     if last_contacted is not None:
-        raw["last_contacted"] = last_contacted
+        relationship.last_contacted = last_contacted
     if channels is not None:
-        raw["channels"] = channels
+        relationship.channels = list(dict.fromkeys(channels))
     if notes is not None:
-        raw["notes"] = notes
+        relationship.notes = notes
     if tags is not None:
-        raw["tags"] = tags
-    raw.setdefault("relationship_type", "acquaintance")
-    store.remember(f"rel:{person_id}", raw, tags={"relationship", f"person:{person_id}"})
-    return raw
+        relationship.tags = list(dict.fromkeys(tags))
+    relationship.updated_at = time.time()
+    _persist_relationship(store, key, relationship)
+    return relationship
+
+
+def _compute_strength(contact_count: int, last_contacted: float) -> float:
+    """Compute a relationship strength score in the inclusive range 0..1."""
+    recency = max(
+        0.0,
+        min(1.0, 1.0 - (time.time() - last_contacted) / (30 * 24 * 3600)),
+    )
+    frequency = math.log1p(max(0, contact_count)) / math.log1p(20)
+    return round(min(1.0, max(0.0, 0.5 * recency + 0.5 * frequency)), 4)
 
 
 def record_interaction(
     store: Any,
     person_id: str,
+    *,
+    name: str = "",
     channel: str = "",
+    relationship_type: str | None = None,
     summary: str = "",
-) -> dict[str, Any]:
-    """Record a new interaction, update contact count and recency."""
-    now = time.time()
-    interaction = {"person": person_id, "channel": channel, "summary": summary, "timestamp": now}
-    store.remember(
-        f"interaction:{person_id}:{int(now)}:{random.randint(0, 9999)}",
-        interaction,
-        tags={"interaction", f"person:{person_id}"},
+) -> Relationship:
+    """Record an interaction and preserve accumulated relationship metadata."""
+    if not person_id:
+        raise RelationshipError("person_id is required")
+    key, raw = _fact_key_and_value(store, person_id)
+    relationship = (
+        Relationship.from_dict(raw)
+        if isinstance(raw, dict)
+        else Relationship(person_id=person_id, name=name)
     )
-    raw = update_relationship(
-        store,
-        person_id,
-        channels=[channel] if channel else None,
-        last_contacted=time.time(),
+    relationship.person_id = person_id
+    if name and not relationship.name:
+        relationship.name = name
+    if relationship_type is not None:
+        relationship.relationship_type = relationship_type
+    relationship.contact_count += 1
+    relationship.last_contacted = time.time()
+    relationship.updated_at = relationship.last_contacted
+    if channel and channel not in relationship.channels:
+        relationship.channels.append(channel)
+    relationship.strength = _compute_strength(
+        relationship.contact_count, relationship.last_contacted
     )
-    count = raw.get("contact_count", 0) + 1
-    update_relationship(store, person_id, contact_count=count)
-    return interaction
+    _persist_relationship(store, key, relationship)
 
-
-def _compute_strength(contact_count: int, last_contacted: float) -> float:
-    """Compute a relationship strength score 0.0–1.0."""
-    import math
-    recency = max(0.0, min(1.0, 1.0 - (time.time() - last_contacted) / (30 * 24 * 3600)))
-    freq = math.log1p(contact_count) / math.log1p(20)
-    return round(min(1.0, max(0.0, 0.5 * recency + 0.5 * freq)), 4)
-
-
-# ---------------------------------------------------------------------------
-# Relationships manager (modern API used by tests)
-# ---------------------------------------------------------------------------
+    interaction = Interaction(
+        person=person_id,
+        channel=channel,
+        summary=summary,
+        timestamp=relationship.last_contacted,
+    )
+    try:
+        store.remember(
+            _next_interaction_id(person_id),
+            interaction.to_dict(),
+            tags={"interaction", f"person:{person_id}"},
+        )
+    except Exception as exc:
+        raise RelationshipError(f"failed to record interaction: {exc}") from exc
+    return relationship
 
 
 class Relationships:
-    """Manage personal relationships on top of MemoryStore."""
+    """Manage relationship graph metadata and interaction history."""
 
     def __init__(self, store: Any) -> None:
         self._store = store
-
-    # ---- define / query relationships ----
 
     def add(
         self,
@@ -242,100 +416,149 @@ class Relationships:
         notes: str = "",
         important_dates: dict[str, str] | None = None,
     ) -> Relationship:
+        if not person:
+            raise RelationshipError("person is required")
         if relation not in RELATIONSHIP_TYPES:
             raise RelationshipError(
-                f"unknown relationship type '{relation}'; "
-                f"valid: {sorted(RELATIONSHIP_TYPES)}"
+                f"unknown relationship type '{relation}'; valid: {sorted(RELATIONSHIP_TYPES)}"
             )
-        rel = Relationship(
-            person=person,
-            relation=relation,
-            since=since,
-            notes=notes,
-            important_dates=important_dates or {},
-        )
-        fact_id = f"rel:{person}"
-        self._store.remember(
-            fact_id,
-            rel.to_dict(),
-            tags={"relationship", f"person:{person}", relation},
-        )
-        return rel
+        existing = self.get(person)
+        relationship = existing or Relationship(person=person, relation=relation)
+        relationship.person = person
+        relationship.name = relationship.name or person
+        relationship.relation = relation
+        relationship.since = since if since is not None else relationship.since
+        relationship.notes = notes if notes else relationship.notes
+        if important_dates is not None:
+            relationship.important_dates = dict(important_dates)
+        relationship.updated_at = time.time()
+
+        try:
+            # add_node is idempotent for this store and avoids confusing graph
+            # nodes with separately persisted facts.
+            self._store.add_node(
+                f"person:{person}", kind="person", props={"name": person}
+            )
+            self._store.add_node("person:@me", kind="person", props={"name": "me"})
+            self._store.relate("person:@me", relation, f"person:{person}")
+            _persist_relationship(self._store, f"rel:{person}", relationship)
+        except RelationshipError:
+            raise
+        except Exception as exc:
+            raise RelationshipError(f"failed to add relationship: {exc}") from exc
+        return relationship
 
     def get(self, person: str) -> Relationship | None:
-        try:
-            raw = self._store.recall(f"rel:{person}")
-            if raw is None:
-                return None
-            if isinstance(raw, dict):
-                return Relationship.from_dict(raw)
+        _, raw = _fact_key_and_value(self._store, person)
+        if not isinstance(raw, dict):
             return None
-        except Exception:
+        try:
+            return Relationship.from_dict(raw)
+        except (TypeError, ValueError):
             return None
 
     def list(self, *, relation: str | None = None) -> list[Relationship]:
-        try:
-            facts = self._store.search(tag="relationship")
-        except Exception:
-            return []
-        out: list[Relationship] = []
-        for f in facts:
-            if relation is None or relation in (f.tags or set()):
-                try:
-                    out.append(Relationship.from_dict(f.value))
-                except Exception:
-                    continue
-        out.sort(key=lambda r: r.person.lower())
-        return out
+        relationships = scan_relationships(store=self._store).relationships
+        if relation is not None:
+            relationships = [item for item in relationships if item.relation == relation]
+        return sorted(relationships, key=lambda item: item.person.lower())
 
     def remove(self, person: str) -> bool:
-        try:
-            self._store.forget(f"rel:{person}")
-            return True
-        except Exception:
-            return False
+        removed = False
+        for key in (f"rel:{person}", f"relationship:{person}"):
+            try:
+                if self._store.recall(key) is not None:
+                    self._store.forget(key)
+                    removed = True
+            except Exception:
+                continue
+        return removed
 
     def log_interaction(
         self, person: str, *, channel: str = "", summary: str = ""
     ) -> Interaction:
+        if not person:
+            raise RelationshipError("person is required")
+        if self.get(person) is None:
+            self.add(person, "other")
         interaction = Interaction(person=person, channel=channel, summary=summary)
-        key = f"interaction:{person}:{int(interaction.timestamp)}:{random.randint(0, 9999)}"
-        self._store.remember(
-            key,
-            interaction.to_dict(),
-            tags={"interaction", f"person:{person}"},
-        )
-        self.add(person, _guess_relation(person))
+        fact_id = _next_interaction_id(person)
+        try:
+            tags = {"interaction", f"person:{person}"}
+            if channel:
+                tags.add(channel)
+            self._store.remember(fact_id, interaction.to_dict(), tags=tags)
+        except Exception as exc:
+            raise RelationshipError(f"failed to log interaction: {exc}") from exc
         return interaction
 
-    def interactions_for(self, person: str, *, limit: int = 20) -> list[Interaction]:
+    def interactions(
+        self, person: str | None = None, *, limit: int = 10
+    ) -> list[Interaction]:
         try:
             facts = self._store.search(tag="interaction")
         except Exception:
             return []
-        out: list[Interaction] = []
-        for f in facts:
-            if f.value and f.value.get("person") == person:
-                try:
-                    out.append(Interaction.from_dict(f.value))
-                except Exception:
-                    continue
-        out.sort(key=lambda x: x.timestamp, reverse=True)
-        return out[:limit]
+        interactions: list[Interaction] = []
+        for fact in facts:
+            try:
+                interaction = Interaction.from_dict(fact.value)
+            except (AttributeError, TypeError, ValueError):
+                continue
+            if person is None or interaction.person == person:
+                interactions.append(interaction)
+        interactions.sort(key=lambda item: item.timestamp, reverse=True)
+        return interactions[: max(0, limit)]
+
+    def interactions_for(self, person: str, *, limit: int = 20) -> list[Interaction]:
+        """Compatibility alias for person-filtered interactions."""
+        return self.interactions(person, limit=limit)
 
     def last_interaction(self, person: str) -> Interaction | None:
-        items = self.interactions_for(person, limit=1)
-        return items[0] if items else None
+        interactions = self.interactions(person, limit=1)
+        return interactions[0] if interactions else None
 
     def set_important_date(self, person: str, label: str, value: str) -> bool:
-        rel = self.get(person)
-        if rel is None:
+        relationship = self.get(person)
+        if relationship is None:
             return False
-        rel.important_dates[label] = value
-        fact_id = f"rel:{person}"
-        self._store.remember(fact_id, rel.to_dict(), tags={"relationship", f"person:{person}", rel.relation})
+        relationship.important_dates[label] = value
+        relationship.updated_at = time.time()
+        try:
+            key, _ = _fact_key_and_value(self._store, person)
+            _persist_relationship(self._store, key, relationship)
+        except RelationshipError:
+            return False
         return True
 
-
-def _guess_relation(person: str) -> str:
-    return "other"
+    def upcoming_dates(self, *, within_days: float = 30) -> list[dict[str, Any]]:
+        """Return important dates occurring within the requested window."""
+        today = date.today()
+        current_year = today.year
+        results: list[dict[str, Any]] = []
+        for relationship in self.list():
+            for label, date_text in relationship.important_dates.items():
+                parts = date_text.split("-")
+                if len(parts) == 3:
+                    _, month_text, day_text = parts
+                elif len(parts) == 2:
+                    month_text, day_text = parts
+                else:
+                    continue
+                try:
+                    month = int(month_text)
+                    day = min(int(day_text), calendar.monthrange(current_year, month)[1])
+                    target = date(current_year, month, day)
+                except (ValueError, OverflowError):
+                    continue
+                days_until = (target - today).days
+                if 0 <= days_until <= within_days:
+                    results.append(
+                        {
+                            "person": relationship.person,
+                            "label": label,
+                            "date": date_text,
+                            "daysUntil": round(days_until),
+                        }
+                    )
+        return sorted(results, key=lambda item: item["daysUntil"])
