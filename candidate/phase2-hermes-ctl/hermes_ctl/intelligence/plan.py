@@ -205,7 +205,8 @@ def run_plan(
             briefing_json = "{}"
     inbox_json = json.dumps(signals, ensure_ascii=False)
 
-    prompt = _build_prompt(briefing_json, inbox_json)
-    raw = router.complete(PLAN_ROLE, prompt, max_tokens=250)
+    prompt = "/no_think\n" + _build_prompt(briefing_json, inbox_json)
+    complete_json = getattr(router, "complete_json", router.complete)
+    raw = complete_json(PLAN_ROLE, prompt, max_tokens=1024)
     plan = _parse_plan(raw, date)
     return deliver_plan(plan, store=store, plans_dir=plans_dir, date=date)
