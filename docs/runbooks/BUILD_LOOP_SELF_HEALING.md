@@ -37,7 +37,8 @@ ${XDG_STATE_HOME:-$HOME/.local/state}/hada-build/
 ```
 
 The manifest binds `run_id`, a 256-bit token, host, owner PID and PID start time,
-heartbeat, immutable base SHA, branch, worktree, verified head and gate-log hash.
+heartbeat, immutable base SHA, explicit path allowlist, branch, worktree, verified
+head and gate-log hash.
 State writes use temporary files, file `fsync`, atomic replacement and directory
 `fsync`. Corrupt or incomplete state is a hard stop.
 
@@ -47,10 +48,13 @@ State writes use temporary files, file `fsync`, atomic replacement and directory
 # The wrapper process remains alive for the cycle; pass its PID explicitly.
 cycle=$(python3 scripts/ci/build_cycle_guard.py prepare \
   --repo /home/m_dyer_apis_gmail_com/hada \
+  --allow-path 'candidate/phase2-hermes-ctl/hermes_ctl/**' \
+  --allow-path 'candidate/phase2-hermes-ctl/tests/**' \
   --owner-pid "$$")
 # Parse run_id, token, worktree, branch and base_sha from JSON.
 
-# Work only inside the returned worktree. Select ONE ready roadmap item, commit it.
+# Work only inside the returned worktree and allowlisted paths. Select ONE ready
+# roadmap item, commit it.
 
 python3 scripts/ci/build_cycle_guard.py heartbeat --token "$token"
 python3 scripts/ci/build_cycle_guard.py verify --token "$token"
@@ -76,6 +80,11 @@ python3 scripts/ci/build_cycle_guard.py recover
 A live local PID is never stolen solely because TTL elapsed. Recovery requires a
 dead owner and expired heartbeat, or a terminal/quarantined state. Recovery
 archives metadata and changed-file evidence before cleanup.
+
+Every cycle requires one or more `--allow-path` Git globs. Verification compares
+the immutable base with the candidate using rename detection disabled, so both
+the source and destination of a rename must be allowlisted. Any out-of-scope
+addition, edit, deletion or rename quarantines the cycle before the quality gate.
 
 ## Complete green gate
 
