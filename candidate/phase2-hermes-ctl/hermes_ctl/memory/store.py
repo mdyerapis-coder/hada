@@ -17,7 +17,10 @@ modelling + verification-friendly logic.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
+import tempfile
 import threading
 import time
 from contextlib import contextmanager
@@ -111,6 +114,7 @@ class MemoryStore:
         self._transaction_dirty = False
         self._transaction_error: BaseException | None = None
         self._transaction_snapshot: tuple[Any, ...] | None = None
+        self._file_lock_handle: Any | None = None
         if persist_path:
             self._load()
 
@@ -120,11 +124,18 @@ class MemoryStore:
         with self._lock:
             outermost = self._transaction_depth == 0
             if outermost:
-                self._transaction_snapshot = deepcopy(
-                    (self._facts, self._working, self._nodes, self._edges)
-                )
-                self._transaction_dirty = False
-                self._transaction_error = None
+                try:
+                    self._acquire_file_lock()
+                    if self._persist_path:
+                        self._load()
+                    self._transaction_snapshot = deepcopy(
+                        (self._facts, self._working, self._nodes, self._edges)
+                    )
+                    self._transaction_dirty = False
+                    self._transaction_error = None
+                except BaseException:
+                    self._release_file_lock()
+                    raise
             self._transaction_depth += 1
             try:
                 yield
@@ -152,6 +163,30 @@ class MemoryStore:
                         raise
                     self._transaction_snapshot = None
                     self._transaction_dirty = False
+            finally:
+                if outermost:
+                    self._release_file_lock()
+
+    def _acquire_file_lock(self) -> None:
+        if not self._persist_path:
+            return
+        handle = open(f"{self._persist_path}.lock", "a+", encoding="utf-8")
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        except BaseException:
+            handle.close()
+            raise
+        self._file_lock_handle = handle
+
+    def _release_file_lock(self) -> None:
+        handle = self._file_lock_handle
+        self._file_lock_handle = None
+        if handle is None:
+            return
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            handle.close()
 
     def _restore_transaction_snapshot(self) -> None:
         if self._transaction_snapshot is not None:
@@ -177,15 +212,45 @@ class MemoryStore:
             return fact
 
     def recall(self, fact_id: str, now: float | None = None) -> Any:
-        with self._lock:
+        expired = False
+        value: Any = None
+        with self.transaction():
             fact = self._facts.get(fact_id)
             if fact is None:
                 raise MemoryError(f"unknown fact: {fact_id}")
             if fact.is_expired(now):
                 del self._facts[fact_id]
                 self._save()
-                raise MemoryError(f"fact expired: {fact_id}")
-            return fact.value
+                expired = True
+            else:
+                value = fact.value
+        if expired:
+            raise MemoryError(f"fact expired: {fact_id}")
+        return value
+
+    def recall_optional(self, fact_id: str, now: float | None = None) -> Any | None:
+        """Return a fact value or ``None`` without raising for absence/expiry."""
+        value: Any | None = None
+        with self.transaction():
+            fact = self._facts.get(fact_id)
+            if fact is not None and fact.is_expired(now):
+                del self._facts[fact_id]
+                self._save()
+            elif fact is not None:
+                value = fact.value
+        return value
+
+    def has_fact(self, fact_id: str, now: float | None = None) -> bool:
+        """Check presence without exceptions for normal control flow."""
+        present = False
+        with self.transaction():
+            fact = self._facts.get(fact_id)
+            if fact is not None and fact.is_expired(now):
+                del self._facts[fact_id]
+                self._save()
+            else:
+                present = fact is not None
+        return present
 
     def forget(self, fact_id: str) -> None:
         with self.transaction():
@@ -194,7 +259,7 @@ class MemoryStore:
             self._save()
 
     def search(self, tag: str | None = None, now: float | None = None) -> list[Fact]:
-        with self._lock:
+        with self.transaction():
             now = now if now is not None else time.time()
             out = []
             expired = []
@@ -275,7 +340,7 @@ class MemoryStore:
             return removed
 
     def neighbors(self, node_id: str, relation: str | None = None) -> list[Edge]:
-        with self._lock:
+        with self.transaction():
             return [
                 e
                 for e in self._edges
@@ -294,21 +359,46 @@ class MemoryStore:
             "nodes": [n.to_dict() for n in self._nodes.values()],
             "edges": [e.to_dict() for e in self._edges],
         }
-        tmp = self._persist_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(snapshot, fh, indent=2)
-        __import__("os").replace(tmp, self._persist_path)
+        destination = os.path.abspath(self._persist_path)
+        parent = os.path.dirname(destination) or "."
+        tmp = ""
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                encoding="utf-8",
+                dir=parent,
+                prefix=f"{os.path.basename(destination)}.tmp.",
+                delete=False,
+            ) as fh:
+                tmp = fh.name
+                json.dump(snapshot, fh, indent=2)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, destination)
+            tmp = ""
+            directory_fd = os.open(parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            if tmp:
+                try:
+                    os.unlink(tmp)
+                except FileNotFoundError:
+                    pass
 
     def _load(self) -> None:
-        import os
-
         if not os.path.exists(self._persist_path):  # type: ignore[arg-type]
+            self._facts = {}
+            self._nodes = {}
+            self._edges = []
             return
         with open(self._persist_path, "r", encoding="utf-8") as fh:  # type: ignore[arg-type]
             data = json.load(fh)
-        for f in data.get("facts", []):
-            self._facts[f["id"]] = Fact.from_dict(f)
-        for n in data.get("nodes", []):
-            self._nodes[n["id"]] = Node.from_dict(n)
-        for e in data.get("edges", []):
-            self._edges.append(Edge.from_dict(e))
+        facts = {item["id"]: Fact.from_dict(item) for item in data.get("facts", [])}
+        nodes = {item["id"]: Node.from_dict(item) for item in data.get("nodes", [])}
+        edges = [Edge.from_dict(item) for item in data.get("edges", [])]
+        self._facts = facts
+        self._nodes = nodes
+        self._edges = edges
