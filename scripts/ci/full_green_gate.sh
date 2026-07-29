@@ -23,8 +23,11 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 cleanup_evidence() {
-  git restore -- .ci-evidence 2>/dev/null || true
-  git clean -fd -- .ci-evidence >/dev/null 2>&1 || true
+  # The gate starts from a clean candidate, so anything newly created in these
+  # evidence roots is generated test output, never candidate work.
+  git reset -q -- .ci-evidence workspace/evidence/phase-b 2>/dev/null || true
+  git restore -- .ci-evidence workspace/evidence/phase-b 2>/dev/null || true
+  git clean -fd -- .ci-evidence workspace/evidence/phase-b >/dev/null 2>&1 || true
 }
 trap cleanup_evidence EXIT
 
