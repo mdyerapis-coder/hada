@@ -199,22 +199,29 @@ Integrate household services while maintaining project separation.
 
 Implementation remains external to HADA and is governed through review and evidence.
 
+## Architecture
+
+See ADR 0004 (Proposed) for the three-layer integration pattern:
+adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
+(MemoryStore/Channel/CLI) → external service.
+
 ## Integrations
 
-- Shopping
-- Inventory
-- Pantry
-- Calendar
-- Family tasks
-- Smart home
-- Cameras
-- Notifications
-- Dashboards
-- Household automation
+- Shopping (foundation in Phase 3 shopping module)
+- Inventory ⬜ — stdlib module (Phase 3 pattern), planned Cycle 32
+- Pantry ⬜ — stdlib module (Phase 3 pattern), planned Cycle 33
+- Calendar (foundation in Phase 2 Productivity calendar)
+- Family tasks (foundation in Phase 2 Productivity tasks)
+- Smart home ⬜ — adapter, gated on creds/infra
+- Cameras ⬜ — adapter, gated on creds/infra
+- Notifications (foundation in Phase 2 Communications channels)
+- Dashboards (foundation in deployed Command Centre)
+- Household automation ⬜ — rules engine, gated on adapters
 
 ## Definition of Done
 
-Home Hub integrates cleanly through governed interfaces.
+Home Hub integrates cleanly through governed interfaces. At least one
+Phase 4 adapter is delivered, verified, and reaches draft-PR state.
 
 ---
 
@@ -405,6 +412,11 @@ Build loop continues with gated integration cycles as authorized.
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
 Regression-certified (326 unit tests passing, clean conflict-artifact scan,
 build loop verification gate green). Build loop now advances to Phase 4.**
+
+## Phase 4 — Home Hub Integration
+
+**Phase 4 architecture defined (ADR 0004 Proposed). Next: Inventory module
+(Cycle 33).** External integrations gated on secrets/infra authorization.
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
