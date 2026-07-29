@@ -7,6 +7,8 @@ trap 'rm -rf "$TMP"' EXIT
 REMOTE="$TMP/origin.git"
 SEED="$TMP/seed"
 STATE="$TMP/state"
+TRACE="$TMP/command-trace"
+OWNER_PID=$$
 
 mkdir -p "$SEED"
 git init --bare -q "$REMOTE"
@@ -20,68 +22,143 @@ git -C "$SEED" branch -M main
 git -C "$SEED" remote add origin "$REMOTE"
 git -C "$SEED" push -q -u origin main
 git --git-dir="$REMOTE" symbolic-ref HEAD refs/heads/main
+seed_branch=$(git -C "$SEED" branch --show-current)
+seed_status=$(git -C "$SEED" status --porcelain)
 
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
-base=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["base_sha"])' <<<"$out")
-[[ -n "$token" ]]
-[[ -d "$worktree/.git" || -f "$worktree/.git" ]]
+prepare_cycle() {
+  local out
+  out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" \
+    --ttl 300 --owner-pid "$OWNER_PID")
+  token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
+  run_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_id"])' <<<"$out")
+  worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
+  branch=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["branch"])' <<<"$out")
+  base=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["base_sha"])' <<<"$out")
+  printf '%s' "$branch" >"$TMP/current-branch"
+}
+
+commit_change() {
+  local text=${1:-change}
+  printf '%s\n' "$text" >>"$worktree/README.md"
+  git -C "$worktree" config user.name Test
+  git -C "$worktree" config user.email test@example.invalid
+  git -C "$worktree" add README.md
+  git -C "$worktree" commit -qm "$text"
+}
+
+HEALTH="$TMP/health"
+printf '#!/usr/bin/env bash\nprintf "hermetic health pass\\n"\n' >"$HEALTH"
+chmod +x "$HEALTH"
+
+# prepare: controller-owned bare mirror + exact immutable SHA + isolated worktree
+prepare_cycle
+[[ ${#token} == 64 ]]
+[[ -d "$STATE/repository.git" ]]
+[[ "$worktree" == "$STATE/runs/$run_id/worktree" ]]
 [[ "$(git -C "$worktree" rev-parse HEAD)" == "$base" ]]
+[[ "$(git -C "$SEED" branch --show-current)" == "$seed_branch" ]]
+[[ "$(git -C "$SEED" status --porcelain)" == "$seed_status" ]]
 
+# foreign ownership cannot mutate any stage
+bad=$(printf 'f%.0s' {1..64})
+for command in heartbeat verify release; do
+  set +e
+  if [[ $command == release ]]; then
+    python3 "$GUARD" release --state-dir "$STATE" --token "$bad" --status failed >/dev/null 2>&1
+  elif [[ $command == verify ]]; then
+    HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
+      --state-dir "$STATE" --token "$bad" --command-timeout 5 >/dev/null 2>&1
+  else
+    python3 "$GUARD" heartbeat --state-dir "$STATE" --token "$bad" >/dev/null 2>&1
+  fi
+  rc=$?
+  set -e
+  [[ $rc == 1 ]]
+done
+
+# contention is immediate and a live PID is never stolen on wall-clock expiry
+python3 - "$STATE/lease.json" <<'PY'
+import json, pathlib, sys
+p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['heartbeat_at']=0; p.write_text(json.dumps(d))
+PY
 set +e
-python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300 >/tmp/build-guard-busy.out 2>&1
+python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" \
+  --ttl 300 --owner-pid "$OWNER_PID" >"$TMP/busy.out" 2>&1
 rc=$?
 set -e
-[[ "$rc" == 75 ]]
-grep -q 'active lease' /tmp/build-guard-busy.out
-
+[[ $rc == 75 ]]
+grep -q 'active build-cycle lease' "$TMP/busy.out"
+python3 "$GUARD" heartbeat --state-dir "$STATE" --token "$token" >/dev/null
+python3 "$GUARD" status --state-dir "$STATE" >"$TMP/status.json"
+python3 - "$TMP/status.json" <<'PY'
+import json, sys
+v=json.load(open(sys.argv[1])); assert v['owner_live'] is True; assert 'token' not in v
+PY
 python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status complete >/dev/null
-[[ ! -e "$STATE/lease.json" ]]
 
-# A cycle must be based on the immutable origin/main SHA and contain a clean
-# committed change before verification.
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
-printf 'change\n' >>"$worktree/README.md"
+# clean committed candidate verifies, produces hashed evidence, and decorative separators pass
+prepare_cycle
+printf '# ===== decorative separator\n' >"$worktree/decorative.sh"
+git -C "$worktree" add decorative.sh
 git -C "$worktree" config user.name Test
 git -C "$worktree" config user.email test@example.invalid
-git -C "$worktree" add README.md
 git -C "$worktree" commit -qm change
-HEALTH="$TMP/health"
-printf '#!/usr/bin/env bash\nexit 0\n' >"$HEALTH"
-chmod +x "$HEALTH"
 HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
-  --state-dir "$STATE" --token "$token" --command-timeout 5 >/dev/null
-[[ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$STATE/lease.json")" == verified ]]
+  --state-dir "$STATE" --token "$token" --command-timeout 5 >"$TMP/verified.json"
+python3 - "$STATE/lease.json" <<'PY'
+import json, re, sys
+v=json.load(open(sys.argv[1])); assert v['status']=='verified'; assert re.fullmatch(r'[0-9a-f]{64}', v['gate_log_sha256'])
+PY
+
+# draft-only publication is verified and idempotently reuses an existing PR
 mkdir -p "$TMP/bin"
 cat >"$TMP/bin/gh" <<EOF
 #!/usr/bin/env bash
-printf '%s\n' "\$*" >"$TMP/gh.args"
-printf 'https://example.invalid/pr/1\n'
+set -euo pipefail
+printf '%s\n' "\$*" >>"$TRACE"
+branch=\$(cat "$TMP/current-branch")
+case "\$1 \$2" in
+  'pr list')
+    if [[ -f "$TMP/pr-created" ]]; then
+      printf '[{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main"}]\n' "\$branch"
+    else
+      printf '[]\n'
+    fi
+    ;;
+  'pr create')
+    touch "$TMP/pr-created"
+    printf 'https://example.invalid/pr/1\n'
+    ;;
+  'pr view')
+    printf '{"url":"https://example.invalid/pr/1","isDraft":true,"headRefName":"%s","baseRefName":"main"}\n' "\$branch"
+    ;;
+  *) exit 9 ;;
+esac
 EOF
 chmod +x "$TMP/bin/gh"
 printf 'body\n' >"$TMP/body.md"
-PATH="$TMP/bin:$PATH" python3 "$GUARD" publish \
-  --state-dir "$STATE" --token "$token" --title 'bounded cycle' --body-file "$TMP/body.md" >/dev/null
-grep -q '^pr create --draft --base main --head agent/build-cycle-' "$TMP/gh.args"
-if grep -q 'merge' "$TMP/gh.args"; then
-  echo 'FAIL: publish invoked merge' >&2
+PATH="$TMP/bin:$PATH" python3 "$GUARD" publish --state-dir "$STATE" \
+  --token "$token" --title 'bounded cycle' --body-file "$TMP/body.md" >/dev/null
+[[ "$(grep -c '^pr create ' "$TRACE")" == 1 ]]
+grep -q '^pr create --draft --base main --head agent/build-cycle-' "$TRACE"
+if grep -Eq 'merge|rebase|force' "$TRACE"; then
+  echo 'FAIL: publication invoked a prohibited operation' >&2
   exit 1
 fi
-[[ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$STATE/lease.json")" == published ]]
+[[ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$STATE/lease.json")" == awaiting_human ]]
+# Simulate recovery after create succeeded but final state transition was interrupted.
+python3 - "$STATE/lease.json" <<'PY'
+import json, pathlib, sys
+p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['status']='verified'; p.write_text(json.dumps(d))
+PY
+PATH="$TMP/bin:$PATH" python3 "$GUARD" publish --state-dir "$STATE" \
+  --token "$token" --title 'bounded cycle' --body-file "$TMP/body.md" >/dev/null
+[[ "$(grep -c '^pr create ' "$TRACE")" == 1 ]]
 python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status complete >/dev/null
 
-# If main moves after prepare, verification must fail closed and quarantine.
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
-printf 'cycle\n' >>"$worktree/README.md"
-git -C "$worktree" config user.name Test
-git -C "$worktree" config user.email test@example.invalid
-git -C "$worktree" add README.md
-git -C "$worktree" commit -qm cycle
+# main moving after prepare blocks verification and quarantines the cycle
+prepare_cycle
+commit_change stale
 printf 'main moved\n' >>"$SEED/README.md"
 git -C "$SEED" add README.md
 git -C "$SEED" commit -qm moved
@@ -91,34 +168,30 @@ HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
   --state-dir "$STATE" --token "$token" --command-timeout 5 >"$TMP/stale.out" 2>&1
 rc=$?
 set -e
-[[ "$rc" == 1 ]]
+[[ $rc == 1 ]]
 grep -q 'origin/main moved' "$TMP/stale.out"
 [[ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$STATE/lease.json")" == quarantined ]]
 python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status quarantined >/dev/null
+[[ -f "$STATE/quarantine/$run_id/manifest.json" ]]
 
-# True Git conflict markers are rejected; decorative comment separators are not.
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
-printf '# ===== decorative separator\n<<<<<<< HEAD\nbad\n=======\nworse\n>>>>>>> branch\n' >"$worktree/conflict.txt"
+# real conflict markers and hung gates fail closed
+prepare_cycle
+printf '<<<<<<< HEAD\nbad\n=======\nworse\n>>>>>>> branch\n' >"$worktree/conflict.txt"
 git -C "$worktree" add conflict.txt
+git -C "$worktree" config user.name Test
+git -C "$worktree" config user.email test@example.invalid
 git -C "$worktree" commit -qm conflict
 set +e
 HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
   --state-dir "$STATE" --token "$token" --command-timeout 5 >"$TMP/marker.out" 2>&1
 rc=$?
 set -e
-[[ "$rc" == 1 ]]
-grep -q 'unresolved conflict markers: conflict.txt:2' "$TMP/marker.out"
+[[ $rc == 1 ]]
+grep -q 'unresolved conflict markers: conflict.txt:1' "$TMP/marker.out"
 python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status quarantined >/dev/null
 
-# A hung verification is time-bounded and its expired lease self-recovers.
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
-printf 'timeout\n' >>"$worktree/README.md"
-git -C "$worktree" add README.md
-git -C "$worktree" commit -qm timeout
+prepare_cycle
+commit_change timeout
 printf '#!/usr/bin/env bash\nsleep 5\n' >"$HEALTH"
 chmod +x "$HEALTH"
 set +e
@@ -126,32 +199,34 @@ HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
   --state-dir "$STATE" --token "$token" --command-timeout 1 >"$TMP/timeout.out" 2>&1
 rc=$?
 set -e
-[[ "$rc" == 1 ]]
+[[ $rc == 1 ]]
+python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status quarantined >/dev/null
+
+# dead-owner recovery quarantines; corrupt/unsafe paths fail before deletion
+prepare_cycle
 python3 - "$STATE/lease.json" <<'PY'
 import json, pathlib, sys
-p = pathlib.Path(sys.argv[1]); d = json.loads(p.read_text()); d["expires_at"] = 0
-p.write_text(json.dumps(d))
+p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['pid']=99999999; d['pid_start_time']='dead'; d['heartbeat_at']=0; p.write_text(json.dumps(d))
 PY
-out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" --ttl 300)
-[[ "$(python3 -c 'import json,sys; print(str(json.load(sys.stdin)["recovered_stale_lease"]).lower())' <<<"$out")" == true ]]
-token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
-python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status complete >/dev/null
+python3 "$GUARD" recover --state-dir "$STATE" >"$TMP/recover.json"
+[[ ! -e "$STATE/lease.json" ]]
+[[ -f "$STATE/quarantine/$run_id/manifest.json" ]]
 
-# Corrupt state must fail closed before any path outside state/worktrees is removed.
-python3 - "$STATE/lease.json" "$SEED" <<'PY'
+prepare_cycle
+python3 - "$STATE/lease.json" <<'PY'
 import json, pathlib, sys
-path = pathlib.Path(sys.argv[1])
-path.write_text(json.dumps({"token": "tampered", "repo": sys.argv[2], "worktree": "/", "status": "active"}))
+p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['worktree']='/'; p.write_text(json.dumps(d))
 PY
 set +e
-python3 "$GUARD" release --state-dir "$STATE" --token tampered --status failed >"$TMP/unsafe.out" 2>&1
+python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status failed >"$TMP/unsafe.out" 2>&1
 rc=$?
 set -e
-[[ "$rc" == 1 ]]
+[[ $rc == 1 ]]
 grep -q 'unsafe worktree path' "$TMP/unsafe.out"
 [[ -d / ]]
-rm -f "$STATE/lease.json"
 
-printf 'PASS: prepare creates pinned isolated worktree and serialises cycles\n'
-printf 'PASS: verify accepts a clean committed cycle and rejects a stale base\n'
-printf 'PASS: publish is draft-only; marker, timeout, recovery, and path safety hold\n'
+[[ "$(git -C "$SEED" branch --show-current)" == "$seed_branch" ]]
+[[ "$(git -C "$SEED" status --porcelain)" == "$seed_status" ]]
+printf 'PASS: token lease, live-owner protection, heartbeat, and recovery\n'
+printf 'PASS: mirror-isolated immutable worktree, stale-base and marker rejection\n'
+printf 'PASS: hashed verification, draft-only idempotent publication, safe quarantine\n'

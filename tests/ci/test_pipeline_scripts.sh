@@ -23,6 +23,11 @@ if [[ -x tests/ci/test_release_manifests.sh ]]; then
   tests/ci/test_release_manifests.sh
 fi
 
+# Central full-green gate and conflict-artifact scanner fail-closed tests.
+if [[ -x tests/ci/test_full_green_gate.sh ]]; then
+  tests/ci/test_full_green_gate.sh
+fi
+
 # The --continue/--scan self-tests re-invoke autonomous_repair.sh. Running them
 # *inside* a repair's own verification (verify_in_worktree) would recurse
 # infinitely. Skip them when HADA_REPAIR_VERIFY is set (set by the repair

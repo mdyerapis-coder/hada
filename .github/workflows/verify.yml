@@ -13,19 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
       - name: Install verification tools
         run: |
           sudo apt-get update
           sudo apt-get install -y shellcheck jq
-      - name: Check shell scripts
-        run: |
-          mapfile -t scripts < <(find workspace scripts tests -type f -name '*.sh' 2>/dev/null || true)
-          if ((${#scripts[@]})); then shellcheck "${scripts[@]}"; fi
-      - name: Reject operator-local absolute paths
-        run: scripts/ci/reject_operator_paths.sh
-      - name: Validate release manifests
-        run: scripts/ci/verify_release_manifests.sh
-      - name: Run fast tests
-        run: scripts/ci/run_fast_tests.sh
-      - name: Run Phase B local-only gate suite
-        run: workspace/tests/phase-b/run_all.sh
+          python3 -m pip install --user 'pytest>=8,<9'
+      - name: Run the central full-green gate
+        run: scripts/ci/full_green_gate.sh
