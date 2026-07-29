@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import fnmatch
 import hashlib
 import json
 import os
@@ -19,7 +20,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 BUSY = 75
-SCHEMA = 2
+SCHEMA = 3
 DEFAULT_STATE = Path(
     os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")
 ) / "hada-build"
@@ -131,6 +132,7 @@ def _validate_lease(lease: dict[str, Any]) -> None:
         "worktree",
         "branch",
         "base_sha",
+        "allowed_paths",
         "pid",
         "pid_start_time",
         "host",
@@ -147,6 +149,46 @@ def _validate_lease(lease: dict[str, Any]) -> None:
         raise RuntimeError("invalid lease base SHA")
     if not re.fullmatch(r"[0-9a-f]{64}", str(lease["token"])):
         raise RuntimeError("invalid lease token")
+    allowed_paths = lease["allowed_paths"]
+    if not isinstance(allowed_paths, list) or not allowed_paths:
+        raise RuntimeError("lease allowed_paths must be a non-empty list")
+    if not all(isinstance(pattern, str) and pattern for pattern in allowed_paths):
+        raise RuntimeError("lease contains an invalid allowed path pattern")
+
+
+def _validated_allow_paths(patterns: list[str]) -> list[str]:
+    allowed = sorted(set(patterns))
+    if not allowed:
+        raise RuntimeError("at least one --allow-path is required")
+    for pattern in allowed:
+        parts = pattern.split("/")
+        if (
+            pattern.startswith("/")
+            or "\\" in pattern
+            or "\x00" in pattern
+            or ".." in parts
+            or any(part == "" for part in parts)
+        ):
+            raise RuntimeError(f"unsafe allow-path pattern: {pattern}")
+    return allowed
+
+
+def _assert_allowed_paths(
+    worktree: Path, base_sha: str, head: str, patterns: list[str]
+) -> None:
+    changed = _run(
+        [
+            "git",
+            "diff",
+            "--no-renames",
+            "--name-only",
+            f"{base_sha}..{head}",
+        ],
+        cwd=worktree,
+    ).splitlines()
+    for relative in changed:
+        if not any(fnmatch.fnmatchcase(relative, pattern) for pattern in patterns):
+            raise RuntimeError(f"candidate path outside allowlist: {relative}")
 
 
 def _validate_token(lease: dict[str, Any], token: str) -> None:
@@ -265,6 +307,7 @@ def _quarantine(
 def prepare(args: argparse.Namespace) -> int:
     source_repo = Path(args.repo).resolve()
     state_dir = Path(args.state_dir).resolve()
+    allowed_paths = _validated_allow_paths(args.allow_path)
     if not (source_repo / ".git").exists():
         raise RuntimeError(f"not a Git checkout: {source_repo}")
     if args.ttl < 60 or args.ttl > 7200:
@@ -322,6 +365,7 @@ def prepare(args: argparse.Namespace) -> int:
             "worktree": str(worktree),
             "branch": branch,
             "base_sha": base_sha,
+            "allowed_paths": allowed_paths,
             "pid": owner_pid,
             "pid_start_time": owner_start,
             "host": socket.gethostname(),
@@ -409,6 +453,9 @@ def _assert_candidate(lease: dict[str, Any], state_dir: Path, timeout: int) -> t
     )
     if merges:
         raise RuntimeError("merge commits are forbidden in a build cycle")
+    _assert_allowed_paths(
+        worktree, str(lease["base_sha"]), head, list(lease["allowed_paths"])
+    )
     if _run(["git", "ls-files", "-u"], cwd=worktree):
         raise RuntimeError("unmerged Git index entries remain")
     markers = _conflict_markers(worktree)
@@ -680,6 +727,12 @@ def parser() -> argparse.ArgumentParser:
     prep.add_argument("--ttl", type=int, default=900)
     prep.add_argument("--owner-pid", type=int, default=os.getppid())
     prep.add_argument("--command-timeout", type=int, default=180)
+    prep.add_argument(
+        "--allow-path",
+        action="append",
+        default=[],
+        help="allowed Git path glob for this cycle (repeatable; required)",
+    )
     prep.set_defaults(func=prepare)
 
     beat = sub.add_parser("heartbeat")

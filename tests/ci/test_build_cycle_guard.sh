@@ -28,7 +28,8 @@ seed_status=$(git -C "$SEED" status --porcelain)
 prepare_cycle() {
   local out
   out=$(python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" \
-    --ttl 300 --owner-pid "$OWNER_PID")
+    --ttl 300 --owner-pid "$OWNER_PID" \
+    --allow-path README.md --allow-path decorative.sh --allow-path conflict.txt)
   token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])' <<<"$out")
   run_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_id"])' <<<"$out")
   worktree=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])' <<<"$out")
@@ -51,6 +52,13 @@ printf '#!/usr/bin/env bash\nprintf "hermetic health pass\\n"\n' >"$HEALTH"
 chmod +x "$HEALTH"
 
 # prepare: controller-owned bare mirror + exact immutable SHA + isolated worktree
+set +e
+python3 "$GUARD" prepare --repo "$SEED" --state-dir "$TMP/no-allow-state" \
+  --ttl 300 --owner-pid "$OWNER_PID" >"$TMP/no-allow.out" 2>&1
+rc=$?
+set -e
+[[ $rc == 1 ]]
+grep -q 'at least one --allow-path is required' "$TMP/no-allow.out"
 prepare_cycle
 [[ ${#token} == 64 ]]
 [[ -d "$STATE/repository.git" ]]
@@ -83,7 +91,7 @@ p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['heartbeat_at']=0; p
 PY
 set +e
 python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" \
-  --ttl 300 --owner-pid "$OWNER_PID" >"$TMP/busy.out" 2>&1
+  --ttl 300 --owner-pid "$OWNER_PID" --allow-path README.md >"$TMP/busy.out" 2>&1
 rc=$?
 set -e
 [[ $rc == 75 ]]
@@ -95,6 +103,22 @@ import json, sys
 v=json.load(open(sys.argv[1])); assert v['owner_live'] is True; assert 'token' not in v
 PY
 python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status complete >/dev/null
+
+# A committed candidate outside the cycle's explicit path allowlist fails closed.
+prepare_cycle
+printf 'out of scope\n' >"$worktree/forbidden.md"
+git -C "$worktree" add forbidden.md
+git -C "$worktree" config user.name Test
+git -C "$worktree" config user.email test@example.invalid
+git -C "$worktree" commit -qm forbidden
+set +e
+HADA_BUILD_VERIFY_COMMAND="$HEALTH" python3 "$GUARD" verify \
+  --state-dir "$STATE" --token "$token" --command-timeout 5 >"$TMP/allowlist.out" 2>&1
+rc=$?
+set -e
+[[ $rc == 1 ]]
+grep -q 'candidate path outside allowlist: forbidden.md' "$TMP/allowlist.out"
+python3 "$GUARD" release --state-dir "$STATE" --token "$token" --status quarantined >/dev/null
 
 # clean committed candidate verifies, produces hashed evidence, and decorative separators pass
 prepare_cycle
