@@ -189,6 +189,23 @@ class MemoryStore:
             self._save()
             return edge
 
+    def set_relation(self, source: str, relation: str, target: str) -> Edge:
+        """Set exactly one current edge for a source/target pair."""
+        with self._lock:
+            if source not in self._nodes:
+                raise MemoryError(f"unknown source node: {source}")
+            if target not in self._nodes:
+                raise MemoryError(f"unknown target node: {target}")
+            self._edges = [
+                edge
+                for edge in self._edges
+                if not (edge.source == source and edge.target == target)
+            ]
+            edge = Edge(source=source, target=target, relation=relation)
+            self._edges.append(edge)
+            self._save()
+            return edge
+
     def neighbors(self, node_id: str, relation: str | None = None) -> list[Edge]:
         with self._lock:
             return [

@@ -12,7 +12,6 @@ writes; read-only queries return safe empty values.
 from __future__ import annotations
 
 import calendar
-import math
 import time
 from dataclasses import dataclass, field
 from datetime import date
@@ -342,13 +341,13 @@ def update_relationship(
 
 
 def _compute_strength(contact_count: int, last_contacted: float) -> float:
-    """Compute a relationship strength score in the inclusive range 0..1."""
-    recency = max(
-        0.0,
-        min(1.0, 1.0 - (time.time() - last_contacted) / (30 * 24 * 3600)),
+    """Preserve the historical linear frequency/recency strength contract."""
+    frequency = min(max(0, contact_count) / 10.0, 1.0) * 0.8
+    days_since = (
+        (time.time() - last_contacted) / 86400.0 if last_contacted else 365.0
     )
-    frequency = math.log1p(max(0, contact_count)) / math.log1p(20)
-    return round(min(1.0, max(0.0, 0.5 * recency + 0.5 * frequency)), 4)
+    recency = max(0.0, 0.2 - (days_since / 35.0))
+    return min(frequency + recency, 1.0)
 
 
 def record_interaction(
@@ -364,6 +363,7 @@ def record_interaction(
     if not person_id:
         raise RelationshipError("person_id is required")
     key, raw = _fact_key_and_value(store, person_id)
+    is_new = not isinstance(raw, dict)
     relationship = (
         Relationship.from_dict(raw)
         if isinstance(raw, dict)
@@ -379,8 +379,10 @@ def record_interaction(
     relationship.updated_at = relationship.last_contacted
     if channel and channel not in relationship.channels:
         relationship.channels.append(channel)
-    relationship.strength = _compute_strength(
-        relationship.contact_count, relationship.last_contacted
+    relationship.strength = (
+        0.1
+        if is_new
+        else _compute_strength(relationship.contact_count, relationship.last_contacted)
     )
     _persist_relationship(store, key, relationship)
 
@@ -422,6 +424,7 @@ class Relationships:
             raise RelationshipError(
                 f"unknown relationship type '{relation}'; valid: {sorted(RELATIONSHIP_TYPES)}"
             )
+        key, _ = _fact_key_and_value(self._store, person)
         existing = self.get(person)
         relationship = existing or Relationship(person=person, relation=relation)
         relationship.person = person
@@ -440,8 +443,8 @@ class Relationships:
                 f"person:{person}", kind="person", props={"name": person}
             )
             self._store.add_node("person:@me", kind="person", props={"name": "me"})
-            self._store.relate("person:@me", relation, f"person:{person}")
-            _persist_relationship(self._store, f"rel:{person}", relationship)
+            self._store.set_relation("person:@me", relation, f"person:{person}")
+            _persist_relationship(self._store, key, relationship)
         except RelationshipError:
             raise
         except Exception as exc:
