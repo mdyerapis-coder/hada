@@ -26,6 +26,11 @@ class MemoryStore:
     def get_task(self, task_id: str) -> TaskRecord:
         return self.tasks[task_id]
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]:
+        return [t for t in self.tasks.values() if t.status == status][:limit]
+
     def save_task_transition(
         self,
         before: TaskRecord,

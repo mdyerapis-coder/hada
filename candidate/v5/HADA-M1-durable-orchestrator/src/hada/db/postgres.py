@@ -696,6 +696,17 @@ class PostgresStore:
                 actor_party=actor_party,
             )
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]:
+        """Return tasks matching a given status, most recently updated first."""
+        with self._connection() as connection:
+            rows = connection.execute(
+                "SELECT * FROM tasks WHERE status = %s ORDER BY updated_at DESC LIMIT %s",
+                (status.value, limit),
+            ).fetchall()
+        return [self._task_from_row(dict(row)) for row in rows]
+
     def iter_audit(self) -> Iterator[AuditRecord]:
         with self._connection() as connection:
             rows = connection.execute("SELECT * FROM audit_events ORDER BY sequence").fetchall()

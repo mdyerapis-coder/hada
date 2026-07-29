@@ -17,6 +17,10 @@ class OrchestratorStore(Protocol):
 
     def get_task(self, task_id: str) -> TaskRecord: ...
 
+    def list_tasks_by_status(
+        self, status: TaskStatus, limit: int = 50
+    ) -> list[TaskRecord]: ...
+
     def save_task_transition(
         self,
         before: TaskRecord,
