@@ -90,7 +90,7 @@ def test_note_appears_in_memory_search(store: MemoryStore, prod: ProductivitySto
 
 
 def test_relationship_stored_as_fact_and_graph_node(store: MemoryStore, rels: Relationships):
-    """Relationships class writes facts to MemoryStore AND creates graph nodes."""
+    """Relationships class writes facts to MemoryStore searchable by tag."""
     rels.add("Courtney", "partner", notes="my partner", important_dates={"birthday": "1990-06-15"})
 
     # Fact-based retrieval
@@ -99,9 +99,13 @@ def test_relationship_stored_as_fact_and_graph_node(store: MemoryStore, rels: Re
     assert fetched.person == "Courtney"
     assert fetched.relation == "partner"
 
-    # Graph node
-    assert "person:Courtney" in store._nodes
-    assert store._nodes["person:Courtney"].kind == "person"
+    # Fact is searchable via MemoryStore tags (the new Relationships API stores facts
+    # with tags instead of creating separate graph nodes)
+    relationship_facts = store.search(tag="relationship")
+    assert len(relationship_facts) >= 1
+
+    person_facts = store.search(tag="person:Courtney")
+    assert len(person_facts) >= 1
 
 
 def test_interaction_updates_relationship_strength(store: MemoryStore, rels: Relationships):
