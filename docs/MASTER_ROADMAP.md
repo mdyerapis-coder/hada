@@ -191,7 +191,9 @@ Hermes proactively assists without requiring continual prompting.
 
 ---
 
-# Phase 4 -- Home Hub Integration
+# Phase 4 — Home Hub Integration
+
+**In progress — first integration started.** Family Tasks module built (Cycle 33).
 
 ## Objective
 
@@ -207,11 +209,11 @@ adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
 
 ## Integrations
 
-|- Shopping ✅ (Phase 3)
-|- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
-|- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
-|- Calendar 🔄 (Cycle 36 — active, household calendar module)
-|- Family tasks ✅ (Cycle 35 — PR #46, family task management)
+- Shopping
+- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
+- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
+- Family tasks ✅ (Cycle 35 — PR #46, family task management)
+- Calendar 🔄 (Cycle 36 — active, household calendar module)
 - Smart home
 - Cameras
 - Notifications
@@ -407,12 +409,6 @@ Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
 
-## Phase 4 — Home Hub Integration
-
-**First feature delivered ✅ — Inventory module (Cycle 33).** Household inventory tracking with item management, stock levels, location tracking, category grouping, and low-stock alerts. 22 new tests. CLI: `hermesctl inventory add|list|update|remove`.
-
-Next buildable: Pantry module following the same Phase 3 pattern.
-
 ## Phase 3 — Personal Intelligence
 
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
@@ -471,4 +467,3 @@ authorization (see Human Approval Boundary).
 Governance is operative: ADR framework, CI verification, guardrails
 (`scripts/ci/repair_guardrails.sh`), audit logging (`.ci-evidence/`), and the
 human approval boundary are all in place and enforced.
-
