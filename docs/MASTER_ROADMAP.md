@@ -191,9 +191,7 @@ Hermes proactively assists without requiring continual prompting.
 
 ---
 
-# Phase 4 — Home Hub Integration
-
-**In progress — first integration started.** Family Tasks module built (Cycle 33).
+# Phase 4 -- Home Hub Integration
 
 ## Objective
 
@@ -203,22 +201,23 @@ Implementation remains external to HADA and is governed through review and evide
 
 ## Architecture
 
-See ADR 0004 (Proposed) for the three-layer integration pattern:
+See ADR 0004 (Accepted) for the three-layer integration pattern:
 adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
 (MemoryStore/Channel/CLI) → external service.
 
 ## Integrations
 
-- Shopping
-- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
-- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
-- Family tasks ✅ (Cycle 35 — PR #46, family task management)
-- Calendar 🔄 (Cycle 36 — active, household calendar module)
-- Smart home
-- Cameras
-- Notifications
-- Dashboards
-- Household automation
+|- Shopping ✅ (Phase 3)
+||- Inventory ✅ (Cycle 33 — PR #43, merged)
+||- Pantry ✅ (Cycle 34 — PR #44, merged)
+||- Calendar ✅ (Cycle 36 — PR #47, merged)
+||- Family tasks ✅ (Cycle 35 — PR #46, merged)
+|- Android 🚧 (Stage 1 contracts merged: PR #50 — versioned API contracts, auth seam, adult/child roles. APK build deferred pending toolchain authorization.)
+|- Smart home
+|- Cameras
+|- Notifications
+|- Dashboards
+|- Household automation
 
 ## Definition of Done
 
@@ -409,6 +408,10 @@ Approval Boundary). ADR 0003 (Hermes CTL architecture) Accepted.
 
 Build loop continues with gated integration cycles as authorized.
 
+## Phase 4 — Home Hub Integration
+
+**All four build cycles delivered ✅ — Inventory (Cycle 33), Pantry (Cycle 34), Family tasks (Cycle 35), Calendar (Cycle 36) merged to `main`.** Household inventory/pantry/calendar modules with full CLI, plus family task management. Android Stage 1 contracts (PR #50) also merged — versioned API contracts, auth seam, adult/child roles; APK build deferred.
+
 ## Phase 3 — Personal Intelligence
 
 **COMPLETE ✅ — All 11 features delivered, merged to `main` (PRs #20–#32).
@@ -417,17 +420,21 @@ build loop verification gate green). Build loop now advances to Phase 4.**
 
 ## Phase 4 — Home Hub Integration
 
-**In progress — Phase 4 integrations under development (Cycles 33–36).**
-Foundation ADR 0004 accepted. Three draft PRs open for review:
+**All Phase 4 integrations merged to `main` (PRs #43, #44, #46, #47).**
+Foundation ADR 0004 accepted (PR #45). Android Stage 1 contracts also merged (PR #50):
 
 - ✅ Inventory (Cycle 33, PR #43) — household inventory tracking module
 - ✅ Pantry (Cycle 34, PR #44) — household pantry stock management
 - ✅ Family tasks (Cycle 35, PR #46) — family task assignment and tracking
-- 🔄 Calendar (Cycle 36, this PR) — household calendar event management
+- ✅ Calendar (Cycle 36, PR #47) — household calendar event management
+- ✅ Android Stage 1 (PR #50) — versioned API contracts, auth seam, adult/child roles
 
 Remaining integrations (smart home, cameras, notifications, dashboards,
 household automation) deferred — require hardware or infrastructure not yet
 available in the build environment.
+
+**Android APK note:** APK build deferred pending toolchain authorization
+(gradle/Android SDK — Human Approval Boundary).
 
 ## Phase 1 — Autonomous Engineering (M1: HADA release appliance)
 
@@ -467,3 +474,4 @@ authorization (see Human Approval Boundary).
 Governance is operative: ADR framework, CI verification, guardrails
 (`scripts/ci/repair_guardrails.sh`), audit logging (`.ci-evidence/`), and the
 human approval boundary are all in place and enforced.
+
