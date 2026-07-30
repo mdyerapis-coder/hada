@@ -282,6 +282,19 @@ deploy, secret/infra change, or governance bypass occurs.
 - **Phase 4 entry**: Next cycle will begin Phase 4 Home Hub Integration work
   (ADR 0004 already drafted in PR #40; Phase 4 architecture design begins here).
 
+## Cycle 34 — Pantry stock management (Phase 4: Home Hub Integration)
+- Branch: `agent/build-cycle-1785309167-b1ea73dc92c2` (this PR — draft)
+- New module `hermes_ctl/intelligence/pantry.py`:
+  - `PantryItem` / `PantrySnapshot` dataclasses with to_dict/from_dict (camelCase API)
+  - `add_item()` — create or stock items (increments quantity on duplicate)
+  - `remove_item()` — delete by name
+  - `update_quantity()` — adjust stock by delta or set absolute, clamps to zero
+  - `scan_pantry()` — MemoryStore-backed scan with category, location, and low-stock filtering
+  - Low-stock detection: items with quantity &lt;= min_quantity flagged as ⚠️ LOW
+  - 14 pantry categories, 7 storage locations
+- CLI: `hermesctl pantry add|list|remove|update` with category/location/low-stock filters
+- 20 new tests in `tests/test_pantry.py`
+
 ## Cycle 36 — Calendar intelligence module (Phase 4: Home Hub Integration)
 - Branch: `agent/build-cycle-1785323954-2b9ac0802b42` (this PR)
 - New module `hermes_ctl/intelligence/calendar.py` — household calendar event management:

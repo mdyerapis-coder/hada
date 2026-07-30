@@ -207,11 +207,11 @@ adapter (`hermes_ctl/integrations/`) → existing Hermes CTL seam
 
 ## Integrations
 
-- Shopping
-- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
-- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
-- Calendar 🔄 (Cycle 36 — active, household calendar module)
-- Family tasks ✅ (Cycle 35 — PR #46, family task management)
+|- Shopping ✅ (Phase 3)
+|- Inventory ✅ (Cycle 33 — PR #43, household inventory module)
+|- Pantry ✅ (Cycle 34 — PR #44, household pantry stock management)
+|- Calendar 🔄 (Cycle 36 — active, household calendar module)
+|- Family tasks ✅ (Cycle 35 — PR #46, family task management)
 - Smart home
 - Cameras
 - Notifications
