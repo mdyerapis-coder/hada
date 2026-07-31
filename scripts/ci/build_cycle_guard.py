@@ -327,7 +327,7 @@ def prepare(args: argparse.Namespace) -> int:
             status = str(existing["status"])
             healthy_until = int(existing["heartbeat_at"]) + int(existing["ttl"])
             if status in {"active", "verified", "publishing"} and (
-                _owner_is_live(existing) or healthy_until > now
+                _owner_is_live(existing) and healthy_until > now
             ):
                 raise LeaseBusy("active build-cycle lease")
             existing["recovered_at"] = now
@@ -372,6 +372,7 @@ def prepare(args: argparse.Namespace) -> int:
             "acquired_at": now,
             "heartbeat_at": now,
             "ttl": args.ttl,
+            "expires_at": now + args.ttl,
             "status": "active",
         }
         _write_json(lease_path, lease)
@@ -390,7 +391,9 @@ def heartbeat(args: argparse.Namespace) -> int:
         _validate_token(lease, args.token)
         if lease["status"] not in {"active", "verified"}:
             raise RuntimeError(f"lease cannot heartbeat in state {lease['status']}")
-        lease["heartbeat_at"] = int(time.time())
+        now = int(time.time())
+        lease["heartbeat_at"] = now
+        lease["expires_at"] = now + int(lease["ttl"])
         _write_json(lease_path, lease)
         run_dir, _, _ = _paths(lease, state_dir)
         _write_json(run_dir / "manifest.json", lease)
@@ -693,9 +696,9 @@ def recover(args: argparse.Namespace) -> int:
         now = int(time.time())
         healthy_until = int(lease["heartbeat_at"]) + int(lease["ttl"])
         if lease["status"] in {"active", "verified", "publishing"} and (
-            _owner_is_live(lease) or healthy_until > now
+            _owner_is_live(lease) and healthy_until > now
         ):
-            raise LeaseBusy("live or recently heartbeating owner cannot be recovered")
+            raise LeaseBusy("live owner with unexpired heartbeat cannot be recovered")
         lease["recovered_at"] = now
         lease["recovery_reason"] = "explicit dead-owner recovery"
         _archive(lease_path, lease, state_dir, "quarantine")
@@ -713,6 +716,9 @@ def status(args: argparse.Namespace) -> int:
         _validate_lease(lease)
         safe = {k: v for k, v in lease.items() if k != "token"}
         safe["owner_live"] = _owner_is_live(lease)
+        safe["expired"] = int(time.time()) >= int(
+            lease.get("expires_at", int(lease["heartbeat_at"]) + int(lease["ttl"]))
+        )
         print(json.dumps(safe, sort_keys=True))
         return 0
 
