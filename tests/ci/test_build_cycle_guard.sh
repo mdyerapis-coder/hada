@@ -84,10 +84,11 @@ for command in heartbeat verify release; do
   [[ $rc == 1 ]]
 done
 
-# contention is immediate and a live PID is never stolen on wall-clock expiry
+# contention: a live owner with unexpired heartbeat blocks re-prepare
 python3 - "$STATE/lease.json" <<'PY'
 import json, pathlib, sys
-p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text()); d['heartbeat_at']=0; p.write_text(json.dumps(d))
+p=pathlib.Path(sys.argv[1]); d=json.loads(p.read_text())
+# owner is still live (pid matches), heartbeat fresh — contention should block
 PY
 set +e
 python3 "$GUARD" prepare --repo "$SEED" --state-dir "$STATE" \
