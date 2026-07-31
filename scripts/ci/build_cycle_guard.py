@@ -35,7 +35,7 @@ HEALTH_JSON_PATH = Path(
 )
 
 
-def _write_health_json(state_dir: Path, lease: dict[str, Any] | None, run_dir: Path | None = None) -> None:
+def _write_health_json(state_dir: Path, lease: dict[str, Any] | None, run_dir: Path | None = None, source_repo: Path | None = None) -> None:
     """Regenerate health.json every cycle — even when healthy."""
     health_dir = HEALTH_JSON_PATH.parent
     health_dir.mkdir(parents=True, exist_ok=True)
@@ -50,10 +50,11 @@ def _write_health_json(state_dir: Path, lease: dict[str, Any] | None, run_dir: P
             active_prs.append({"number": pr["number"], "title": pr["title"], "state": pr["state"]})
     except Exception:
         pass
+    repo = source_repo if source_repo else state_dir
     health = {
         "timestamp": now,
         "status": status,
-        "main_sha": _run(["git", "rev-parse", "HEAD"], cwd=state_dir).strip() if state_dir.exists() else "unknown",
+        "main_sha": _run(["git", "rev-parse", "HEAD"], cwd=repo).strip() if repo.exists() else "unknown",
         "main_ci": "PASS",
         "open_prs": active_prs,
         "new_failing_prs": 0,
