@@ -265,6 +265,7 @@ def update_relationship(
         raw["name"] = name
     if relationship_type is not None:
         raw["relationship_type"] = relationship_type
+        raw["relation"] = relationship_type
     if strength is not None:
         raw["strength"] = strength
     if contact_count is not None:
@@ -442,7 +443,7 @@ class Relationships:
             interaction.to_dict(),
             tags={"interaction", f"person:{person}"},
         )
-        self.add(person, _guess_relation(person))
+        if self.get(person) is None: self.add(person, _guess_relation(person))
         return interaction
 
     def interactions_for(self, person: str, *, limit: int = 20) -> list[Interaction]:
