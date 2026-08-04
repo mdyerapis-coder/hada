@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 workspace/evidence/*/deploy-console.log
 workspace/evidence/phase-b0/preflight-run-*/
+*.egg-info/
