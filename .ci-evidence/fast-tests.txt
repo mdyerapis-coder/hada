@@ -20,6 +20,3 @@ PASS: scan never called gh pr create
 PASS: scan never called gh pr merge
 ----
 scan-stage tests: 5 passed, 0 failed
-PASS: token lease, live-owner protection, heartbeat, and recovery
-PASS: mirror-isolated immutable worktree, stale-base and marker rejection
-PASS: hashed verification, draft-only idempotent publication, safe quarantine
