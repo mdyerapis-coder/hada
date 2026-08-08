@@ -6,14 +6,23 @@ on:
       - main
     paths:
       - .github/workflows/security-history-purge.yml
+  issue_comment:
+    types:
+      - created
 
 permissions:
   contents: write
   issues: write
 
+concurrency:
+  group: hada-history-purge
+  cancel-in-progress: false
+
 jobs:
   purge:
-    if: github.event.head_commit.message == 'security: execute history purge'
+    if: >-
+      (github.event_name == 'push' && github.event.head_commit.message == 'security: execute history purge') ||
+      (github.event_name == 'issue_comment' && github.event.issue.number == 58 && github.event.comment.body == '/execute-history-purge' && github.event.comment.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -58,7 +67,7 @@ jobs:
             --tag-name-filter cat \
             -- "${rewrite_refs[@]}"
 
-          # Remove filter-branch backup refs so the contaminated commits are not reachable locally.
+          # Remove filter-branch backup refs so contaminated commits are not reachable locally.
           git for-each-ref --format='delete %(refname)' refs/original/ | git update-ref --stdin || true
 
           # Hard verification: target path and known leaked blob must be unreachable from all rewritten refs.
