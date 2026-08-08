@@ -1,0 +1,78 @@
+name: One-time HADA history hit classifier
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  classify:
+    if: >-
+      github.event.issue.number == 58 &&
+      github.event.comment.body == '/classify-history-hits' &&
+      github.event.comment.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout all reachable history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify high-confidence history hits without printing values
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          git fetch --force --prune --tags origin
+
+          report=/tmp/history-hit-report.md
+          {
+            echo 'History secret-pattern classification (commit hashes and paths only; matched values intentionally suppressed):'
+            echo
+          } > "$report"
+
+          labels=(
+            'OpenAI/project-style key'
+            'generic sk-style key'
+            'GitHub classic PAT'
+            'GitHub fine-grained PAT'
+            'Tailscale-style key'
+            'AWS access key id'
+            'private-key header'
+          )
+          patterns=(
+            'sk-proj-[A-Za-z0-9_-]{24,}'
+            'sk-[A-Za-z0-9_-]{24,}'
+            'ghp_[A-Za-z0-9]{20,}'
+            'github_pat_[A-Za-z0-9_]{20,}'
+            'tskey-[A-Za-z0-9_-]{20,}'
+            'AKIA[0-9A-Z]{16}'
+            '-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY-----'
+          )
+
+          total=0
+          for i in "${!patterns[@]}"; do
+            label="${labels[$i]}"
+            pattern="${patterns[$i]}"
+            mapfile -t commits < <(git log --all -G"$pattern" --format='%H' --no-patch | sort -u)
+            (( total += ${#commits[@]} )) || true
+            if (( ${#commits[@]} == 0 )); then
+              continue
+            fi
+            echo "- **${label}**: ${#commits[@]} matching commit(s)" >> "$report"
+            for commit in "${commits[@]}"; do
+              paths="$(git show --format= --name-only "$commit" | sed '/^$/d' | sort -u | paste -sd ',' -)"
+              short="${commit:0:12}"
+              echo "  - \`${short}\` — \`${paths:-<no-path>}\`" >> "$report"
+            done
+          done
+          echo >> "$report"
+          echo "Total pattern/commit hits: **${total}**. A commit can count more than once if it matches multiple pattern families." >> "$report"
+
+          gh issue comment 58 --repo "$GITHUB_REPOSITORY" --body-file "$report"
