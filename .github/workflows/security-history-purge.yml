@@ -1,0 +1,125 @@
+name: One-time HADA history purge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/security-history-purge.yml
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  purge:
+    if: github.event.head_commit.message == 'security: execute history purge'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_PATH: workspace/deploy-staging/.env
+      LEAK_BLOB_SHA: f8af24bee977e0ecd14b7ca32c5d446d3920c162
+    steps:
+      - name: Checkout full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Rewrite all branch and tag history atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Fetch every normal branch and tag, then materialise branches locally.
+          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          git fetch --force --prune --tags origin
+          git checkout --detach
+          while IFS= read -r ref; do
+            branch="${ref#refs/remotes/origin/}"
+            [[ "$branch" == "HEAD" ]] && continue
+            git branch -f "$branch" "$ref"
+          done < <(git for-each-ref --format='%(refname)' refs/remotes/origin/)
+
+          # Remote-tracking refs would otherwise retain the pre-rewrite history locally.
+          git for-each-ref --format='delete %(refname)' refs/remotes/origin/ | git update-ref --stdin || true
+
+          mapfile -t rewrite_refs < <(git for-each-ref --format='%(refname)' refs/heads refs/tags)
+          if (( ${#rewrite_refs[@]} == 0 )); then
+            echo "No refs found to rewrite" >&2
+            exit 1
+          fi
+
+          FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force \
+            --index-filter "git rm --cached --ignore-unmatch '$TARGET_PATH'" \
+            --prune-empty \
+            --tag-name-filter cat \
+            -- "${rewrite_refs[@]}"
+
+          # Remove filter-branch backup refs so the contaminated commits are not reachable locally.
+          git for-each-ref --format='delete %(refname)' refs/original/ | git update-ref --stdin || true
+
+          # Hard verification: target path and known leaked blob must be unreachable from all rewritten refs.
+          if git log --all --format='%H' -- "$TARGET_PATH" | grep -q .; then
+            echo "Target path remains reachable after rewrite" >&2
+            exit 1
+          fi
+          if git rev-list --objects --all | grep -q "^${LEAK_BLOB_SHA} "; then
+            echo "Known leaked blob remains reachable after rewrite" >&2
+            exit 1
+          fi
+
+          # High-confidence historical secret scan. Only counts are recorded; values are never printed.
+          scan_hits=0
+          patterns=(
+            'sk-proj-[A-Za-z0-9_-]{24,}'
+            'sk-[A-Za-z0-9_-]{24,}'
+            'ghp_[A-Za-z0-9]{20,}'
+            'github_pat_[A-Za-z0-9_]{20,}'
+            'tskey-[A-Za-z0-9_-]{20,}'
+            'AKIA[0-9A-Z]{16}'
+            '-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY-----'
+          )
+          for pattern in "${patterns[@]}"; do
+            count="$(git log --all -G"$pattern" --format='%H' --no-patch | sort -u | wc -l | tr -d ' ')"
+            scan_hits=$((scan_hits + count))
+          done
+          echo "$scan_hits" > /tmp/history-secret-scan-count
+
+          # Remove this one-time workflow from rewritten main before publishing.
+          git checkout main
+          git rm .github/workflows/security-history-purge.yml
+          git commit -m "security: remove one-time history purge workflow"
+
+          # Build an all-or-nothing force-push for every normal branch and tag.
+          refspecs=()
+          while IFS= read -r ref; do
+            refspecs+=("+${ref}:${ref}")
+          done < <(git for-each-ref --format='%(refname)' refs/heads refs/tags)
+
+          # Dry-run first. If branch protection or token permissions reject the rewrite,
+          # no remote history is changed.
+          if ! git push --dry-run --atomic --force origin "${refspecs[@]}"; then
+            echo "BLOCKED" > /tmp/history-purge-status
+            exit 20
+          fi
+
+          git push --atomic --force origin "${refspecs[@]}"
+          echo "PASS" > /tmp/history-purge-status
+
+      - name: Report result to security issue
+        if: always()
+        shell: bash
+        run: |
+          status="$(cat /tmp/history-purge-status 2>/dev/null || echo FAILED_BEFORE_PUSH)"
+          hits="$(cat /tmp/history-secret-scan-count 2>/dev/null || echo unknown)"
+          if [[ "$status" == "PASS" ]]; then
+            body="History rewrite completed across fetched branch/tag refs. The tracked path \`workspace/deploy-staging/.env\` and known leaked blob are no longer reachable from rewritten refs. High-confidence historical secret-pattern hit count after rewrite: **${hits}** (counts only; no values logged). The one-time workflow removed itself before the atomic force-push. GitHub may still retain unreachable objects/cached PR views until server-side garbage collection/support cleanup."
+          elif [[ "$status" == "BLOCKED" ]]; then
+            body="History rewrite was **blocked before any remote ref changed** (most likely branch protection or token force-push policy). The live tree remains sanitised, but the old blob is still reachable in historical refs."
+          else
+            body="History rewrite workflow failed before a remote atomic push completed. Treat remote history as unchanged unless separately verified."
+          fi
+          gh issue comment 58 --repo "$GITHUB_REPOSITORY" --body "$body" || true
