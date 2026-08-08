@@ -61,19 +61,21 @@ while IFS= read -r f; do
   done
 done < <(cd "$WT" && git diff --name-only "$BASE" 2>/dev/null)
 
-# 3) Secret patterns added anywhere.
+# 3) Secret patterns added anywhere. Include current provider/project token
+#    forms as well as classic PATs, cloud keys and private-key material.
 # shellcheck disable=SC2015
 SECRET_HITS=$(cd "$WT" && git diff "$BASE" 2>/dev/null \
-  | grep -E '^\+' | grep -iE 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]+|Bearer [A-Za-z0-9._-]+|api[_-]?key\s*[:=]|password\s*[:=]\s*["'\''][^"'\'']+["'\'']|aws_secret_access_key|private_key' \
+  | grep -E '^\+' \
+  | grep -iE 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-(proj-)?[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|tskey-(auth|api|client)-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer[[:space:]]+[A-Za-z0-9._-]{20,}|api[_-]?key[[:space:]]*[:=][[:space:]]*[A-Za-z0-9._-]{20,}|password[[:space:]]*[:=][[:space:]]*[A-Za-z0-9._-]{12,}|aws_secret_access_key|BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' \
   | grep -v '^\+\+\+' || true)
 if [[ -n "$SECRET_HITS" ]]; then
   violations+="  SECRET pattern added:"$'\n'"$SECRET_HITS"$'\n'
 fi
 
-# 4) Secret-named files.
+# 4) Secret-named files, including environment-file variants.
 # shellcheck disable=SC2015
 SECRET_FILES=$(cd "$WT" && git diff --name-only "$BASE" 2>/dev/null \
-  | grep -iE '\.secret|\.key$|\.pem|secrets?\.|credentials' || true)
+  | grep -iE '(^|/)\.env($|\.)|\.secret|\.key$|\.pem$|secrets?\.|credentials' || true)
 if [[ -n "$SECRET_FILES" ]]; then
   violations+="  secret-named file changed:"$'\n'"$SECRET_FILES"$'\n'
 fi
