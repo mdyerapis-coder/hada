@@ -1,3 +1,10 @@
+# Secrets and local environment files (never track)
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
 
 # build artifacts (never track)
 __pycache__/
