@@ -27,6 +27,26 @@ Candidate v3 remains preserved with SHA-256:
 
 `7d969ee44874837a584dcd3363dd4c72c0816fc46d3054300a896d0a37686204`
 
+## Source of truth
+
+The canonical active HADA M1 source tree is
+`workspace/deploy-v4/HADA-M1-durable-orchestrator/`. This follows the layout
+above (`workspace/` is active) and the current-release declaration (`v4`).
+The `candidate/` and `workspace/inspection/` trees, plus ZIP files under
+`archives/`, `releases/`, and `workspace/`, are retained candidates,
+inspection copies, or immutable archives—not additional active sources.
+
+Inventory and compare the tracked source-of-truth files without modifying any
+copy or archive:
+
+```bash
+python3 scripts/check_hada_consistency.py --root .
+```
+
+The command exits `1` when any discovered source tree's `pyproject.toml` or
+`Dockerfile` differs from the canonical tree, and lists ZIP archive members
+for manual review. It is intentionally report-only and non-destructive.
+
 ## Local development
 
 Run local tests from `workspace/`:
